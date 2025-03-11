@@ -1,0 +1,340 @@
+/* default style for gemini-prompt application */
+/* version v0.1.0 - 2025/02/14
+
+/*
+Rendering Markdown to HTML - Potential HTML Elements
+----------------------------------------------------
+gemini-prompt uses the goldmark parser to render Markdown to HTML. goldmark aims for CommonMark compliance, but
+it also supports extensions, so the exact set of elements can vary. Here's a comprehensive breakdown, covering
+standard and common extensions:
+
+Block-Level Elements:
+- <h1> to <h6>         : Headers (levels 1 through 6). Markdown # syntax.
+- <p>                  : Paragraphs. Plain text separated by one or more blank lines.
+- <pre> and <code>     : Code blocks. Indented text or fenced code blocks using backticks (`````).
+                         goldmark often uses the language-xyz class on the <code> element for syntax highlighting (if a highlighter is enabled).
+- <ul> and <li>        : Unordered lists. Markdown *, -, or + at the beginning of a line.
+- <ol> and <li>        : Ordered lists. Markdown 1., 2., etc. at the beginning of a line. The <ol> tag gets a start attribute if the list doesn't start at 1.
+- <blockquote>         : Blockquotes. Lines starting with >.
+- <hr>                 : Horizontal rule. Markdown ---, ***, or ___ on a line by itself.
+- <table>, <thead>, <tbody>, <tr>, <th>, <td>:
+                         Tables. Markdown table syntax (using pipes | and hyphens -). These require the tables extension to be enabled.
+- <div>                : Generic block-level container. May be used by some extensions or custom renderers.
+- <dl>, <dt>, <dd>     : Definition lists. These are often supported via extensions.
+- <details>, <summary> : Collapsible sections. Often supported via extensions like details.
+
+Inline Elements:
+- <a>               : Links. Markdown [link text](URL) or [link text][reference]. The rel attribute might be added depending
+                      on configuration, e.g., rel="nofollow" for external links.
+- <em>              : Emphasis (italic). Markdown *text* or _text_.
+- <strong>          : Strong emphasis (bold). Markdown **text** or __text__.
+- <code>            : Inline code. Markdown `code`.
+- <br>              : Line break. Markdown two spaces at the end of a line. Or using the hardwraps extension.
+- <img>             : Images. Markdown ![alt text](URL).
+- <del>             : Deleted text (strikethrough). Markdown ~~text~~. Requires the strikethrough extension.
+- <ins>             : Inserted text. Requires a custom extension, as it's not standard Markdown.
+- <span>            : Generic inline container. May be used by some extensions or custom renderers for styling or semantic markup.
+                      For example, the typographer extension might use <span> for things like smart quotes.
+- <mark>            : Highlighted text. Commonly supported via extensions like mark. Markdown ==text==
+- <kbd>             : Keyboard input. Requires a custom extension.
+- <sub>             : Subscript. Requires an extension, often paired with superscript.
+- <sup>             : Superscript. Requires an extension, often paired with subscript.
+- <em> and <strong> : Nested emphasis for stronger emphasis. E.g. ***bold italic*** or ___bold italic___.
+- Text nodes        : Plain text that isn't otherwise marked up. This is implicitly an inline element.
+
+HTML Entities:
+goldmark will automatically escape certain characters to their HTML entity equivalents to prevent rendering issues or XSS vulnerabilities.
+For example:
+- < becomes &lt;
+- > becomes &gt;
+- & becomes &amp;
+- " becomes &quot;
+
+goldmark Extensions:
+The power of goldmark lies in its extensions. Common extensions that affect HTML output include:
+- tables          : Enables table rendering.
+- strikethrough   : Enables strikethrough text.
+- taskList        : Enables task lists (checkboxes in lists). This usually generates <input type="checkbox"> elements within list items.
+- linkify         : Automatically converts plain URLs to links.
+- typographer     : Handles smart quotes, dashes, and other typographic enhancements.
+- footnote        : Enables footnotes.
+- definition list : Enables the rendering of definition lists using <dl>, <dt>, <dd>.
+- attributes      : Allows specifying HTML attributes directly in Markdown using a special syntax.
+- classes         : Allows specifying HTML classes directly in Markdown using a special syntax.
+- emoji           : Supports emoji syntax like :smile:.
+- frontmatter     : Enables frontmatter parsing (e.g., YAML or TOML at the beginning of the document).
+                    This usually doesn't directly affect the HTML output, but it provides metadata to your application.
+*/
+
+body {
+  font-family: sans-serif;
+  line-height: 1.3em;
+  margin: 1em;
+  color: #333333;
+  background-color: #ffffff;
+  font-size: 1em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: normal;
+  margin-top: 0.8em;
+  margin-bottom: 0.6em;
+  line-height: 1.2;
+  color: #222;
+  padding-bottom: 0.2em;
+}
+
+h1, h2 {
+  border-bottom: 1px solid #dddddd;
+}
+
+h1 { font-size: 2.1em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.4em; }
+h4 { font-size: 1.3em; }
+h5 { font-size: 1.2em; }
+h6 { font-size: 1.1em; }
+
+p {
+  margin-bottom: 0.3em;
+}
+
+a {
+  color: #1763b5;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+ul, ol {
+  margin-bottom: 1em;
+  padding-top: 0em;
+  padding-left: 2em;
+}
+
+ul {
+  list-style-type: disc;
+}
+
+ul ul {
+  list-style-type: circle;
+}
+
+ol {
+  list-style-type: decimal;
+}
+
+li {
+  margin-bottom: 0.2em;
+}
+
+blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #f0f0f0;
+  font-style: italic;
+}
+
+code {
+  background-color: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+pre {
+  max-height: 50em;
+  overflow-x: auto;
+  overflow-y: auto;
+  border-radius: 3px;
+}
+
+pre code {
+  font-family: monospace;
+  padding: 0;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #e7e7e7;
+  margin: 1em 0;
+}
+
+table {
+  width: auto;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+th, td {
+  border: 1px solid #dddddd;
+  padding: 0.5em;
+  text-align: left;
+}
+
+th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+figure {
+  margin: 1em 0;
+  text-align: center;
+}
+
+figcaption {
+  font-size: 0.9em;
+  color: #777777;
+}
+
+/* inline elements */
+strong { font-weight: bold; }
+em { font-style: italic; }
+del { text-decoration: line-through; }
+ins { text-decoration: underline; }
+
+details {
+  margin-bottom: 1em;
+  border: 1px solid #cccccc;
+  padding: 1em;
+  border-radius: 5px;
+}
+
+summary {
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.5em 0;
+}
+
+/* specific goldmark extensions */
+.footnote-ref {
+  vertical-align: super;
+  font-size: smaller;
+}
+.footnote-item {
+  margin-top: 1em;
+  padding-left: 2em;
+  text-indent: -2em;
+}
+
+/* other elements */
+
+abbr[title] {
+  cursor: help;
+  border-bottom: 1px dotted #777777;
+  text-decoration: none;
+}
+
+abbr[title]:hover {
+  color: #0056b3;
+}
+
+sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+kbd {
+  font-family: monospace;
+  font-size: 1.0em;
+  background-color: #f0f0f0;
+  padding: 4px 4px;
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+  margin: 0px 5px;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); 
+
+}
+
+mark {
+  background-color: #FFFF7D;
+  color: black;
+  padding: 2px 5px;
+}
+
+/* for use with code syntax highlighter */
+code[class*="language-"],
+pre[class*="language-"] {
+  font-size: 1.0em;
+  line-height: 1.3em;
+}
+
+/* dark mode styles */
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #eeeeee;
+    background-color: #121212; /* dark background */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #eeeeee; /* lighter header color */
+  }
+
+  h1, h2 {
+    border-bottom: 1px solid #555555; /* darker border for headers */
+  }
+
+  a {
+    color: #64b5f6; /* lighter link color */
+  }
+
+  blockquote {
+    border-left-color: #333333; /* darker blockquote border */
+  }
+
+  code {
+    background-color: #333333; /* darker code background */
+    color: #eeeeee; /* lighter code color */
+  }
+
+  pre {
+    background-color: #333333; /* darker pre background */
+    color: #eeeeee;
+  }
+
+  hr {
+    background: #555555; /* darker horizontal rule */
+  }
+
+  th {
+    background-color: #333333; /* darker table header */
+    color: #eeeeee;
+  }
+
+  td {
+    border-color: #555555; /* darker table border */
+  }
+
+  table {
+    border-color: #555555; /* darker table border */
+  }
+
+  details {
+    border-color: #555555;
+    background-color: #222222;
+  }
+
+  kbd {
+    background-color: #333333;
+    border-color: #555555;
+    color: #eee;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  mark {
+    background-color: #c8ff80;
+    color: #000000;
+  }
+}

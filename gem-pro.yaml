@@ -1,0 +1,242 @@
+﻿# --------------------------------------------------
+# Purpose:
+# - Program configuration for Gemini AI Client
+# 
+# Release:
+# - v0.1 - 2025/03/11: corresponding to program release
+#
+# Remarks:
+# - do not use tabs or unnecessary white spaces in YAML files
+# - !!str = indicates that the associated value is a string
+#
+# Useful links:
+# - https://ai.google.dev/gemini-api/docs/models/generative-models#model-parameters
+# - https://ai.google.dev/gemini-api/docs/text-generation?lang=go#system-instructions
+# --------------------------------------------------
+
+# Gemini configuration section
+# ----------------------------
+
+# Gemini API key (your private key, don't share)
+# 'env:var': obtain api-key from environment variable
+# 'file:pathname': first line of pathname is api-key
+# 'pass:api-key': pass contains the api-key
+GeminiAPIKey: 'env:GEMINI_API_KEY'
+
+# Gemini AI model
+# use option '-models' to list all available models
+GeminiAiModel: gemini-2.0-flash
+
+# number of generated responses to return (int)
+GeminiCandidateCount: 1
+
+# control the randomness of the output (varies by model, float)
+# Values can range over [0.0, MaxTemperature], inclusive. A higher value will produce responses that
+# are more varied, while a value closer to 0.0 will typically result in less surprising responses
+# from the model.
+# The temperature controls the degree of randomness in token selection. The temperature is used for
+# sampling during response generation, which occurs when topP and topK are applied. Lower temperatures
+# are good for prompts that require a more deterministic or less open-ended response, while higher
+# temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic,
+# meaning that the highest probability response is always selected.
+GeminiTemperature:
+
+# maximum cumulative probability of tokens to consider when sampling (float)
+# The topP parameter changes how the model selects tokens for output. Tokens are selected from the
+# most to least probable until the sum of their probabilities equals the topP value. For example,
+# if tokens A, B, and C have a probability of 0.3, 0.2, and 0.1 and the topP value is 0.5, then the
+# model will select either A or B as the next token by using the temperature and exclude C as a
+# candidate.
+GeminiTopP:
+
+# maximum number of tokens to consider when sampling (int)
+# The topK parameter changes how the model selects tokens for output. A topK of 1 means the
+# selected token is the most probable among all the tokens in the model's vocabulary (also 
+# called greedy decoding), while a topK of 3 means that the next token is selected from among
+# the 3 most probable using the temperature. For each token selection step, the topK tokens
+# with the highest probabilities are sampled. Tokens are then further filtered based on topP
+# with the final token selected using temperature sampling.
+GeminiTopK:
+
+# maximum number of tokens to include in a candidate (int)
+# Specifies the maximum number of tokens that can be generated in the response. A token 
+# is approximately four characters. 100 tokens correspond to roughly 60-80 english words.
+GeminiMaxOutputTokens:
+
+# SystemInstruction (also known as "system prompt") is a more forceful prompt to the model.
+# The model will adhere the instructions more strongly than if they appeared in a normal prompt.
+# Examples:
+# - 'Translate prompt from English to German. Pay attention to correct grammar and a fluent style.'
+# - 'Use the technical terms common in the subject area. Avoid filler words.'
+# - 'All questions should be answered comprehensively with details, unless the user requests a
+#    concise response specifically. Respond in the same language as the query.'
+# - 'Answer as concisely as possible.'
+# - 'Don't use technical terms in your response.'
+# System instructions let you steer the behavior of a model based on your specific needs and use cases.
+# By giving the model system instructions, you provide the model additional context to understand the
+# task, generate more customized responses, and adhere to specific guidelines over the full user
+# interaction with the model. 
+GeminiSystemInstruction:
+
+# ground responses with Google Search (not supported by all AI models, affects other settings)
+GeminiGroundigWithGoogleSearch: true
+
+# Markdown rendering section
+# --------------------------
+
+# handling of current prompt/response pair (valid filename is mandatory)
+MarkdownPromptResponseFile: prompt-response.md
+
+# output of current prompt/response pair (%s = placeholder for name of file)
+MarkdownOutput: false
+MarkdownOutputApplicationMacOS: 'open -a "/Applications/Markdown Editor.app" %s'
+MarkdownOutputApplicationLinux:
+MarkdownOutputApplicationWindows:
+MarkdownOutputApplicationOther:
+
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+MarkdownHistory: true
+MarkdownHistoryDirectory: ./history-markdown
+
+# Ansi (terminal) rendering section
+# ---------------------------------
+
+# handling of current prompt/response pair
+AnsiRendering: true
+AnsiPromptResponseFile: prompt-response.ansi
+
+# output of current prompt/response pair
+AnsiOutput: true
+
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+AnsiHistory: true
+AnsiHistoryDirectory: ./history-ansi
+
+# Ansi color codes to replace or remove (modifies Ansi output)
+# reference: https://en.wikipedia.org/wiki/ANSI_escape_code
+AnsiReplaceColors:
+# - "\x1b[44;3m": "\x1b[48;5;186m"
+# - "\x1b[3;44m": "\x1b[48;5;186m"
+
+# HTML rendering section
+# ----------------------
+
+# handling of current prompt/response pair
+HTMLRendering: true
+HTMLPromptResponseFile: prompt-response.html
+
+# output of current prompt/response pair (%s = placeholder for name of file)
+HTMLOutput: true
+HTMLOutputApplicationMacOS: 'open %s'
+HTMLOutputApplicationLinux: 'xdg-open %s'
+HTMLOutputApplicationWindows: 'cmd /c start "" %s'
+HTMLOutputApplicationOther:
+
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+HTMLHistory: true
+HTMLHistoryDirectory: ./history-html
+
+# maximum length of webpage title (equal with first n characters of prompt)
+HTMLMaxLengthTitle: 200
+
+# HTML elements to replace or remove (modifies HTML output)
+# e.g. show mermaid graphic instead of mermaid text
+HTMLReplaceElements:
+- 'class="language-mermaid"': 'class="mermaid"'
+
+# header to insert at beginning of html page (do not change title, %s is placeholder for prompt)
+HTMLHeader: |
+  <!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8">
+    <title>%s</title>
+    <link rel="icon" type="image/svg+xml" href="assets/gemini-prompt-303030.svg" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/svg+xml" href="assets/gemini-prompt-ebebeb.svg" media="(prefers-color-scheme: dark)">
+    <!-- replace highlight theme with your favorite one -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-light.min.css" media="(prefers-color-scheme: light)">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css" media="(prefers-color-scheme: dark)">
+    <link rel="stylesheet" type="text/css" href="assets/gemini-prompt.css">
+  </head>
+  <body>
+
+# footer to add to end of html page (e.g. to add javascript functionality)
+HTMLFooter: |
+  <!-- highlight: syntax highlighter with many themes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <!-- mermaid: render mermaid diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad: true});</script>
+  <!-- add 'copy to clipboard' button to all '<pre><code>' block elements -->
+  <script src="assets/copy-to-clipboard.js"></script>
+  </body>
+  </html>
+
+# Input section
+# -------------
+
+# input from terminal
+InputFromTerminal: true
+
+# input from file (name of file must be specified)
+InputFromFile: true
+InputFile: prompt-input.txt
+
+# input from localhost (should work on all systems)
+InputFromLocalhost: true
+InputLocalhostPort: 4242
+
+# Notification section
+# --------------------
+
+# notify when prompt processing starts
+NotifyPrompt: true
+NotifyPromptApplicationMacOS: !!str osascript -e 'display notification "Prompt received ..." with title "gemini-prompt" sound name "Ping"'
+NotifyPromptApplicationLinux: !!str notify-send "gemini-prompt" "Prompt received ..." -i info -t 1000
+NotifyPromptApplicationWindows: !!str msg * /TIME:2 "gemini-prompt - Prompt received ..."
+NotifyPromptApplicationOther:
+
+# notify when prompt processing has finished
+NotifyResponse: true
+NotifyResponseApplicationMacOS: !!str osascript -e 'display notification "Response received ..." with title "gemini-prompt" sound name "Blow"'
+NotifyResponseApplicationLinux: !!str notify-send "gemini-prompt" "Response received ..." -i info -t 1000
+NotifyResponseApplicationWindows: !!str msg * /TIME:2 "gemini-prompt - Response received ..."
+NotifyResponseApplicationOther:
+
+# History section
+# ---------------
+
+# filename schema (possible option: timestamp, prompt)
+# timestamp : yyyymmdd-hhmmss.extension
+#             e.g. 20250118-134910.html
+# prompt    : prefix.[your actual prompt].postfix.extension
+#             e.g. [What oceans are thereʔ].20250118-140233.html
+#             e.g. 20250118-140233.[What oceans are thereʔ].html
+# file schema 'prompt' often allows you to infer file content from filename
+HistoryFilenameSchema: prompt
+
+# add timestamp (yyyymmdd-hhmmss) to filename (ensures the uniqueness of the filename)
+# this parameters are only useful in conjunction with filename schema 'prompt' 
+HistoryFilenameAddPrefix: false
+HistoryFilenameAddPostfix: true
+
+# add extension to filename (extensions are often associated with applications)
+HistoryFilenameExtensionMarkdown: md
+HistoryFilenameExtensionAnsi: ansi
+HistoryFilenameExtensionHTML: html
+
+# maximum length of filename (mind your operating system's limitations)
+# this parameter is useful in conjunction with filename schema 'prompt' 
+HistoryMaxFilenameLength: 200
+
+# General settings section
+# ------------------------
+
+# internet proxy url (client -> proxy -> internet)
+# 'env:var': obtain proxy setting from environment variable
+# 'file:pathname': first line of pathname is proxy setting
+# 'pass:api-key': pass contains the proxy setting
+# proxy is often set via enviroment variable 'env:HTTPS_PROXY'
+# e.g. HTTPS_PROXY=http://USERNAME:PASSWORD@proxy-server.mycorp.com:3128
+# do not set anything, if you have a direct internet connection
+GeneralInternetProxy: 

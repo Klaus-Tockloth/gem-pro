@@ -1,0 +1,9 @@
+# ignore special macOS files
+.DS_Store
+
+# ignore evaluation code
+*.eval
+
+# ignore directories
+binaries/
+uploads/
