@@ -64,7 +64,7 @@ Programmfehler bitte in 'Issues' melden, Diskussionen und Fragen in 'Discussions
 
 ### Purpose
 
-This program enables interaction with a Google Gemini AI model to send prompts and receive responses in various formats (Markdown, ANSI, HTML). It aims to seamlessly integrate AI capabilities into the user's workflow by supporting various input and output channels along with a history feature..
+This program enables interaction with a Google Gemini AI model to send prompts and receive responses in various formats (Markdown, ANSI, HTML). It aims to seamlessly integrate AI capabilities into the user's workflow by supporting various input and output channels along with a history feature.
 
 The program is available for BSD, Linux, macOS, and Windows.
 
