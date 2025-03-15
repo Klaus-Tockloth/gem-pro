@@ -208,10 +208,19 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			responseString.WriteString(fmt.Sprintf("Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason))
 		}
 
-		// show list of recommended web search queries
+		// grounding: show list of used web resources (search sources)
+		if candidate.GroundingMetadata.GroundingChunks != nil {
+			responseString.WriteString("\n***\n")
+			responseString.WriteString("**Online Search Sources Used:**\n\n")
+			for _, groundingChunk := range candidate.GroundingMetadata.GroundingChunks {
+				responseString.WriteString(fmt.Sprintf("* [%s](%s)\n", groundingChunk.Web.Title, groundingChunk.Web.URI))
+			}
+		}
+
+		// grounding: show list of recommended web search queries (google search suggestions)
 		if candidate.GroundingMetadata.WebSearchQueries != nil {
 			responseString.WriteString("\n***\n")
-			responseString.WriteString("**Recommended Websearch Queries:**\n\n")
+			responseString.WriteString("**Google Search Suggestions:**\n\n")
 			for _, webSearchQuery := range candidate.GroundingMetadata.WebSearchQueries {
 				responseString.WriteString(fmt.Sprintf("* [%s](https://www.google.com/search?q=%s)\n", webSearchQuery, url.QueryEscape(webSearchQuery)))
 			}

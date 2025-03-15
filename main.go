@@ -1,12 +1,13 @@
 /*
 Purpose:
-- gemini prompt
+- gemini prompt (gem-pro)
 
 Description:
 - Prompt Google Gemini AI and display the response.
 
 Releases:
   - v0.1.0 - 2025/03/11: initial release
+  - v0.2.0 - 2025/03/15: 'GroundingChunks' added to response output
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -47,8 +48,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.1.0"
-	progDate    = "2025/03/11"
+	progVersion = "v0.2.0"
+	progDate    = "2025/03/15"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompt Google Gemini AI and display the response."
 )
