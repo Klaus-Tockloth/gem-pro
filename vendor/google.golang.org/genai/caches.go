@@ -602,7 +602,6 @@ func (m Caches) Create(ctx context.Context, model string, config *CreateCachedCo
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(CachedContent)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -673,7 +672,6 @@ func (m Caches) Get(ctx context.Context, name string, config *GetCachedContentCo
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(CachedContent)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -744,7 +742,6 @@ func (m Caches) Delete(ctx context.Context, name string, config *DeleteCachedCon
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(DeleteCachedContentResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -815,7 +812,6 @@ func (m Caches) Update(ctx context.Context, name string, config *UpdateCachedCon
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(CachedContent)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -886,7 +882,6 @@ func (m Caches) list(ctx context.Context, config *ListCachedContentsConfig) (*Li
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(ListCachedContentsResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)

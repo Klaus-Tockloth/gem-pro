@@ -358,9 +358,65 @@ const (
 // Metadata describes the input video content.
 type VideoMetadata struct {
 	// Optional. The end offset of the video.
-	EndOffset string `json:"endOffset,omitempty"`
+	EndOffset time.Duration `json:"endOffset,omitempty"`
 	// Optional. The start offset of the video.
-	StartOffset string `json:"startOffset,omitempty"`
+	StartOffset time.Duration `json:"startOffset,omitempty"`
+}
+
+func (c *VideoMetadata) UnmarshalJSON(data []byte) error {
+	type Alias VideoMetadata
+	aux := &struct {
+		EndOffset   string `json:"endOffset,omitempty"`
+		StartOffset string `json:"startOffset,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.EndOffset != "" {
+		d, err := time.ParseDuration(aux.EndOffset)
+		if err != nil {
+			return err
+		}
+		c.EndOffset = d
+	}
+
+	if aux.StartOffset != "" {
+		d, err := time.ParseDuration(aux.StartOffset)
+		if err != nil {
+			return err
+		}
+		c.StartOffset = d
+	}
+
+	return nil
+}
+
+func (c *VideoMetadata) MarshalJSON() ([]byte, error) {
+	type Alias VideoMetadata
+	aux := &struct {
+		EndOffset   string `json:"endOffset,omitempty"`
+		StartOffset string `json:"startOffset,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if c.StartOffset != 0 {
+		aux.StartOffset = fmt.Sprintf("%.0fs", c.StartOffset.Seconds())
+	}
+	if c.EndOffset != 0 {
+		aux.EndOffset = fmt.Sprintf("%.0fs", c.EndOffset.Seconds())
+		if aux.StartOffset == "" {
+			aux.StartOffset = "0s"
+		}
+	}
+
+	return json.Marshal(aux)
 }
 
 // Result of executing the [ExecutableCode]. Always follows a `part` containing the
@@ -496,16 +552,6 @@ func NewPartFromFunctionResponse(name string, response map[string]any) *Part {
 		FunctionResponse: &FunctionResponse{
 			Name:     name,
 			Response: response,
-		},
-	}
-}
-
-// NewPartFromVideoMetadata builds a Part from a given end offset and start offset.
-func NewPartFromVideoMetadata(endOffset, startOffset string) *Part {
-	return &Part{
-		VideoMetadata: &VideoMetadata{
-			EndOffset:   endOffset,
-			StartOffset: startOffset,
 		},
 	}
 }
@@ -695,14 +741,8 @@ type Schema struct {
 	Example any `json:"example,omitempty"`
 	// Optional. Pattern of the Type.STRING to restrict a string to a regular expression.
 	Pattern string `json:"pattern,omitempty"`
-	// Optional. SCHEMA FIELDS FOR TYPE INTEGER and NUMBER Minimum value of the Type.INTEGER
-	// and Type.NUMBER
-	Minimum *float64 `json:"minimum,omitempty"`
 	// Optional. Default value of the data.
 	Default any `json:"default,omitempty"`
-	// Optional. The value should be validated against any (one or more) of the subschemas
-	// in the list.
-	AnyOf []*Schema `json:"anyOf,omitempty"`
 	// Optional. Maximum length of the Type.STRING
 	MaxLength *int64 `json:"maxLength,omitempty"`
 	// Optional. The title of the Schema.
@@ -711,10 +751,11 @@ type Schema struct {
 	MinLength *int64 `json:"minLength,omitempty"`
 	// Optional. Minimum number of the properties for Type.OBJECT.
 	MinProperties *int64 `json:"minProperties,omitempty"`
-	// Optional. Maximum value of the Type.INTEGER and Type.NUMBER
-	Maximum *float64 `json:"maximum,omitempty"`
 	// Optional. Maximum number of the properties for Type.OBJECT.
 	MaxProperties *int64 `json:"maxProperties,omitempty"`
+	// Optional. The value should be validated against any (one or more) of the subschemas
+	// in the list.
+	AnyOf []*Schema `json:"anyOf,omitempty"`
 	// Optional. The description of the data.
 	Description string `json:"description,omitempty"`
 	// Optional. Possible values of the element of primitive type with enum format. Examples:
@@ -729,8 +770,13 @@ type Schema struct {
 	Items *Schema `json:"items,omitempty"`
 	// Optional. Maximum number of the elements for Type.ARRAY.
 	MaxItems *int64 `json:"maxItems,omitempty"`
+	// Optional. Maximum value of the Type.INTEGER and Type.NUMBER
+	Maximum *float64 `json:"maximum,omitempty"`
 	// Optional. Minimum number of the elements for Type.ARRAY.
 	MinItems *int64 `json:"minItems,omitempty"`
+	// Optional. SCHEMA FIELDS FOR TYPE INTEGER and NUMBER Minimum value of the Type.INTEGER
+	// and Type.NUMBER
+	Minimum *float64 `json:"minimum,omitempty"`
 	// Optional. Indicates if the value may be null.
 	Nullable bool `json:"nullable,omitempty"`
 	// Optional. SCHEMA FIELDS FOR TYPE OBJECT Properties of Type.OBJECT.
@@ -742,6 +788,110 @@ type Schema struct {
 	Required []string `json:"required,omitempty"`
 	// Optional. The type of the data.
 	Type Type `json:"type,omitempty"`
+}
+
+func (s *Schema) UnmarshalJSON(data []byte) error {
+	type Alias Schema
+	aux := &struct {
+		MaxLength     string `json:"maxLength,omitempty"`
+		MinLength     string `json:"minLength,omitempty"`
+		MinProperties string `json:"minProperties,omitempty"`
+		MaxProperties string `json:"maxProperties,omitempty"`
+		MaxItems      string `json:"maxItems,omitempty"`
+		MinItems      string `json:"minItems,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.MaxLength != "" {
+		maxLength, err := strconv.ParseInt(aux.MaxLength, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MaxLength: %w", err)
+		}
+		s.MaxLength = &maxLength
+	}
+
+	if aux.MinLength != "" {
+		minLength, err := strconv.ParseInt(aux.MinLength, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MinLength: %w", err)
+		}
+		s.MinLength = &minLength
+	}
+
+	if aux.MinProperties != "" {
+		minProperties, err := strconv.ParseInt(aux.MinProperties, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MinProperties: %w", err)
+		}
+		s.MinProperties = &minProperties
+	}
+
+	if aux.MaxProperties != "" {
+		maxProperties, err := strconv.ParseInt(aux.MaxProperties, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MaxProperties: %w", err)
+		}
+		s.MaxProperties = &maxProperties
+	}
+
+	if aux.MaxItems != "" {
+		maxItems, err := strconv.ParseInt(aux.MaxItems, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MaxItems: %w", err)
+		}
+		s.MaxItems = &maxItems
+	}
+
+	if aux.MinItems != "" {
+		minItems, err := strconv.ParseInt(aux.MinItems, 10, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing MinItems: %w", err)
+		}
+		s.MinItems = &minItems
+	}
+
+	return nil
+}
+
+func (s *Schema) MarshalJSON() ([]byte, error) {
+	type Alias Schema
+	aux := struct {
+		MaxLength     string `json:"maxLength,omitempty"`
+		MinLength     string `json:"minLength,omitempty"`
+		MinProperties string `json:"minProperties,omitempty"`
+		MaxProperties string `json:"maxProperties,omitempty"`
+		MaxItems      string `json:"maxItems,omitempty"`
+		MinItems      string `json:"minItems,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+
+	if s.MaxLength != nil {
+		aux.MaxLength = strconv.FormatInt(*s.MaxLength, 10)
+	}
+	if s.MinLength != nil {
+		aux.MinLength = strconv.FormatInt(*s.MinLength, 10)
+	}
+	if s.MinProperties != nil {
+		aux.MinProperties = strconv.FormatInt(*s.MinProperties, 10)
+	}
+	if s.MaxProperties != nil {
+		aux.MaxProperties = strconv.FormatInt(*s.MaxProperties, 10)
+	}
+	if s.MaxItems != nil {
+		aux.MaxItems = strconv.FormatInt(*s.MaxItems, 10)
+	}
+	if s.MinItems != nil {
+		aux.MinItems = strconv.FormatInt(*s.MinItems, 10)
+	}
+	return json.Marshal(aux)
 }
 
 // Safety settings.
@@ -1018,7 +1168,7 @@ type Citation struct {
 	// Output only. License of the attribution.
 	License string `json:"license,omitempty"`
 	// Output only. Publication date of the attribution.
-	PublicationDate *civil.Date `json:"publicationDate,omitempty"`
+	PublicationDate civil.Date `json:"publicationDate,omitempty"`
 	// Output only. Start index into the content.
 	StartIndex int32 `json:"startIndex,omitempty"`
 	// Output only. Title of the attribution.
@@ -1042,22 +1192,35 @@ func (c *Citation) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.PublicationDate != nil {
-		var year, month, day int
-		var ok bool
-		if year, ok = aux.PublicationDate["year"]; !ok {
+		if _, ok := aux.PublicationDate["year"]; !ok {
 			return fmt.Errorf("key %q not found", "year")
 		}
-		if month, ok = aux.PublicationDate["month"]; !ok {
-			return fmt.Errorf("key %q not found", "month")
+		c.PublicationDate = civil.Date{Year: aux.PublicationDate["year"]}
+		if month, ok := aux.PublicationDate["month"]; ok {
+			c.PublicationDate.Month = time.Month(month)
 		}
-		if day, ok = aux.PublicationDate["day"]; !ok {
-			return fmt.Errorf("key %q not found", "day")
+		if day, ok := aux.PublicationDate["day"]; ok {
+			c.PublicationDate.Day = day
 		}
-
-		c.PublicationDate = &civil.Date{Year: year, Month: time.Month(month), Day: day}
 	}
 
 	return nil
+}
+
+func (c *Citation) MarshalJSON() ([]byte, error) {
+	type Alias Citation
+	aux := &struct {
+		PublicationDate *civil.Date `json:"publicationDate,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.PublicationDate.IsZero() {
+		aux.PublicationDate = &c.PublicationDate
+	}
+
+	return json.Marshal(aux)
 }
 
 // Citation information when the model quotes another source.
@@ -1258,7 +1421,7 @@ type GenerateContentResponse struct {
 	// Response variations returned by the model.
 	Candidates []*Candidate `json:"candidates,omitempty"`
 	// Timestamp when the request is made to the server.
-	CreateTime *time.Time `json:"createTime,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 	// Identifier for each response.
 	ResponseID string `json:"responseId,omitempty"`
 	// Output only. The model version used to generate the response.
@@ -1272,9 +1435,9 @@ type GenerateContentResponse struct {
 }
 
 // Text concatenates all the text parts in the GenerateContentResponse.
-func (r *GenerateContentResponse) Text() (string, error) {
+func (r *GenerateContentResponse) Text() string {
 	if len(r.Candidates) == 0 || r.Candidates[0].Content == nil || len(r.Candidates[0].Content.Parts) == 0 {
-		return "", nil
+		return ""
 	}
 
 	if len(r.Candidates) > 1 {
@@ -1316,10 +1479,10 @@ func (r *GenerateContentResponse) Text() (string, error) {
 	}
 
 	if len(texts) == 0 {
-		return "", nil
+		return ""
 	}
 
-	return strings.Join(texts, ""), nil
+	return strings.Join(texts, "")
 }
 
 // FunctionCalls returns the list of function calls in the GenerateContentResponse.
@@ -1382,6 +1545,22 @@ func (r *GenerateContentResponse) CodeExecutionResult() string {
 	}
 
 	return ""
+}
+
+func (c *GenerateContentResponse) MarshalJSON() ([]byte, error) {
+	type Alias GenerateContentResponse
+	aux := &struct {
+		CreateTime *time.Time `json:"createTime,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.CreateTime.IsZero() {
+		aux.CreateTime = &c.CreateTime
+	}
+
+	return json.Marshal(aux)
 }
 
 // Optional parameters for the embed_content method.
@@ -1452,7 +1631,7 @@ type GenerateImagesConfig struct {
 	// Description of what to discourage in the generated images.
 	NegativePrompt string `json:"negativePrompt,omitempty"`
 	// Number of images to generate.
-	NumberOfImages *int32 `json:"numberOfImages,omitempty"`
+	NumberOfImages int32 `json:"numberOfImages,omitempty"`
 	// Aspect ratio of the generated images.
 	AspectRatio string `json:"aspectRatio,omitempty"`
 	// Controls how much the model adheres to the text prompt. Large
@@ -1496,6 +1675,14 @@ type Image struct {
 	MIMEType string `json:"mimeType,omitempty"`
 }
 
+// Safety attributes of a GeneratedImage or the user-provided prompt.
+type SafetyAttributes struct {
+	// List of RAI categories.
+	Categories []string `json:"categories,omitempty"`
+	// List of scores of each categories.
+	Scores []float32 `json:"scores,omitempty"`
+}
+
 // An output image.
 type GeneratedImage struct {
 	// The output image data.
@@ -1503,6 +1690,9 @@ type GeneratedImage struct {
 	// Responsible AI filter reason if the image is filtered out of the
 	// response.
 	RAIFilteredReason string `json:"raiFilteredReason,omitempty"`
+	// Safety attributes of the image. Lists of RAI categories and their
+	// scores of each content.
+	SafetyAttributes *SafetyAttributes `json:"safetyAttributes,omitempty"`
 	// The rewritten prompt used for the image generation if the prompt
 	// enhancer is enabled.
 	EnhancedPrompt string `json:"enhancedPrompt,omitempty"`
@@ -1649,10 +1839,10 @@ type EditImageConfig struct {
 	// Aspect ratio of the generated images.
 	AspectRatio string `json:"aspectRatio,omitempty"`
 	// Controls how much the model adheres to the text prompt. Large values increase output
-	// and prompt alignment, but may compromise image quality. If empty, then API will determine
+	// and prompt alignment, but may compromise image quality. If nil, then API will determine
 	// the default value.
 	GuidanceScale *float32 `json:"guidanceScale,omitempty"`
-	// Seed for the random number generator. If empty, then API will determine the default
+	// Seed for the random number generator. If nil, then API will determine the default
 	// value.
 	Seed *int32 `json:"seed,omitempty"`
 	// Filter level for safety filtering.
@@ -1669,10 +1859,13 @@ type EditImageConfig struct {
 	// MIME type of the generated image.
 	OutputMIMEType string `json:"outputMimeType,omitempty"`
 	// Compression quality of the generated image (for `image/jpeg` MIME type only). If
-	// empty, then API will determine the default value.
+	// nil, then API will determine the default value.
 	OutputCompressionQuality *int32 `json:"outputCompressionQuality,omitempty"`
 	// Describes the editing mode for the request.
 	EditMode EditMode `json:"editMode,omitempty"`
+	// The number of sampling steps. A higher value has better image
+	// quality, while a lower value has better latency.
+	BaseSteps *int32 `json:"baseSteps,omitempty"`
 }
 
 // Response for the request to edit an image.
@@ -1725,9 +1918,29 @@ type TunedModelInfo struct {
 	// ID of the base model that you want to tune.
 	BaseModel string `json:"baseModel,omitempty"`
 	// Date and time when the base model was created.
-	CreateTime *time.Time `json:"createTime,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 	// Date and time when the base model was last updated.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
+	UpdateTime time.Time `json:"updateTime,omitempty"`
+}
+
+func (c *TunedModelInfo) MarshalJSON() ([]byte, error) {
+	type Alias TunedModelInfo
+	aux := &struct {
+		CreateTime *time.Time `json:"createTime,omitempty"`
+		UpdateTime *time.Time `json:"updateTime,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.CreateTime.IsZero() {
+		aux.CreateTime = &c.CreateTime
+	}
+	if !c.UpdateTime.IsZero() {
+		aux.UpdateTime = &c.UpdateTime
+	}
+
+	return json.Marshal(aux)
 }
 
 // A trained machine learning model.
@@ -1877,28 +2090,48 @@ type TokensInfo struct {
 }
 
 func (ti *TokensInfo) UnmarshalJSON(data []byte) error {
+	type Alias TokensInfo
 	aux := struct {
-		Role     string   `json:"role,omitempty"`
 		TokenIDs []string `json:"tokenIds,omitempty"`
-		Tokens   [][]byte `json:"tokens,omitempty"`
-	}{}
+		*Alias
+	}{
+		Alias: (*Alias)(ti),
+	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
 	// Convert the string value to int64
-	tokenIDs := []int64{}
-	for _, tokenID := range aux.TokenIDs {
-		tokenIDInt, err := strconv.ParseInt(tokenID, 10, 64)
-		if err != nil {
-			return err
+	if aux.TokenIDs != nil {
+		tokenIDs := []int64{}
+		for _, tokenID := range aux.TokenIDs {
+			tokenIDInt, err := strconv.ParseInt(tokenID, 10, 64)
+			if err != nil {
+				return err
+			}
+			tokenIDs = append(tokenIDs, tokenIDInt)
 		}
-		tokenIDs = append(tokenIDs, tokenIDInt)
+		ti.TokenIDs = tokenIDs
 	}
-	ti.TokenIDs = tokenIDs
-	ti.Role = aux.Role
-	ti.Tokens = aux.Tokens
 	return nil
+}
+
+func (ti *TokensInfo) MarshalJSON() ([]byte, error) {
+	type Alias TokensInfo
+	aux := struct {
+		TokenIDs []string `json:"tokenIds,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(ti),
+	}
+
+	if ti.TokenIDs != nil {
+		for _, tokenID := range ti.TokenIDs {
+			aux.TokenIDs = append(aux.TokenIDs, strconv.FormatInt(tokenID, 10))
+		}
+	}
+
+	return json.Marshal(aux)
 }
 
 // Response for computing tokens.
@@ -1916,7 +2149,7 @@ type CreateCachedContentConfig struct {
 	// The TTL for this resource. The expiration time is computed: now + TTL.
 	TTL string `json:"ttl,omitempty"`
 	// Timestamp of when this resource is considered expired.
-	ExpireTime *time.Time `json:"expireTime,omitempty"`
+	ExpireTime time.Time `json:"expireTime,omitempty"`
 	// The user-generated meaningful display name of the cached content.
 	DisplayName string `json:"displayName,omitempty"`
 	// The content to cache.
@@ -1927,6 +2160,22 @@ type CreateCachedContentConfig struct {
 	Tools []*Tool `json:"tools,omitempty"`
 	// Configuration for the tools to use. This config is shared for all tools.
 	ToolConfig *ToolConfig `json:"toolConfig,omitempty"`
+}
+
+func (c *CreateCachedContentConfig) MarshalJSON() ([]byte, error) {
+	type Alias CreateCachedContentConfig
+	aux := &struct {
+		ExpireTime *time.Time `json:"expireTime,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.ExpireTime.IsZero() {
+		aux.ExpireTime = &c.ExpireTime
+	}
+
+	return json.Marshal(aux)
 }
 
 // Metadata on the usage of the cached content.
@@ -1954,13 +2203,37 @@ type CachedContent struct {
 	// The name of the publisher model to use for cached content.
 	Model string `json:"model,omitempty"`
 	// Creation time of the cache entry.
-	CreateTime *time.Time `json:"createTime,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 	// When the cache entry was last updated in UTC time.
-	UpdateTime *time.Time `json:"updateTime,omitempty"`
+	UpdateTime time.Time `json:"updateTime,omitempty"`
 	// Expiration time of the cached content.
-	ExpireTime *time.Time `json:"expireTime,omitempty"`
+	ExpireTime time.Time `json:"expireTime,omitempty"`
 	// Metadata on the usage of the cached content.
 	UsageMetadata *CachedContentUsageMetadata `json:"usageMetadata,omitempty"`
+}
+
+func (c *CachedContent) MarshalJSON() ([]byte, error) {
+	type Alias CachedContent
+	aux := &struct {
+		ExpireTime *time.Time `json:"expireTime,omitempty"`
+		CreateTime *time.Time `json:"createTime,omitempty"`
+		UpdateTime *time.Time `json:"updateTime,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.ExpireTime.IsZero() {
+		aux.ExpireTime = &c.ExpireTime
+	}
+	if !c.CreateTime.IsZero() {
+		aux.CreateTime = &c.CreateTime
+	}
+	if !c.UpdateTime.IsZero() {
+		aux.UpdateTime = &c.UpdateTime
+	}
+
+	return json.Marshal(aux)
 }
 
 // Optional parameters for caches.get method.
@@ -1986,7 +2259,23 @@ type UpdateCachedContentConfig struct {
 	// The TTL for this resource. The expiration time is computed: now + TTL.
 	TTL string `json:"ttl,omitempty"`
 	// Timestamp of when this resource is considered expired.
-	ExpireTime *time.Time `json:"expireTime,omitempty"`
+	ExpireTime time.Time `json:"expireTime,omitempty"`
+}
+
+func (c *UpdateCachedContentConfig) MarshalJSON() ([]byte, error) {
+	type Alias UpdateCachedContentConfig
+	aux := &struct {
+		ExpireTime *time.Time `json:"expireTime,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+
+	if !c.ExpireTime.IsZero() {
+		aux.ExpireTime = &c.ExpireTime
+	}
+
+	return json.Marshal(aux)
 }
 
 // Config for caches.list method.

@@ -175,16 +175,8 @@ func schemaToMldev(ac *apiClient, fromObject map[string]any, parentObject map[st
 		return nil, fmt.Errorf("pattern parameter is not supported in Gemini API")
 	}
 
-	if getValueByPath(fromObject, []string{"minimum"}) != nil {
-		return nil, fmt.Errorf("minimum parameter is not supported in Gemini API")
-	}
-
 	if getValueByPath(fromObject, []string{"default"}) != nil {
 		return nil, fmt.Errorf("default parameter is not supported in Gemini API")
-	}
-
-	if getValueByPath(fromObject, []string{"anyOf"}) != nil {
-		return nil, fmt.Errorf("anyOf parameter is not supported in Gemini API")
 	}
 
 	if getValueByPath(fromObject, []string{"maxLength"}) != nil {
@@ -203,12 +195,13 @@ func schemaToMldev(ac *apiClient, fromObject map[string]any, parentObject map[st
 		return nil, fmt.Errorf("minProperties parameter is not supported in Gemini API")
 	}
 
-	if getValueByPath(fromObject, []string{"maximum"}) != nil {
-		return nil, fmt.Errorf("maximum parameter is not supported in Gemini API")
-	}
-
 	if getValueByPath(fromObject, []string{"maxProperties"}) != nil {
 		return nil, fmt.Errorf("maxProperties parameter is not supported in Gemini API")
+	}
+
+	fromAnyOf := getValueByPath(fromObject, []string{"anyOf"})
+	if fromAnyOf != nil {
+		setValueByPath(toObject, []string{"anyOf"}, fromAnyOf)
 	}
 
 	fromDescription := getValueByPath(fromObject, []string{"description"})
@@ -236,9 +229,19 @@ func schemaToMldev(ac *apiClient, fromObject map[string]any, parentObject map[st
 		setValueByPath(toObject, []string{"maxItems"}, fromMaxItems)
 	}
 
+	fromMaximum := getValueByPath(fromObject, []string{"maximum"})
+	if fromMaximum != nil {
+		setValueByPath(toObject, []string{"maximum"}, fromMaximum)
+	}
+
 	fromMinItems := getValueByPath(fromObject, []string{"minItems"})
 	if fromMinItems != nil {
 		setValueByPath(toObject, []string{"minItems"}, fromMinItems)
+	}
+
+	fromMinimum := getValueByPath(fromObject, []string{"minimum"})
+	if fromMinimum != nil {
+		setValueByPath(toObject, []string{"minimum"}, fromMinimum)
 	}
 
 	fromNullable := getValueByPath(fromObject, []string{"nullable"})
@@ -282,19 +285,9 @@ func schemaToVertex(ac *apiClient, fromObject map[string]any, parentObject map[s
 		setValueByPath(toObject, []string{"pattern"}, fromPattern)
 	}
 
-	fromMinimum := getValueByPath(fromObject, []string{"minimum"})
-	if fromMinimum != nil {
-		setValueByPath(toObject, []string{"minimum"}, fromMinimum)
-	}
-
 	fromDefault := getValueByPath(fromObject, []string{"default"})
 	if fromDefault != nil {
 		setValueByPath(toObject, []string{"default"}, fromDefault)
-	}
-
-	fromAnyOf := getValueByPath(fromObject, []string{"anyOf"})
-	if fromAnyOf != nil {
-		setValueByPath(toObject, []string{"anyOf"}, fromAnyOf)
 	}
 
 	fromMaxLength := getValueByPath(fromObject, []string{"maxLength"})
@@ -317,14 +310,14 @@ func schemaToVertex(ac *apiClient, fromObject map[string]any, parentObject map[s
 		setValueByPath(toObject, []string{"minProperties"}, fromMinProperties)
 	}
 
-	fromMaximum := getValueByPath(fromObject, []string{"maximum"})
-	if fromMaximum != nil {
-		setValueByPath(toObject, []string{"maximum"}, fromMaximum)
-	}
-
 	fromMaxProperties := getValueByPath(fromObject, []string{"maxProperties"})
 	if fromMaxProperties != nil {
 		setValueByPath(toObject, []string{"maxProperties"}, fromMaxProperties)
+	}
+
+	fromAnyOf := getValueByPath(fromObject, []string{"anyOf"})
+	if fromAnyOf != nil {
+		setValueByPath(toObject, []string{"anyOf"}, fromAnyOf)
 	}
 
 	fromDescription := getValueByPath(fromObject, []string{"description"})
@@ -352,9 +345,19 @@ func schemaToVertex(ac *apiClient, fromObject map[string]any, parentObject map[s
 		setValueByPath(toObject, []string{"maxItems"}, fromMaxItems)
 	}
 
+	fromMaximum := getValueByPath(fromObject, []string{"maximum"})
+	if fromMaximum != nil {
+		setValueByPath(toObject, []string{"maximum"}, fromMaximum)
+	}
+
 	fromMinItems := getValueByPath(fromObject, []string{"minItems"})
 	if fromMinItems != nil {
 		setValueByPath(toObject, []string{"minItems"}, fromMinItems)
+	}
+
+	fromMinimum := getValueByPath(fromObject, []string{"minimum"})
+	if fromMinimum != nil {
+		setValueByPath(toObject, []string{"minimum"}, fromMinimum)
 	}
 
 	fromNullable := getValueByPath(fromObject, []string{"nullable"})
@@ -1425,9 +1428,8 @@ func generateImagesConfigToMldev(ac *apiClient, fromObject map[string]any, paren
 		return nil, fmt.Errorf("outputGcsUri parameter is not supported in Gemini API")
 	}
 
-	fromNegativePrompt := getValueByPath(fromObject, []string{"negativePrompt"})
-	if fromNegativePrompt != nil {
-		setValueByPath(parentObject, []string{"parameters", "negativePrompt"}, fromNegativePrompt)
+	if getValueByPath(fromObject, []string{"negativePrompt"}) != nil {
+		return nil, fmt.Errorf("negativePrompt parameter is not supported in Gemini API")
 	}
 
 	fromNumberOfImages := getValueByPath(fromObject, []string{"numberOfImages"})
@@ -1910,9 +1912,8 @@ func editImageConfigToMldev(ac *apiClient, fromObject map[string]any, parentObje
 		return nil, fmt.Errorf("outputGcsUri parameter is not supported in Gemini API")
 	}
 
-	fromNegativePrompt := getValueByPath(fromObject, []string{"negativePrompt"})
-	if fromNegativePrompt != nil {
-		setValueByPath(parentObject, []string{"parameters", "negativePrompt"}, fromNegativePrompt)
+	if getValueByPath(fromObject, []string{"negativePrompt"}) != nil {
+		return nil, fmt.Errorf("negativePrompt parameter is not supported in Gemini API")
 	}
 
 	fromNumberOfImages := getValueByPath(fromObject, []string{"numberOfImages"})
@@ -1972,6 +1973,10 @@ func editImageConfigToMldev(ac *apiClient, fromObject map[string]any, parentObje
 	fromEditMode := getValueByPath(fromObject, []string{"editMode"})
 	if fromEditMode != nil {
 		setValueByPath(parentObject, []string{"parameters", "editMode"}, fromEditMode)
+	}
+
+	if getValueByPath(fromObject, []string{"baseSteps"}) != nil {
+		return nil, fmt.Errorf("baseSteps parameter is not supported in Gemini API")
 	}
 
 	return toObject, nil
@@ -2048,6 +2053,11 @@ func editImageConfigToVertex(ac *apiClient, fromObject map[string]any, parentObj
 	fromEditMode := getValueByPath(fromObject, []string{"editMode"})
 	if fromEditMode != nil {
 		setValueByPath(parentObject, []string{"parameters", "editMode"}, fromEditMode)
+	}
+
+	fromBaseSteps := getValueByPath(fromObject, []string{"baseSteps"})
+	if fromBaseSteps != nil {
+		setValueByPath(parentObject, []string{"parameters", "editConfig", "baseSteps"}, fromBaseSteps)
 	}
 
 	return toObject, nil
@@ -3263,6 +3273,38 @@ func imageFromVertex(ac *apiClient, fromObject map[string]any, parentObject map[
 	return toObject, nil
 }
 
+func safetyAttributesFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromCategories := getValueByPath(fromObject, []string{"safetyAttributes", "categories"})
+	if fromCategories != nil {
+		setValueByPath(toObject, []string{"categories"}, fromCategories)
+	}
+
+	fromScores := getValueByPath(fromObject, []string{"safetyAttributes", "scores"})
+	if fromScores != nil {
+		setValueByPath(toObject, []string{"scores"}, fromScores)
+	}
+
+	return toObject, nil
+}
+
+func safetyAttributesFromVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromCategories := getValueByPath(fromObject, []string{"safetyAttributes", "categories"})
+	if fromCategories != nil {
+		setValueByPath(toObject, []string{"categories"}, fromCategories)
+	}
+
+	fromScores := getValueByPath(fromObject, []string{"safetyAttributes", "scores"})
+	if fromScores != nil {
+		setValueByPath(toObject, []string{"scores"}, fromScores)
+	}
+
+	return toObject, nil
+}
+
 func generatedImageFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3279,6 +3321,16 @@ func generatedImageFromMldev(ac *apiClient, fromObject map[string]any, parentObj
 	fromRaiFilteredReason := getValueByPath(fromObject, []string{"raiFilteredReason"})
 	if fromRaiFilteredReason != nil {
 		setValueByPath(toObject, []string{"raiFilteredReason"}, fromRaiFilteredReason)
+	}
+
+	fromSafetyAttributes := getValueByPath(fromObject, []string{"_self"})
+	if fromSafetyAttributes != nil {
+		fromSafetyAttributes, err = safetyAttributesFromMldev(ac, fromSafetyAttributes.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"safetyAttributes"}, fromSafetyAttributes)
 	}
 
 	return toObject, nil
@@ -3300,6 +3352,16 @@ func generatedImageFromVertex(ac *apiClient, fromObject map[string]any, parentOb
 	fromRaiFilteredReason := getValueByPath(fromObject, []string{"raiFilteredReason"})
 	if fromRaiFilteredReason != nil {
 		setValueByPath(toObject, []string{"raiFilteredReason"}, fromRaiFilteredReason)
+	}
+
+	fromSafetyAttributes := getValueByPath(fromObject, []string{"_self"})
+	if fromSafetyAttributes != nil {
+		fromSafetyAttributes, err = safetyAttributesFromVertex(ac, fromSafetyAttributes.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"safetyAttributes"}, fromSafetyAttributes)
 	}
 
 	fromEnhancedPrompt := getValueByPath(fromObject, []string{"prompt"})
@@ -3702,7 +3764,6 @@ func (m Models) generateContent(ctx context.Context, model string, contents []*C
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(GenerateContentResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -3774,7 +3835,6 @@ func (m Models) generateContentStream(ctx context.Context, model string, content
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var rs responseStream[GenerateContentResponse]
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
 	var toConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -3837,7 +3897,6 @@ func (m Models) EmbedContent(ctx context.Context, model string, contents []*Cont
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(EmbedContentResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -3908,7 +3967,6 @@ func (m Models) GenerateImages(ctx context.Context, model string, prompt string,
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(GenerateImagesResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -3979,10 +4037,6 @@ func (m Models) editImage(ctx context.Context, model string, prompt string, refe
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-	if m.apiClient.clientConfig.Backend == BackendGeminiAPI {
-		return nil, fmt.Errorf("method editImage is only supported in the Vertex AI client.")
-	}
-
 	var response = new(EditImageResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -3991,8 +4045,9 @@ func (m Models) editImage(ctx context.Context, model string, prompt string, refe
 		toConverter = editImageParametersToVertex
 		fromConverter = editImageResponseFromVertex
 	} else {
-		toConverter = editImageParametersToMldev
-		fromConverter = editImageResponseFromMldev
+
+		return nil, fmt.Errorf("method EditImage is only supported in the Vertex AI client. You can choose to use Vertex AI by setting ClientConfig.Backend to BackendVertexAI.")
+
 	}
 
 	body, err := toConverter(m.apiClient, parameterMap, nil)
@@ -4053,10 +4108,6 @@ func (m Models) upscaleImage(ctx context.Context, model string, image *Image, up
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-	if m.apiClient.clientConfig.Backend == BackendGeminiAPI {
-		return nil, fmt.Errorf("method UpscaleImage is only supported in the Vertex AI client.")
-	}
-
 	var response = new(UpscaleImageResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4065,8 +4116,9 @@ func (m Models) upscaleImage(ctx context.Context, model string, image *Image, up
 		toConverter = upscaleImageAPIParametersToVertex
 		fromConverter = upscaleImageResponseFromVertex
 	} else {
-		toConverter = upscaleImageAPIParametersToMldev
-		fromConverter = upscaleImageResponseFromMldev
+
+		return nil, fmt.Errorf("method UpscaleImage is only supported in the Vertex AI client. You can choose to use Vertex AI by setting ClientConfig.Backend to BackendVertexAI.")
+
 	}
 
 	body, err := toConverter(m.apiClient, parameterMap, nil)
@@ -4127,7 +4179,6 @@ func (m Models) Get(ctx context.Context, model string, config *GetModelConfig) (
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(Model)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4198,7 +4249,6 @@ func (m Models) list(ctx context.Context, config *ListModelsConfig) (*ListModels
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(ListModelsResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4269,7 +4319,6 @@ func (m Models) Update(ctx context.Context, model string, config *UpdateModelCon
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(Model)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4340,7 +4389,6 @@ func (m Models) Delete(ctx context.Context, model string, config *DeleteModelCon
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(DeleteModelResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4411,7 +4459,6 @@ func (m Models) CountTokens(ctx context.Context, model string, contents []*Conte
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-
 	var response = new(CountTokensResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4482,10 +4529,6 @@ func (m Models) ComputeTokens(ctx context.Context, model string, contents []*Con
 		httpOptions = mergeHTTPOptions(m.apiClient.clientConfig, config.HTTPOptions)
 		config.HTTPOptions = nil
 	}
-	if m.apiClient.clientConfig.Backend == BackendGeminiAPI {
-		return nil, fmt.Errorf("method ComputeTokens is only supported in the Vertex AI client.")
-	}
-
 	var response = new(ComputeTokensResponse)
 	var responseMap map[string]any
 	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
@@ -4494,8 +4537,9 @@ func (m Models) ComputeTokens(ctx context.Context, model string, contents []*Con
 		toConverter = computeTokensParametersToVertex
 		fromConverter = computeTokensResponseFromVertex
 	} else {
-		toConverter = computeTokensParametersToMldev
-		fromConverter = computeTokensResponseFromMldev
+
+		return nil, fmt.Errorf("method ComputeTokens is only supported in the Vertex AI client. You can choose to use Vertex AI by setting ClientConfig.Backend to BackendVertexAI.")
+
 	}
 
 	body, err := toConverter(m.apiClient, parameterMap, nil)
@@ -4548,9 +4592,6 @@ func (m Models) GenerateContent(ctx context.Context, model string, contents []*C
 	if config != nil {
 		config.setDefaults()
 	}
-	for _, c := range contents {
-		c.setDefaults()
-	}
 	return m.generateContent(ctx, model, contents, config)
 }
 
@@ -4558,9 +4599,6 @@ func (m Models) GenerateContent(ctx context.Context, model string, contents []*C
 func (m Models) GenerateContentStream(ctx context.Context, model string, contents []*Content, config *GenerateContentConfig) iter.Seq2[*GenerateContentResponse, error] {
 	if config != nil {
 		config.setDefaults()
-	}
-	for _, c := range contents {
-		c.setDefaults()
 	}
 	return m.generateContentStream(ctx, model, contents, config)
 }

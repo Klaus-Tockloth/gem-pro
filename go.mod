@@ -12,12 +12,12 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/yuin/goldmark v1.7.8
 	golang.org/x/term v0.30.0
-	google.golang.org/genai v0.5.0
+	google.golang.org/genai v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	cloud.google.com/go v0.119.0 // indirect
+	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/MichaelMure/go-term-text v0.3.1 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -64,6 +65,42 @@ func sanitizeMapWithSourceType(t *testing.T, sourceType reflect.Type, m any) {
 			}
 		} else {
 			sanitizeMapByPath(m.(map[string]any), path, stdBase64Handler, false)
+		}
+	}
+
+	int64ArrayPaths := make([]string, 0)
+	st = sourceType
+	if sourceType.Kind() == reflect.Slice {
+		st = sourceType.Elem()
+	}
+	visitedTypes = make(map[string]bool)
+	if err := getFieldPath(st, reflect.TypeOf([]int64{}), &int64ArrayPaths, "", visitedTypes, false); err != nil {
+		t.Fatal(err)
+	}
+
+	int64ArrayHandler := func(data any, path string) any {
+		t.Log("data: ", data, reflect.TypeOf(data))
+		s := data.([]any)
+		b := make([]any, len(s))
+		for i := 0; i < len(s); i++ {
+			v, err := strconv.ParseInt(s[i].(string), 10, 64)
+			if err != nil {
+				t.Errorf("invalid int64 string %s at path %s", s, path)
+			}
+			b[i] = float64(v) // When loading the replay file, the int64 is converted to float64.
+		}
+
+		return b
+	}
+	for _, path := range int64ArrayPaths {
+
+		if sourceType.Kind() == reflect.Slice {
+			data := m.([]any)
+			for i := 0; i < len(data); i++ {
+				sanitizeMapByPath(data[i], path, int64ArrayHandler, false)
+			}
+		} else {
+			sanitizeMapByPath(m.(map[string]any), path, int64ArrayHandler, false)
 		}
 	}
 }

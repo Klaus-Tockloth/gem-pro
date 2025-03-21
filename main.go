@@ -8,6 +8,7 @@ Description:
 Releases:
   - v0.1.0 - 2025/03/11: initial release
   - v0.2.0 - 2025/03/15: 'GroundingChunks' added to response output
+  - v0.3.0 - 2025/03/20: libs updated (e.g. genai v0.6.0)
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -48,8 +49,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.2.0"
-	progDate    = "2025/03/15"
+	progVersion = "v0.3.0"
+	progDate    = "2025/03/20"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompt Google Gemini AI and display the response."
 )

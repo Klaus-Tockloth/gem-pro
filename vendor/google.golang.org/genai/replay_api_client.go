@@ -234,13 +234,17 @@ func omitEmptyValues(v any) {
 	case map[string]any:
 		for k, v := range m {
 			// If the value is empty, delete the key from the map.
-			if reflect.ValueOf(v).IsZero() {
+			if reflect.ValueOf(v).IsZero() || v == "0001-01-01T00:00:00Z" {
 				delete(m, k)
 			} else {
 				omitEmptyValues(v)
 			}
 		}
 	case []any:
+		for _, item := range m {
+			omitEmptyValues(item)
+		}
+	case []map[string]any:
 		for _, item := range m {
 			omitEmptyValues(item)
 		}
