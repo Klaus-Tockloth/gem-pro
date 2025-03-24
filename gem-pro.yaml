@@ -1,17 +1,38 @@
 ﻿# --------------------------------------------------
+#
 # Purpose:
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.1 - 2025/03/11: corresponding to program release
+# - v0.3 - 2025/03/24: corresponding to program release, javascript support for mermaid graphics removed
 #
 # Remarks:
-# - do not use tabs or unnecessary white spaces in YAML files
+# - Do not use tabs or unnecessary white spaces in YAML files.
 # - !!str = indicates that the associated value is a string
+# - Not all options are applicable to all Gemini models.
 #
 # Useful links:
 # - https://ai.google.dev/gemini-api/docs/models/generative-models#model-parameters
 # - https://ai.google.dev/gemini-api/docs/text-generation?lang=go#system-instructions
+#
+# AI model configurations (some examples):
+#
+# GeminiAiModel: gemini-2.0-flash
+# GeminiResponseModalities:
+# - TEXT
+# GeminiGroundigWithGoogleSearch: true
+#
+# GeminiAiModel: gemini-2.0-flash-thinking-exp
+# GeminiResponseModalities:
+# - TEXT
+# GeminiGroundigWithGoogleSearch: true
+#
+# GeminiAiModel: gemini-2.0-flash-exp
+# GeminiResponseModalities:
+# - TEXT
+# - IMAGE
+# GeminiGroundigWithGoogleSearch: false
+#
 # --------------------------------------------------
 
 # Gemini configuration section
@@ -26,6 +47,11 @@ GeminiAPIKey: 'env:GEMINI_API_KEY'
 # Gemini AI model
 # use option '-models' to list all available models
 GeminiAiModel: gemini-2.0-flash
+
+# list of supported response modalities (e.g. TEXT and IMAGE)
+GeminiResponseModalities:
+- TEXT
+# - IMAGE
 
 # number of generated responses to return (int)
 GeminiCandidateCount: 1
@@ -139,10 +165,9 @@ HTMLHistoryDirectory: ./history-html
 # maximum length of webpage title (equal with first n characters of prompt)
 HTMLMaxLengthTitle: 200
 
-# HTML elements to replace or remove (modifies HTML output)
-# e.g. show mermaid graphic instead of mermaid text
+# list of HTML elements to replace or remove (modifies HTML output)
 HTMLReplaceElements:
-- 'class="language-mermaid"': 'class="mermaid"'
+# - 
 
 # header to insert at beginning of html page (do not change title, %s is placeholder for prompt)
 HTMLHeader: |
@@ -164,9 +189,6 @@ HTMLFooter: |
   <!-- highlight: syntax highlighter with many themes -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
   <script>hljs.highlightAll();</script>
-  <!-- mermaid: render mermaid diagrams -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({startOnLoad: true});</script>
   <!-- add 'copy to clipboard' button to all '<pre><code>' block elements -->
   <script src="assets/copy-to-clipboard.js"></script>
   </body>

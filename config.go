@@ -13,15 +13,16 @@ import (
 // ProgConfig represents program configuration
 type ProgConfig struct {
 	// Gemini configration
-	GeminiAPIKey                   string  `yaml:"GeminiAPIKey"`
-	GeminiAiModel                  string  `yaml:"GeminiAiModel"`
-	GeminiCandidateCount           int32   `yaml:"GeminiCandidateCount"`
-	GeminiMaxOutputTokens          int32   `yaml:"GeminiMaxOutputTokens"`
-	GeminiTemperature              float32 `yaml:"GeminiTemperature"`
-	GeminiTopP                     float32 `yaml:"GeminiTopP"`
-	GeminiTopK                     float32 `yaml:"GeminiTopK"`
-	GeminiSystemInstruction        string  `yaml:"GeminiSystemInstruction"`
-	GeminiGroundigWithGoogleSearch bool    `yaml:"GeminiGroundigWithGoogleSearch"`
+	GeminiAPIKey                   string   `yaml:"GeminiAPIKey"`
+	GeminiAiModel                  string   `yaml:"GeminiAiModel"`
+	GeminiResponseModalities       []string `yaml:"GeminiResponseModalities"`
+	GeminiCandidateCount           int32    `yaml:"GeminiCandidateCount"`
+	GeminiMaxOutputTokens          int32    `yaml:"GeminiMaxOutputTokens"`
+	GeminiTemperature              float32  `yaml:"GeminiTemperature"`
+	GeminiTopP                     float32  `yaml:"GeminiTopP"`
+	GeminiTopK                     float32  `yaml:"GeminiTopK"`
+	GeminiSystemInstruction        string   `yaml:"GeminiSystemInstruction"`
+	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -353,7 +354,7 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 		// Labels:
 		// CachedContent:
 		// ResponseModalities:
-		// MediaResolution:
+		// MediaResolution: genai.MediaResolutionHigh, // not enabled for api version v1beta
 		// SpeechConfig:
 		// AudioTimestamp:
 		// ThinkingConfig:
@@ -361,6 +362,9 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 	// configure AI model parameters
 	if progConfig.GeminiCandidateCount > -1 {
 		generateContentConfig.CandidateCount = genai.Ptr(progConfig.GeminiCandidateCount)
+	}
+	if len(progConfig.GeminiResponseModalities) > 0 {
+		generateContentConfig.ResponseModalities = append(generateContentConfig.ResponseModalities, progConfig.GeminiResponseModalities...)
 	}
 	if progConfig.GeminiTemperature > -1.0 {
 		generateContentConfig.Temperature = genai.Ptr(progConfig.GeminiTemperature)
@@ -425,5 +429,8 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 		if geminiModelConfig.Tools[0].GoogleSearch != nil {
 			fmt.Printf("  Tools             : GoogleSearch\n")
 		}
+	}
+	if geminiModelConfig.ResponseModalities != nil {
+		fmt.Printf("  ResponseModalities: %v\n", strings.Join(geminiModelConfig.ResponseModalities, ", "))
 	}
 }

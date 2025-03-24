@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -302,4 +303,47 @@ func dumpDataToFile(flag int, objectname string, object interface{}) {
 	}
 	defer file.Close()
 	fmt.Fprint(file, data)
+}
+
+/*
+writeDataToFile writes the provided byte slice data to a file. It generates a unique filename based on the
+current timestamp, a UUID, and the provided mimeType. It saves the file in the "files" directory. It returns
+the full path and the filename to the written file or an error if any step fails.
+*/
+func writeDataToFile(data []byte, mimeType string, timestamp time.Time) (string, string, error) {
+	// generate UUID4
+	uuid4, err := uuid.NewV4()
+	if err != nil {
+		return "", "", fmt.Errorf("error [%v] at uuid.NewV4()", err)
+	}
+
+	// modify MIME type separator
+	mimeType = strings.ReplaceAll(mimeType, "/", ".")
+
+	// create directory
+	directory := "files"
+	err = os.MkdirAll(directory, 0750)
+	if err != nil {
+		return "", "", fmt.Errorf("error [%v] at os.MkdirAll()", err)
+	}
+
+	// get working directory
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", "", fmt.Errorf("error [%v] at os.Getwd()", err)
+	}
+
+	// build unique filename
+	filename := timestamp.Format("20060102-150405") + "-" + uuid4.String() + "." + mimeType
+
+	// build absolute path
+	pathname := filepath.Join(wd, directory, filename)
+
+	// write file
+	err = os.WriteFile(pathname, data, 0644)
+	if err != nil {
+		return "", "", fmt.Errorf("error [%v] at os.WriteFile()", err)
+	}
+
+	return pathname, filename, nil
 }

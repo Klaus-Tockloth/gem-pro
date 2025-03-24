@@ -8,7 +8,7 @@ Description:
 Releases:
   - v0.1.0 - 2025/03/11: initial release
   - v0.2.0 - 2025/03/15: 'GroundingChunks' added to response output
-  - v0.3.0 - 2025/03/20: libs updated (e.g. genai v0.6.0)
+  - v0.3.0 - 2025/03/24: image support added, libs updated, SIGSEGV in main() and processResponse() fixed
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -42,6 +42,7 @@ import (
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 	"golang.org/x/term"
 	"google.golang.org/genai"
 )
@@ -50,7 +51,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.3.0"
-	progDate    = "2025/03/20"
+	progDate    = "2025/03/24"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompt Google Gemini AI and display the response."
 )
@@ -155,8 +156,11 @@ func main() {
 	// overwrite YAML config values with cli parameters
 	overwriteConfigValues(candidates, temperature, topp, topk, maxtokens)
 
-	// create markdown parser
-	markdownParser = goldmark.New(goldmark.WithExtensions(extension.GFM))
+	// create markdown parser (WithUnsafe() ensures to render potentially dangerous links like "file:///Users/...")
+	markdownParser = goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithRendererOptions(html.WithUnsafe()),
+	)
 
 	// create AI client
 	ctx := context.Background()
@@ -263,7 +267,7 @@ func main() {
 
 		// generate content
 		startProcessing = time.Now()
-		resp, err := client.Models.GenerateContent(ctx,
+		resp, respErr := client.Models.GenerateContent(ctx,
 			progConfig.GeminiAiModel,
 			contents,
 			geminiModelConfig,
@@ -282,7 +286,7 @@ func main() {
 		}
 
 		// handle response
-		handleResponse(resp, err, prompt)
+		handleResponse(resp, respErr, prompt)
 	}
 }
 
