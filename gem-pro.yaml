@@ -167,7 +167,7 @@ HTMLMaxLengthTitle: 200
 
 # list of HTML elements to replace or remove (modifies HTML output)
 HTMLReplaceElements:
-# - 
+# - 'class="language-mermaid"': 'class="mermaid"'
 
 # header to insert at beginning of html page (do not change title, %s is placeholder for prompt)
 HTMLHeader: |
