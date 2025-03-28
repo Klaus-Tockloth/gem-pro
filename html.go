@@ -14,6 +14,10 @@ renderMarkdown2HTML renders markdown text to HTML format. It converts a markdown
 parsing it and applying configured HTML element replacements for output formatting.
 */
 func renderMarkdown2HTML(md string) string {
+	// clean up markdown data (given by Gemini)
+	md = removeSpacesBetweenNewlineAndCodeblock(md)
+
+	// convert markdown data to html
 	var buf bytes.Buffer
 	err := markdownParser.Convert([]byte(md), &buf)
 	if err != nil {

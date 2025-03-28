@@ -347,3 +347,34 @@ func writeDataToFile(data []byte, mimeType string, timestamp time.Time) (string,
 
 	return pathname, filename, nil
 }
+
+/*
+removeSpacesBetweenNewlineAndCodeblock removes spaces between a newline character and the start of a code block (```).
+This is useful for cleaning up markdown or similar text where extra spaces might interfere with code block rendering.
+Example:
+Markdown NOK : "```bash\n    go get github.com/tkrajina/gpxgo/gpx\n    ```"
+Markdown OK  : "```bash\n    go get github.com/tkrajina/gpxgo/gpx\n```"
+*/
+func removeSpacesBetweenNewlineAndCodeblock(input string) string {
+	var output strings.Builder
+	length := len(input)
+	for i := 0; i < length; i++ {
+		if input[i] == '\n' {
+			j := i + 1
+			for j < length && input[j] == ' ' {
+				j++
+			}
+
+			// check if backticks follow the spaces
+			if j+2 < length && input[j:j+3] == "```" {
+				output.WriteByte('\n') // keep only the newline, remove spaces
+				i = j - 1              // adjust the index accordingly
+			} else {
+				output.WriteByte(input[i]) // keep the original character
+			}
+		} else {
+			output.WriteByte(input[i]) // take over all other characters unchanged
+		}
+	}
+	return output.String()
+}
