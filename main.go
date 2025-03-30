@@ -10,6 +10,7 @@ Releases:
   - v0.2.0 - 2025/03/15: 'GroundingChunks' added to response output
   - v0.3.0 - 2025/03/24: image support added, libs updated, SIGSEGV in main() and processResponse() fixed
   - v0.3.1 - 2025/03/28: libs updated, clean up markdown data given by Gemini
+  - v0.3.2 - 2025/03/28: web search sources as numbered list, clean up markdown data revised
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -51,7 +52,7 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.3.1"
+	progVersion = "v0.3.2"
 	progDate    = "2025/03/28"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompt Google Gemini AI and display the response."

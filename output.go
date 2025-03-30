@@ -169,7 +169,8 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			}
 
 			if part.Text != "" {
-				responseString.WriteString(part.Text)
+				// clean up markdown data given by Gemini
+				responseString.WriteString(removeSpacesBetweenNewlineAndCodeblock(part.Text))
 				responseString.WriteString("\n")
 			}
 		}
@@ -225,8 +226,9 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			if candidate.GroundingMetadata.GroundingChunks != nil {
 				responseString.WriteString("\n***\n")
 				responseString.WriteString("**Online Search Sources Used:**\n\n")
+				// numbered list because response can contain references (e.g. [2] or [1,3,15])
 				for _, groundingChunk := range candidate.GroundingMetadata.GroundingChunks {
-					responseString.WriteString(fmt.Sprintf("* [%s](%s)\n", groundingChunk.Web.Title, groundingChunk.Web.URI))
+					responseString.WriteString(fmt.Sprintf("1. [%s](%s)\n", groundingChunk.Web.Title, groundingChunk.Web.URI))
 				}
 			}
 			// grounding: show list of recommended web search queries (google search suggestions)
