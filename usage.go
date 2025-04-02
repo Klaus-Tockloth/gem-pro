@@ -20,6 +20,7 @@ func printUsage() {
 
 	fmt.Printf("\nExamples:\n")
 	fmt.Printf("  %s\n", progName)
+	fmt.Printf("  %s -chatmode\n", progName)
 	fmt.Printf("  %s -candidates 2\n", progName)
 	fmt.Printf("  %s -temperature 1.8\n", progName)
 	fmt.Printf("  %s *.go README.md\n", progName)
@@ -35,8 +36,16 @@ func printUsage() {
 	fmt.Printf("  - You can prompt Gemini AI and integrate the response into your workflow.\n")
 	fmt.Printf("  - You can submit prompts via this input channels: Terminal, File, localhost\n")
 	fmt.Printf("  - Output is available in the following formats: Markdown, HTML, ANSI\n")
-	fmt.Printf("  - Each prompt is self-contained (chat is not support).\n")
 	fmt.Printf("  - Specified files are transmitted to Gemini AI as part of the prompts.\n")
+
+	fmt.Printf("\nNotes concerning the non-chat mode (default):\n")
+	fmt.Printf("  - Each prompt is treated independently.\n")
+	fmt.Printf("  - The AI does not remember previous interactions.\n")
+	fmt.Printf("  - Files are sent with every prompt.\n")
+
+	fmt.Printf("\nNotes concerning the chat mode (-chatmode flag):\n")
+	fmt.Printf("  - The AI remembers the conversation history within a session.\n")
+	fmt.Printf("  - Files are sent only with the initial prompt.\n")
 
 	fmt.Printf("\nDisclaimer:\n")
 	fmt.Printf("  This application is for evaluating the concept of integrating and using AI in\n")

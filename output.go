@@ -29,12 +29,20 @@ processPrompt processes the user prompt and prepares it for different output for
 It takes a user prompt, formats it into Markdown, ANSI, and HTML, including system instructions and referenced
 files, and saves these formats to respective files.
 */
-func processPrompt(prompt string) {
+func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	var promptString strings.Builder
 
 	// text part of prompt (also included in contents)
 	promptString.WriteString("***\n")
-	promptString.WriteString("**Prompt to Gemini:**\n")
+	if chatmode {
+		if chatNumber == 1 {
+			promptString.WriteString("**Prompt to Gemini (initial chat #1):**\n")
+		} else {
+			promptString.WriteString(fmt.Sprintf("**Prompt to Gemini (refinement chat #%d):**\n", chatNumber))
+		}
+	} else {
+		promptString.WriteString("**Prompt to Gemini:**\n")
+	}
 	promptString.WriteString("\n```plaintext\n")
 	promptString.WriteString(prompt)
 	promptString.WriteString("\n```\n")
@@ -49,21 +57,23 @@ func processPrompt(prompt string) {
 		promptString.WriteString("\n***\n")
 	}
 
-	if len(filesToUpload) > 0 {
-		promptString.WriteString("**Data referenced by the Prompt:**\n")
-		promptString.WriteString("\n```plaintext\n")
-		for _, fileToUpload := range filesToUpload {
-			if fileToUpload.state != "error" {
-				promptString.WriteString(fmt.Sprintf("%-5s %s (%s, %s, %s)\n",
-					fileToUpload.state, fileToUpload.filepath,
-					fileToUpload.lastUpdate, fileToUpload.fileSize, fileToUpload.mimeType))
-			} else {
-				promptString.WriteString(fmt.Sprintf("%-5s %s %s\n",
-					fileToUpload.state, fileToUpload.filepath, fileToUpload.errorMessage))
+	if (chatmode && chatNumber == 1) || !chatmode {
+		if len(filesToUpload) > 0 {
+			promptString.WriteString("**Data referenced by the Prompt:**\n")
+			promptString.WriteString("\n```plaintext\n")
+			for _, fileToUpload := range filesToUpload {
+				if fileToUpload.state != "error" {
+					promptString.WriteString(fmt.Sprintf("%-5s %s (%s, %s, %s)\n",
+						fileToUpload.state, fileToUpload.filepath,
+						fileToUpload.lastUpdate, fileToUpload.fileSize, fileToUpload.mimeType))
+				} else {
+					promptString.WriteString(fmt.Sprintf("%-5s %s %s\n",
+						fileToUpload.state, fileToUpload.filepath, fileToUpload.errorMessage))
+				}
 			}
+			promptString.WriteString("```\n")
+			promptString.WriteString("\n***\n")
 		}
-		promptString.WriteString("```\n")
-		promptString.WriteString("\n***\n")
 	}
 
 	// write prompt to current markdown request/response file

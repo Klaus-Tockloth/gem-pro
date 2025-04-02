@@ -69,8 +69,10 @@ func pluralize(count int, singular string) string {
 }
 
 /*
-runCommand executes a command line command or program.It takes a command line string, parses it into command
-and arguments, and then executes it using 'os/exec'.
+runCommand executes an external command line command or program. It takes a command line string,
+parses it into a command and its arguments using `splitCommandLine` (handling quoted arguments),
+and then executes the command using `os/exec.Command().Run()`. If the command execution fails,
+it prints an error message to standard output and returns the error.
 */
 func runCommand(commandLine string) error {
 	parsedArgs := splitCommandLine(commandLine)

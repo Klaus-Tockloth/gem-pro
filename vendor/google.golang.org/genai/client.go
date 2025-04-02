@@ -21,16 +21,24 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"cloud.google.com/go/auth"
+	"cloud.google.com/go/auth/credentials"
+	"cloud.google.com/go/auth/httptransport"
 )
 
-// Client is the GenAI client.
+// Client is the GenAI client. It provides access to the various GenAI services.
 type Client struct {
 	clientConfig ClientConfig
-	Models       *Models
-	Live         *Live
-	Caches       *Caches
+	// Models provides access to the Models service.
+	Models *Models
+	// Live provides access to the Live service.
+	Live *Live
+	// Caches provides access to the Caches service.
+	Caches *Caches
+	// Chats provides util functions for creating a new chat session.
+	Chats *Chats
+	// Operations provides access to long-running operations.
+	Operations *Operations
 }
 
 // Backend is the GenAI backend to use for the client.
@@ -63,18 +71,56 @@ func (t Backend) String() string {
 
 // ClientConfig is the configuration for the GenAI client.
 type ClientConfig struct {
-	APIKey      string              // API Key for GenAI. Required for BackendGeminiAPI.
-	Backend     Backend             // Backend for GenAI. See Backend constants. Defaults to BackendGeminiAPI unless explicitly set to BackendVertexAI, or the environment variable GOOGLE_GENAI_USE_VERTEXAI is set to "1" or "true".
-	Project     string              // GCP Project ID for Vertex AI. Required for BackendVertexAI.
-	Location    string              // GCP Location/Region for Vertex AI. Required for BackendVertexAI. See https://cloud.google.com/vertex-ai/docs/general/locations
-	Credentials *google.Credentials // Optional. Google credentials.  If not specified, application default credentials will be used.
-	HTTPClient  *http.Client        // Optional HTTP client to use. If nil, a default client will be created. For Vertex AI, this client must handle authentication appropriately.
-	HTTPOptions HTTPOptions         // Optional HTTP options to override.
+	// API Key for GenAI. Required for BackendGeminiAPI. Can also be set via the GOOGLE_API_KEY environment variable.
+	APIKey string
+
+	// Backend for GenAI. See Backend constants. Defaults to BackendGeminiAPI unless explicitly set to BackendVertexAI,
+	// or the environment variable GOOGLE_GENAI_USE_VERTEXAI is set to "1" or "true".
+	Backend Backend
+
+	// GCP Project ID for Vertex AI. Required for BackendVertexAI. Can also be set via the GOOGLE_CLOUD_PROJECT environment variable.
+	Project string
+
+	// GCP Location/Region for Vertex AI. Required for BackendVertexAI. See https://cloud.google.com/vertex-ai/docs/general/locations.
+	// Can also be set via the GOOGLE_CLOUD_LOCATION or GOOGLE_CLOUD_REGION environment variable.
+	Location string
+
+	// Optional. Google credentials.  If not specified, [Application Default Credentials] will be used.
+	//
+	// [Application Default Credentials]: https://developers.google.com/accounts/docs/application-default-credentials
+	Credentials *auth.Credentials
+
+	// Optional HTTP client to use. If nil, a default client will be created.
+	// For Vertex AI, this client must handle authentication appropriately.
+	HTTPClient *http.Client
+
+	// Optional HTTP options to override.
+	HTTPOptions HTTPOptions
 }
 
 // NewClient creates a new GenAI client.
 //
 // You can configure the client by passing in a ClientConfig struct.
+//
+// If a nil ClientConfig is provided, the client will be configured using
+// default settings and environment variables:
+//
+//   - Environment Variables for BackendGeminiAPI:
+//
+//   - GOOGLE_API_KEY: Required. Specifies the API key for the Gemini API.
+//
+//   - Environment Variables for BackendVertexAI:
+//
+//   - GOOGLE_GENAI_USE_VERTEXAI: Must be set to "1" or "true" to use the Vertex AI
+//     backend.
+//
+//   - GOOGLE_CLOUD_PROJECT: Required. Specifies the GCP project ID.
+//
+//   - GOOGLE_CLOUD_LOCATION or GOOGLE_CLOUD_REGION: Required. Specifies the GCP
+//     location/region.
+//
+// If using the Vertex AI backend and no credentials are provided in the
+// ClientConfig, the client will attempt to use application default credentials.
 func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 	if cc == nil {
 		cc = &ClientConfig{}
@@ -129,7 +175,9 @@ func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 	}
 
 	if cc.Backend == BackendVertexAI && cc.Credentials == nil {
-		cred, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+		cred, err := credentials.DetectDefault(&credentials.DetectOptions{
+			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to find default credentials: %w", err)
 		}
@@ -154,7 +202,20 @@ func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 
 	if cc.HTTPClient == nil {
 		if cc.Backend == BackendVertexAI {
-			cc.HTTPClient = oauth2.NewClient(ctx, oauth2.ReuseTokenSource(nil, cc.Credentials.TokenSource))
+			quotaProjectID, err := cc.Credentials.QuotaProjectID(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get quota project ID: %w", err)
+			}
+			client, err := httptransport.NewClient(&httptransport.Options{
+				Credentials: cc.Credentials,
+				Headers: http.Header{
+					"X-Goog-User-Project": []string{quotaProjectID},
+				},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create HTTP client: %w", err)
+			}
+			cc.HTTPClient = client
 		} else {
 			cc.HTTPClient = &http.Client{}
 		}
@@ -166,6 +227,8 @@ func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 		Models:       &Models{apiClient: ac},
 		Live:         &Live{apiClient: ac},
 		Caches:       &Caches{apiClient: ac},
+		Chats:        &Chats{apiClient: ac},
+		Operations:   &Operations{apiClient: ac},
 	}
 	return c, nil
 }

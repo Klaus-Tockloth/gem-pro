@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,6 +94,148 @@ func createCachedContentConfigToMldev(ac *apiClient, fromObject map[string]any, 
 	return toObject, nil
 }
 
+func createCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromModel := getValueByPath(fromObject, []string{"model"})
+	if fromModel != nil {
+		fromModel, err = tCachesModel(ac, fromModel)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"model"}, fromModel)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		fromConfig, err = createCachedContentConfigToMldev(ac, fromConfig.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func getCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		fromName, err = tCachedContentName(ac, fromName)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_url", "name"}, fromName)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func deleteCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		fromName, err = tCachedContentName(ac, fromName)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_url", "name"}, fromName)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func updateCachedContentConfigToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromTtl := getValueByPath(fromObject, []string{"ttl"})
+	if fromTtl != nil {
+		setValueByPath(parentObject, []string{"ttl"}, fromTtl)
+	}
+
+	fromExpireTime := getValueByPath(fromObject, []string{"expireTime"})
+	if fromExpireTime != nil {
+		setValueByPath(parentObject, []string{"expireTime"}, fromExpireTime)
+	}
+
+	return toObject, nil
+}
+
+func updateCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		fromName, err = tCachedContentName(ac, fromName)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_url", "name"}, fromName)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		fromConfig, err = updateCachedContentConfigToMldev(ac, fromConfig.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func listCachedContentsConfigToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromPageSize := getValueByPath(fromObject, []string{"pageSize"})
+	if fromPageSize != nil {
+		setValueByPath(parentObject, []string{"_query", "pageSize"}, fromPageSize)
+	}
+
+	fromPageToken := getValueByPath(fromObject, []string{"pageToken"})
+	if fromPageToken != nil {
+		setValueByPath(parentObject, []string{"_query", "pageToken"}, fromPageToken)
+	}
+
+	return toObject, nil
+}
+
+func listCachedContentsParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		fromConfig, err = listCachedContentsConfigToMldev(ac, fromConfig.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
 func createCachedContentConfigToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -165,32 +307,6 @@ func createCachedContentConfigToVertex(ac *apiClient, fromObject map[string]any,
 	return toObject, nil
 }
 
-func createCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromModel := getValueByPath(fromObject, []string{"model"})
-	if fromModel != nil {
-		fromModel, err = tCachesModel(ac, fromModel)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"model"}, fromModel)
-	}
-
-	fromConfig := getValueByPath(fromObject, []string{"config"})
-	if fromConfig != nil {
-		fromConfig, err = createCachedContentConfigToMldev(ac, fromConfig.(map[string]any), toObject)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"config"}, fromConfig)
-	}
-
-	return toObject, nil
-}
-
 func createCachedContentParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -217,49 +333,7 @@ func createCachedContentParametersToVertex(ac *apiClient, fromObject map[string]
 	return toObject, nil
 }
 
-func getCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromName := getValueByPath(fromObject, []string{"name"})
-	if fromName != nil {
-		fromName, err = tCachedContentName(ac, fromName)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"_url", "name"}, fromName)
-	}
-
-	fromConfig := getValueByPath(fromObject, []string{"config"})
-	if fromConfig != nil {
-		setValueByPath(toObject, []string{"config"}, fromConfig)
-	}
-
-	return toObject, nil
-}
-
 func getCachedContentParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromName := getValueByPath(fromObject, []string{"name"})
-	if fromName != nil {
-		fromName, err = tCachedContentName(ac, fromName)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"_url", "name"}, fromName)
-	}
-
-	fromConfig := getValueByPath(fromObject, []string{"config"})
-	if fromConfig != nil {
-		setValueByPath(toObject, []string{"config"}, fromConfig)
-	}
-
-	return toObject, nil
-}
-
-func deleteCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
 	fromName := getValueByPath(fromObject, []string{"name"})
@@ -301,22 +375,6 @@ func deleteCachedContentParametersToVertex(ac *apiClient, fromObject map[string]
 	return toObject, nil
 }
 
-func updateCachedContentConfigToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromTtl := getValueByPath(fromObject, []string{"ttl"})
-	if fromTtl != nil {
-		setValueByPath(parentObject, []string{"ttl"}, fromTtl)
-	}
-
-	fromExpireTime := getValueByPath(fromObject, []string{"expireTime"})
-	if fromExpireTime != nil {
-		setValueByPath(parentObject, []string{"expireTime"}, fromExpireTime)
-	}
-
-	return toObject, nil
-}
-
 func updateCachedContentConfigToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -328,32 +386,6 @@ func updateCachedContentConfigToVertex(ac *apiClient, fromObject map[string]any,
 	fromExpireTime := getValueByPath(fromObject, []string{"expireTime"})
 	if fromExpireTime != nil {
 		setValueByPath(parentObject, []string{"expireTime"}, fromExpireTime)
-	}
-
-	return toObject, nil
-}
-
-func updateCachedContentParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromName := getValueByPath(fromObject, []string{"name"})
-	if fromName != nil {
-		fromName, err = tCachedContentName(ac, fromName)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"_url", "name"}, fromName)
-	}
-
-	fromConfig := getValueByPath(fromObject, []string{"config"})
-	if fromConfig != nil {
-		fromConfig, err = updateCachedContentConfigToMldev(ac, fromConfig.(map[string]any), toObject)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"config"}, fromConfig)
 	}
 
 	return toObject, nil
@@ -385,22 +417,6 @@ func updateCachedContentParametersToVertex(ac *apiClient, fromObject map[string]
 	return toObject, nil
 }
 
-func listCachedContentsConfigToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromPageSize := getValueByPath(fromObject, []string{"pageSize"})
-	if fromPageSize != nil {
-		setValueByPath(parentObject, []string{"_query", "pageSize"}, fromPageSize)
-	}
-
-	fromPageToken := getValueByPath(fromObject, []string{"pageToken"})
-	if fromPageToken != nil {
-		setValueByPath(parentObject, []string{"_query", "pageToken"}, fromPageToken)
-	}
-
-	return toObject, nil
-}
-
 func listCachedContentsConfigToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -412,22 +428,6 @@ func listCachedContentsConfigToVertex(ac *apiClient, fromObject map[string]any, 
 	fromPageToken := getValueByPath(fromObject, []string{"pageToken"})
 	if fromPageToken != nil {
 		setValueByPath(parentObject, []string{"_query", "pageToken"}, fromPageToken)
-	}
-
-	return toObject, nil
-}
-
-func listCachedContentsParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromConfig := getValueByPath(fromObject, []string{"config"})
-	if fromConfig != nil {
-		fromConfig, err = listCachedContentsConfigToMldev(ac, fromConfig.(map[string]any), toObject)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"config"}, fromConfig)
 	}
 
 	return toObject, nil
@@ -490,6 +490,33 @@ func cachedContentFromMldev(ac *apiClient, fromObject map[string]any, parentObje
 	return toObject, nil
 }
 
+func deleteCachedContentResponseFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	return toObject, nil
+}
+
+func listCachedContentsResponseFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
+	if fromNextPageToken != nil {
+		setValueByPath(toObject, []string{"nextPageToken"}, fromNextPageToken)
+	}
+
+	fromCachedContents := getValueByPath(fromObject, []string{"cachedContents"})
+	if fromCachedContents != nil {
+		fromCachedContents, err = applyConverterToSlice(ac, fromCachedContents.([]any), cachedContentFromMldev)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"cachedContents"}, fromCachedContents)
+	}
+
+	return toObject, nil
+}
+
 func cachedContentFromVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -531,35 +558,8 @@ func cachedContentFromVertex(ac *apiClient, fromObject map[string]any, parentObj
 	return toObject, nil
 }
 
-func deleteCachedContentResponseFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	return toObject, nil
-}
-
 func deleteCachedContentResponseFromVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
-
-	return toObject, nil
-}
-
-func listCachedContentsResponseFromMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
-	if fromNextPageToken != nil {
-		setValueByPath(toObject, []string{"nextPageToken"}, fromNextPageToken)
-	}
-
-	fromCachedContents := getValueByPath(fromObject, []string{"cachedContents"})
-	if fromCachedContents != nil {
-		fromCachedContents, err = applyConverterToSlice(ac, fromCachedContents.([]any), cachedContentFromMldev)
-		if err != nil {
-			return nil, err
-		}
-
-		setValueByPath(toObject, []string{"cachedContents"}, fromCachedContents)
-	}
 
 	return toObject, nil
 }
@@ -585,10 +585,14 @@ func listCachedContentsResponseFromVertex(ac *apiClient, fromObject map[string]a
 	return toObject, nil
 }
 
+// Caches provides methods for managing the context caching.
+// You don't need to initiate this struct. Create a client instance via NewClient, and
+// then access Caches through client.Caches field.
 type Caches struct {
 	apiClient *apiClient
 }
 
+// Create creates a new cached content resource.
 func (m Caches) Create(ctx context.Context, model string, config *CreateCachedContentConfig) (*CachedContent, error) {
 	parameterMap := make(map[string]any)
 
@@ -659,6 +663,7 @@ func (m Caches) Create(ctx context.Context, model string, config *CreateCachedCo
 	return response, nil
 }
 
+// Get gets a cached content resource.
 func (m Caches) Get(ctx context.Context, name string, config *GetCachedContentConfig) (*CachedContent, error) {
 	parameterMap := make(map[string]any)
 
@@ -729,6 +734,7 @@ func (m Caches) Get(ctx context.Context, name string, config *GetCachedContentCo
 	return response, nil
 }
 
+// Delete deletes a cached content resource.
 func (m Caches) Delete(ctx context.Context, name string, config *DeleteCachedContentConfig) (*DeleteCachedContentResponse, error) {
 	parameterMap := make(map[string]any)
 
@@ -799,6 +805,7 @@ func (m Caches) Delete(ctx context.Context, name string, config *DeleteCachedCon
 	return response, nil
 }
 
+// Update updates a cached content resource.
 func (m Caches) Update(ctx context.Context, name string, config *UpdateCachedContentConfig) (*CachedContent, error) {
 	parameterMap := make(map[string]any)
 
@@ -939,6 +946,7 @@ func (m Caches) list(ctx context.Context, config *ListCachedContentsConfig) (*Li
 	return response, nil
 }
 
+// List retrieves a paginated list of cached content resources.
 func (m Caches) List(ctx context.Context, config *ListCachedContentsConfig) (Page[CachedContent], error) {
 	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, error) {
 		var c ListCachedContentsConfig
@@ -956,6 +964,12 @@ func (m Caches) List(ctx context.Context, config *ListCachedContentsConfig) (Pag
 	return newPage(ctx, "cachedContents", c, listFunc)
 }
 
+// All retrieves all cached content resources.
+//
+// This method handles pagination internally, making multiple API calls as needed
+// to fetch all entries. It returns an iterator that yields each cached
+// content entry one by one. You do not need to manage pagination
+// tokens or make multiple calls to retrieve all data.
 func (m Caches) All(ctx context.Context) iter.Seq2[*CachedContent, error] {
 	listFunc := func(ctx context.Context, _ map[string]any) ([]*CachedContent, string, error) {
 		resp, err := m.list(ctx, &ListCachedContentsConfig{})

@@ -97,8 +97,11 @@ type ProgConfig struct {
 var progConfig = ProgConfig{GeminiCandidateCount: -1, GeminiTemperature: -1.0, GeminiTopP: -1.0, GeminiTopK: -1.0, GeminiMaxOutputTokens: -1}
 
 /*
-loadConfiguration loads program configuration from a YAML file. It reads the configuration from the specified
-YAML file and unmarshals it into the `progConfig` struct.
+loadConfiguration loads program configuration from a YAML file. It reads the specified YAML file,
+unmarshals it into the global `progConfig` struct, performs extensive validation checks on the loaded
+values, sets OS-specific configurations (e.g., application paths), and resolves secrets like the
+Gemini API key and proxy credentials using the `getPassword` helper. It returns an error if reading,
+unmarshalling, validation, or secret retrieval fails.
 */
 func loadConfiguration(configFile string) error {
 	operatingSystem := runtime.GOOS
@@ -379,7 +382,7 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 		generateContentConfig.MaxOutputTokens = genai.Ptr(progConfig.GeminiMaxOutputTokens)
 	}
 	if progConfig.GeminiSystemInstruction != "" {
-		generateContentConfig.SystemInstruction = genai.NewModelContentFromText(progConfig.GeminiSystemInstruction)
+		generateContentConfig.SystemInstruction = genai.NewContentFromText(progConfig.GeminiSystemInstruction, "user")
 	}
 	if progConfig.GeminiGroundigWithGoogleSearch {
 		generateContentConfig.Tools = []*genai.Tool{

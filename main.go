@@ -11,6 +11,7 @@ Releases:
   - v0.3.0 - 2025/03/24: image support added, libs updated, SIGSEGV in main() and processResponse() fixed
   - v0.3.1 - 2025/03/28: libs updated, clean up markdown data given by Gemini
   - v0.3.2 - 2025/03/28: web search sources as numbered list, clean up markdown data revised
+  - v0.4.0 - 2025/04/02: libs updated, chat mode feature added, compiled with go v1.24.2
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -52,8 +53,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.3.2"
-	progDate    = "2025/03/28"
+	progVersion = "v0.4.0"
+	progDate    = "2025/04/02"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompt Google Gemini AI and display the response."
 )
@@ -100,7 +101,7 @@ func main() {
 	}
 
 	// command line parameter
-	candidates, temperature, topp, topk, maxtokens, uploads, config, models := processCommandLineFlags()
+	candidates, temperature, topp, topk, maxtokens, uploads, config, models, chatmode := processCommandLineFlags()
 
 	if !fileExists(*config) {
 		writeConfig()
@@ -220,6 +221,13 @@ func main() {
 	signal.Notify(shutdownTrigger, syscall.SIGINT)  // kill -SIGINT pid -> interrupt
 	signal.Notify(shutdownTrigger, syscall.SIGTERM) // kill -SIGTERM pid -> terminated
 
+	fmt.Printf("\nOperation mode:\n")
+	if *chatmode {
+		fmt.Printf("  Running in chat mode.\n")
+	} else {
+		fmt.Printf("  Running in standard (non-chat) mode.\n")
+	}
+
 	fmt.Printf("\nProgram termination:\n")
 	fmt.Printf("  Press CTRL-C to terminate this program.\n\n")
 
@@ -229,7 +237,20 @@ func main() {
 	// start input readers
 	inputPossibilities := startInputReaders(promptChannel, progConfig)
 
+	// create chat mode session
+	chat := &genai.Chat{}
+	chatNumber := 1
+	if *chatmode {
+		chat, err = client.Chats.Create(ctx, progConfig.GeminiAiModel, geminiModelConfig, nil)
+		if err != nil {
+			fmt.Printf("error [%v] creating Gemini chat mode session\n", err)
+			os.Exit(1)
+		}
+	}
+
 	// main loop: 'Prompt Google Gemini AI'
+	var resp *genai.GenerateContentResponse
+	var respErr error
 	for {
 		fmt.Printf("Waiting for input from %s ...\n", strings.Join(inputPossibilities, ", "))
 
@@ -245,35 +266,61 @@ func main() {
 			}
 		}
 
-		// build prompt parts (filedata, text prompt)
-		contents := []*genai.Content{}
-		for _, fileToUpload := range filesToUpload {
-			if fileToUpload.state == "error" {
-				continue
+		contents := []*genai.Content{} // prompt in non-chat mode
+		parts := []genai.Part{}        // prompt in chat mode
+
+		// build prompt parts (filedata, text prompt) of type '[]*genai.Content' for non-chat mode
+		if !*chatmode {
+			for _, fileToUpload := range filesToUpload {
+				if fileToUpload.state == "error" {
+					continue
+				}
+				// convert file to content
+				content, err := convertFileToContent(fileToUpload.filepath)
+				if err != nil {
+					fmt.Printf("error [%v] converting file to content\n", err)
+					continue
+				}
+				contents = append(contents, content)
 			}
-			// convert file to content
-			content, err := convertFileToContent(fileToUpload.filepath)
-			if err != nil {
-				fmt.Printf("error [%v] converting file to content\n", err)
-				continue
-			}
-			contents = append(contents, content)
+			contents = append(contents, genai.NewContentFromText(prompt, "user"))
 		}
-		contents = append(contents, genai.NewUserContentFromText(prompt))
+
+		// build prompt parts (filedata, text prompt) of type '[]genai.Part' for chat mode
+		if *chatmode {
+			if chatNumber == 1 {
+				// in chat mode we only add filedata to initial chat prompt
+				for _, fileToUpload := range filesToUpload {
+					if fileToUpload.state == "error" {
+						continue
+					}
+					// convert file to content
+					content, err := convertFileToContent(fileToUpload.filepath)
+					if err != nil {
+						fmt.Printf("error [%v] converting file to content\n", err)
+						continue
+					}
+					parts = append(parts, *content.Parts[0])
+				}
+			}
+			parts = append(parts, *genai.NewPartFromText(prompt))
+		}
 
 		fmt.Printf("%02d:%02d:%02d: Processing prompt ...\n", now.Hour(), now.Minute(), now.Second())
-		processPrompt(prompt)
+		processPrompt(prompt, *chatmode, chatNumber)
 
 		dumpDataToFile(os.O_TRUNC|os.O_WRONLY, "gemini model config", geminiModelConfig)
 		dumpDataToFile(os.O_APPEND|os.O_CREATE|os.O_WRONLY, "gemini prompt contents", contents)
 
 		// generate content
 		startProcessing = time.Now()
-		resp, respErr := client.Models.GenerateContent(ctx,
-			progConfig.GeminiAiModel,
-			contents,
-			geminiModelConfig,
-		)
+		if *chatmode {
+			// chat mode
+			resp, respErr = chat.SendMessage(ctx, parts...)
+		} else {
+			// non-chat mode
+			resp, respErr = client.Models.GenerateContent(ctx, progConfig.GeminiAiModel, contents, geminiModelConfig)
+		}
 		finishProcessing = time.Now()
 
 		dumpDataToFile(os.O_APPEND|os.O_CREATE|os.O_WRONLY, "gemini response", resp)
@@ -289,6 +336,11 @@ func main() {
 
 		// handle response
 		handleResponse(resp, respErr, prompt)
+
+		// increase chat number
+		if *chatmode {
+			chatNumber++
+		}
 	}
 }
 
@@ -296,7 +348,7 @@ func main() {
 processCommandLineFlags parses command-line flags and returns pointers to their values. It uses the flag package
 to define and parse command-line flags, making configuration options available when the program is run.
 */
-func processCommandLineFlags() (*int, *float64, *float64, *int, *int, *string, *string, *bool) {
+func processCommandLineFlags() (*int, *float64, *float64, *int, *int, *string, *string, *bool, *bool) {
 	candidates := flag.Int("candidates", -1, "specifies number of AI responses (overwrites YAML config)")
 	temperature := flag.Float64("temperature", -1.0, "specifies variation range of AI responses (overwrites YAML config)")
 	topp := flag.Float64("topp", -1.0, "maximum cumulative probability of tokens to consider when sampling (overwrites YAML config)")
@@ -307,11 +359,12 @@ func processCommandLineFlags() (*int, *float64, *float64, *int, *int, *string, *
 	defaultConfigFile := dir + progName + ".yaml"
 	config := flag.String("config", defaultConfigFile, "name of YAML config file")
 	models := flag.Bool("models", false, "show all AI Gemini models and terminate")
+	chatmode := flag.Bool("chatmode", false, "use AI Gemini model in chat mode")
 
 	flag.Usage = printUsage
 	flag.Parse()
 
-	return candidates, temperature, topp, topk, maxtokens, uploads, config, models
+	return candidates, temperature, topp, topk, maxtokens, uploads, config, models, chatmode
 }
 
 /*

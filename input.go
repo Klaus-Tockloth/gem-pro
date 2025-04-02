@@ -11,8 +11,11 @@ import (
 )
 
 /*
-readPromptFromKeyboard reads user prompts from the standard input (keyboard/stdin). It continuously reads
-lines from stdin, treating each line as a prompt, and sends them to the prompt channel for processing.
+readPromptFromKeyboard reads user prompts from standard input (keyboard/stdin). It continuously reads
+lines. If a line starts with "<<<" followed by a filename (whitespace trimmed), it reads the content
+of that file and sends it as the prompt to the promptChannel. Otherwise, the line itself (if not empty)
+is treated as the prompt and sent to the channel. Errors during file reading are printed to stderr
+and the loop continues.
 */
 func readPromptFromKeyboard(promptChannel chan string) {
 	reader := bufio.NewReader(os.Stdin)

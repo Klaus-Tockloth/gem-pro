@@ -78,9 +78,10 @@ func mapToStruct[R any](input map[string]any, output *R) error {
 	return nil
 }
 
-func (ac *apiClient) createAPIURL(suffix string, httpOptions *HTTPOptions) (*url.URL, error) {
+func (ac *apiClient) createAPIURL(suffix, method string, httpOptions *HTTPOptions) (*url.URL, error) {
 	if ac.clientConfig.Backend == BackendVertexAI {
-		if !strings.HasPrefix(suffix, "projects/") {
+		queryVertexBaseModel := ac.clientConfig.Backend == BackendVertexAI && method == http.MethodGet && strings.HasPrefix(suffix, "publishers/google/models")
+		if !strings.HasPrefix(suffix, "projects/") && !queryVertexBaseModel {
 			suffix = fmt.Sprintf("projects/%s/locations/%s/%s", ac.clientConfig.Project, ac.clientConfig.Location, suffix)
 		}
 		u, err := url.Parse(fmt.Sprintf("%s/%s/%s", httpOptions.BaseURL, httpOptions.APIVersion, suffix))
@@ -98,7 +99,7 @@ func (ac *apiClient) createAPIURL(suffix string, httpOptions *HTTPOptions) (*url
 }
 
 func buildRequest(ctx context.Context, ac *apiClient, path string, body map[string]any, method string, httpOptions *HTTPOptions) (*http.Request, error) {
-	url, err := ac.createAPIURL(path, httpOptions)
+	url, err := ac.createAPIURL(path, method, httpOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +127,7 @@ func sdkHeader(ac *apiClient) http.Header {
 	if ac.clientConfig.APIKey != "" {
 		header.Set("x-goog-api-key", ac.clientConfig.APIKey)
 	}
-	// TODO(b/381108714): Automate revisions to the SDK library version.
-	libraryLabel := "google-genai-sdk/0.0.1"
+	libraryLabel := fmt.Sprintf("google-genai-sdk/%s", version)
 	languageLabel := fmt.Sprintf("gl-go/%s", runtime.Version())
 	versionHeaderValue := fmt.Sprintf("%s %s", libraryLabel, languageLabel)
 	header.Set("user-agent", versionHeaderValue)
@@ -214,18 +214,29 @@ func iterateResponseStream[R any](rs *responseStream[R], responseConverter func(
 				}
 			}
 		}
+		if rs.r.Err() != nil {
+			if rs.r.Err() == bufio.ErrTooLong {
+				log.Printf("The response is too large to process in streaming mode. Please use a non-streaming method.")
+			}
+			log.Printf("Error %v", rs.r.Err())
+		}
 	}
 }
 
-type apiError struct {
-	Code    int              `json:"code,omitempty"`
-	Message string           `json:"message,omitempty"`
-	Status  string           `json:"status,omitempty"`
+// APIError contains an error response from the server.
+type APIError struct {
+	// Code is the HTTP response status code.
+	Code int `json:"code,omitempty"`
+	// Message is the server response message.
+	Message string `json:"message,omitempty"`
+	// Status is the server response status.
+	Status string `json:"status,omitempty"`
+	// Details provide more context to an error.
 	Details []map[string]any `json:"details,omitempty"`
 }
 
 type responseWithError struct {
-	ErrorInfo *apiError `json:"error,omitempty"`
+	ErrorInfo *APIError `json:"error,omitempty"`
 }
 
 func newAPIError(resp *http.Response) error {
@@ -239,41 +250,15 @@ func newAPIError(resp *http.Response) error {
 		if err := json.Unmarshal(body, respWithError); err != nil {
 			return fmt.Errorf("newAPIError: unmarshal response to error failed: %w. Response: %v", err, string(body))
 		}
-		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-			return ClientError{apiError: *respWithError.ErrorInfo}
-		}
-		return ServerError{apiError: *respWithError.ErrorInfo}
+		return *respWithError.ErrorInfo
 	}
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return ClientError{apiError: apiError{Code: resp.StatusCode, Status: resp.Status}}
-	}
-	return ServerError{apiError: apiError{Code: resp.StatusCode, Status: resp.Status}}
+	return APIError{Code: resp.StatusCode, Status: resp.Status}
 }
 
-// ClientError is an error that occurs when the GenAI API
-// receives an invalid request from a client.
-type ClientError struct {
-	apiError
-}
-
-// Error returns a string representation of the ClientError.
-func (e ClientError) Error() string {
+// Error returns a string representation of the APIError.
+func (e APIError) Error() string {
 	return fmt.Sprintf(
-		"client error. Code: %d, Message: %s, Status: %s, Details: %v",
-		e.Code, e.Message, e.Status, e.Details,
-	)
-}
-
-// ServerError is an error that occurs when the GenAI API
-// encounters an unexpected server problem.
-type ServerError struct {
-	apiError
-}
-
-// Error returns a string representation of the ServerError.
-func (e ServerError) Error() string {
-	return fmt.Sprintf(
-		"server error. Code: %d, Message: %s, Status: %s, Details: %v",
+		"Error %d, Message: %s, Status: %s, Details: %v",
 		e.Code, e.Message, e.Status, e.Details,
 	)
 }
@@ -287,6 +272,12 @@ func deserializeStreamResponse[T responseStream[R], R any](resp *http.Response, 
 		return newAPIError(resp)
 	}
 	output.r = bufio.NewScanner(resp.Body)
+	// Scanner default buffer max size is 64*1024 (64KB).
+	// We provide 1KB byte buffer to the scanner and set max to 256MB.
+	// When data exceed 1KB, then scanner will allocate new memory up to 256MB.
+	// When data exceed 256MB, scanner will stop and returns err: bufio.ErrTooLong.
+	output.r.Buffer(make([]byte, 1024), 268435456)
+
 	output.r.Split(scan)
 	output.rc = resp.Body
 	return nil

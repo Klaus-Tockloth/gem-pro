@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.3 - 2025/03/24: corresponding to program release, javascript support for mermaid graphics removed
+# - v0.4 - 2025/04/01: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -32,6 +32,11 @@
 # - TEXT
 # - IMAGE
 # GeminiGroundigWithGoogleSearch: false
+#
+# GeminiAiModel: models/gemini-2.5-pro-exp-03-25
+# GeminiResponseModalities:
+# - TEXT
+# GeminiGroundigWithGoogleSearch: true
 #
 # --------------------------------------------------
 

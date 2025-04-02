@@ -100,9 +100,7 @@ func setValueByPath(data map[string]any, keys []string, value any) {
 		}
 	}
 
-	if !reflect.ValueOf(value).IsZero() {
-		data[keys[len(keys)-1]] = value
-	}
+	data[keys[len(keys)-1]] = value
 }
 
 // getValueByPath retrieves a value from a nested map or slice or struct based on a path of keys.

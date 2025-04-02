@@ -20,5 +20,5 @@ func convertFileToContent(filepath string) (*genai.Content, error) {
 		return nil, err
 	}
 
-	return genai.NewUserContentFromBytes(data, mimeType), nil
+	return genai.NewContentFromBytes(data, mimeType, "user"), nil
 }

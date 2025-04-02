@@ -17,6 +17,7 @@
 package genai
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -45,8 +46,12 @@ type Session struct {
 // Connect establishes a realtime connection to the specified model with given configuration.
 // It returns a Session object representing the connection or an error if the connection fails.
 // The live module is experimental.
-func (r *Live) Connect(model string, config *LiveConnectConfig) (*Session, error) {
-	baseURL, err := url.Parse(r.apiClient.clientConfig.HTTPOptions.BaseURL)
+func (r *Live) Connect(context context.Context, model string, config *LiveConnectConfig) (*Session, error) {
+	httpOptions := r.apiClient.clientConfig.HTTPOptions
+	if httpOptions.APIVersion == "" {
+		return nil, fmt.Errorf("live module requires APIVersion to be set. You can set APIVersion to v1beta1 for BackendVertexAI or v1apha for BackendGeminiAPI")
+	}
+	baseURL, err := url.Parse(httpOptions.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse base URL: %w", err)
 	}
@@ -57,30 +62,26 @@ func (r *Live) Connect(model string, config *LiveConnectConfig) (*Session, error
 	}
 
 	var u url.URL
-	var header http.Header
+	// TODO(b/406076143): Support function level httpOptions.
+	var header http.Header = mergeHeaders(&httpOptions, nil)
 	if r.apiClient.clientConfig.Backend == BackendVertexAI {
-		token, err := r.apiClient.clientConfig.Credentials.TokenSource.Token()
+		token, err := r.apiClient.clientConfig.Credentials.Token(context)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get token: %w", err)
 		}
-		header = sdkHeader(r.apiClient)
-		header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+		header.Set("Authorization", fmt.Sprintf("Bearer %s", token.Value))
 		u = url.URL{
 			Scheme: scheme,
 			Host:   baseURL.Host,
-			// TODO(b/372231289): support custom api version.
-			Path: "/ws/google.cloud.aiplatform.v1beta1.LlmBidiService/BidiGenerateContent",
+			Path:   fmt.Sprintf("%s/ws/google.cloud.aiplatform.%s.LlmBidiService/BidiGenerateContent", baseURL.Path, httpOptions.APIVersion),
 		}
 	} else {
 		u = url.URL{
-			Scheme: scheme,
-			Host:   baseURL.Host,
-			// TODO(b/372231289): support custom api version.
-			Path:     "/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent",
+			Scheme:   scheme,
+			Host:     baseURL.Host,
+			Path:     fmt.Sprintf("%s/ws/google.ai.generativelanguage.%s.GenerativeService.BidiGenerateContent", baseURL.Path, httpOptions.APIVersion),
 			RawQuery: fmt.Sprintf("key=%s", r.apiClient.clientConfig.APIKey),
 		}
-		// TODO(b/372730941): support custom header
-		header = sdkHeader(r.apiClient)
 	}
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), header)
@@ -201,8 +202,11 @@ func (s *Session) Receive() (*LiveServerMessage, error) {
 
 // Close terminates the connection.
 // The live module is experimental.
-func (s *Session) Close() {
-	s.conn.Close()
+func (s *Session) Close() error {
+	if s != nil && s.conn != nil {
+		return s.conn.Close()
+	}
+	return nil
 }
 
 // BEGIN: Converter functions
