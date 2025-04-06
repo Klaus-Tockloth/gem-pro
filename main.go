@@ -3,15 +3,16 @@ Purpose:
 - gemini prompt (gem-pro)
 
 Description:
-- Prompt Google Gemini AI and display the response.
+- Prompts Google Gemini AI and displays the response.
 
 Releases:
-  - v0.1.0 - 2025/03/11: initial release
-  - v0.2.0 - 2025/03/15: 'GroundingChunks' added to response output
-  - v0.3.0 - 2025/03/24: image support added, libs updated, SIGSEGV in main() and processResponse() fixed
-  - v0.3.1 - 2025/03/28: libs updated, clean up markdown data given by Gemini
-  - v0.3.2 - 2025/03/28: web search sources as numbered list, clean up markdown data revised
-  - v0.4.0 - 2025/04/02: libs updated, chat mode feature added, compiled with go v1.24.2
+  - v0.1.0 - 2025-03-11: initial release
+  - v0.2.0 - 2025-03-15: 'GroundingChunks' added to response output
+  - v0.3.0 - 2025-03-24: image support added, libs updated, SIGSEGV in main() and processResponse() fixed
+  - v0.3.1 - 2025-03-28: libs updated, clean up markdown data given by Gemini
+  - v0.3.2 - 2025-03-28: web search sources as numbered list, clean up markdown data revised
+  - v0.4.0 - 2025-04-02: libs updated, chat mode feature added, compiled with go v1.24.2
+  - v0.4.1 - 2025-04-05: user info concerning prompt processing mode (chat, non-chat)
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -53,10 +54,10 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.4.0"
-	progDate    = "2025/04/02"
+	progVersion = "v0.4.1"
+	progDate    = "2025-04-05"
 	progPurpose = "gemini prompt"
-	progInfo    = "Prompt Google Gemini AI and display the response."
+	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
 
 // processing timestamp
@@ -225,7 +226,7 @@ func main() {
 	if *chatmode {
 		fmt.Printf("  Running in chat mode.\n")
 	} else {
-		fmt.Printf("  Running in standard (non-chat) mode.\n")
+		fmt.Printf("  Running in non-chat mode.\n")
 	}
 
 	fmt.Printf("\nProgram termination:\n")
@@ -306,7 +307,12 @@ func main() {
 			parts = append(parts, *genai.NewPartFromText(prompt))
 		}
 
-		fmt.Printf("%02d:%02d:%02d: Processing prompt ...\n", now.Hour(), now.Minute(), now.Second())
+		if *chatmode {
+			fmt.Printf("%02d:%02d:%02d: Processing prompt in chat mode ...\n", now.Hour(), now.Minute(), now.Second())
+		} else {
+			fmt.Printf("%02d:%02d:%02d: Processing prompt in non-chat mode ...\n", now.Hour(), now.Minute(), now.Second())
+		}
+
 		processPrompt(prompt, *chatmode, chatNumber)
 
 		dumpDataToFile(os.O_TRUNC|os.O_WRONLY, "gemini model config", geminiModelConfig)
@@ -349,17 +355,17 @@ processCommandLineFlags parses command-line flags and returns pointers to their 
 to define and parse command-line flags, making configuration options available when the program is run.
 */
 func processCommandLineFlags() (*int, *float64, *float64, *int, *int, *string, *string, *bool, *bool) {
-	candidates := flag.Int("candidates", -1, "specifies number of AI responses (overwrites YAML config)")
-	temperature := flag.Float64("temperature", -1.0, "specifies variation range of AI responses (overwrites YAML config)")
-	topp := flag.Float64("topp", -1.0, "maximum cumulative probability of tokens to consider when sampling (overwrites YAML config)")
-	topk := flag.Int("topk", -1, "maximum number of tokens to consider when sampling (overwrites YAML config)")
-	maxtokens := flag.Int("maxtokens", -1, "max output tokens (useful to force short content, overwrites YAML config)")
-	uploads := flag.String("uploads", "", "name of list with files to upload to AI (one file per line)")
+	candidates := flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
+	temperature := flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
+	topp := flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
+	topk := flag.Int("topk", -1, "Sets the maximum number of tokens to consider at each sampling step (Top-K sampling).\nOverrides the value in the YAML config.")
+	maxtokens := flag.Int("maxtokens", -1, "Sets the maximum number of tokens for the generated response. Useful for constraining output length.\nOverrides the value in the YAML config.")
+	uploads := flag.String("uploads", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
 	dir, _ := filepath.Split(os.Args[0])
 	defaultConfigFile := dir + progName + ".yaml"
-	config := flag.String("config", defaultConfigFile, "name of YAML config file")
-	models := flag.Bool("models", false, "show all AI Gemini models and terminate")
-	chatmode := flag.Bool("chatmode", false, "use AI Gemini model in chat mode")
+	config := flag.String("config", defaultConfigFile, "Specifies the name of the YAML configuration file.")
+	models := flag.Bool("models", false, "Displays available Google Gemini AI models and exits.")
+	chatmode := flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
 
 	flag.Usage = printUsage
 	flag.Parse()

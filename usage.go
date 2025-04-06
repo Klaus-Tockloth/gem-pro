@@ -29,56 +29,55 @@ func printUsage() {
 	fmt.Printf("\nOptions:\n")
 	flag.PrintDefaults()
 
-	fmt.Printf("\nRemark concerning Options:\n")
-	fmt.Printf("  A default value of -1 only means that the value is not set by the user.\n")
+	var help = `
+Remark Concerning Options:
+  A default value of -1 for numeric options indicates that the option was not set via the command line. 
+  The program will use the value from the YAML configuration file or the API's default if not specified there.
 
-	fmt.Printf("\nNotes:\n")
-	fmt.Printf("  - You can prompt Gemini AI and integrate the response into your workflow.\n")
-	fmt.Printf("  - You can submit prompts via this input channels: Terminal, File, localhost\n")
-	fmt.Printf("  - Output is available in the following formats: Markdown, HTML, ANSI\n")
-	fmt.Printf("  - Specified files are transmitted to Gemini AI as part of the prompts.\n")
+Notes:
+  - Integrate Gemini AI responses into your workflow by prompting via this tool.
+  - Submit prompts via the following input channels: Terminal, File, localhost.
+  - Output is available in Markdown, HTML, or ANSI format.
+  - Files specified on the command line or via the -uploads option are sent to Gemini AI as part of the prompt context.
 
-	fmt.Printf("\nNotes concerning the non-chat mode (default):\n")
-	fmt.Printf("  - Each prompt is treated independently.\n")
-	fmt.Printf("  - The AI does not remember previous interactions.\n")
-	fmt.Printf("  - Files are sent with every prompt.\n")
+Notes Concerning Non-Chat Mode (Default):
+  - Each prompt is treated independently.
+  - The AI does not retain conversation history from previous interactions.
+  - Files are sent with every prompt submitted in this mode.
 
-	fmt.Printf("\nNotes concerning the chat mode (-chatmode flag):\n")
-	fmt.Printf("  - The AI remembers the conversation history within a session.\n")
-	fmt.Printf("  - Files are sent only with the initial prompt.\n")
+Notes Concerning Chat Mode (-chatmode flag):
+  - The AI maintains conversation history within the current session.
+  - Files are sent only once, with the initial prompt of the session.
+ 
+Terms of Service for Google Gemini AI:
+  Your use of the Google Gemini AI service is subject to the Google Terms of Service (policies.google.com/terms) 
+  and the Generative AI Prohibited Use Policy (policies.google.com/terms/generative-ai/use-policy). 
+  Visit the Gemini Apps Privacy Hub (support.google.com/gemini?p=privacy_help) to learn how Google uses 
+  your Gemini Apps data. See also the Gemini Apps FAQ (gemini.google.com/faq).
 
-	fmt.Printf("\nDisclaimer:\n")
-	fmt.Printf("  This application is for evaluating the concept of integrating and using AI in\n")
-	fmt.Printf("  a personalized work environment. All v0.x versions require a Gemini API key,\n")
-	fmt.Printf("  enabling free and limited use of 'Google Gemini AI'.\n")
-	fmt.Printf("  A Gemini API key is associated with a personal Google account, allowing trial\n")
-	fmt.Printf("  use of 'Google Gemini AI'. The Gemini API key is not intended for permanent or\n")
-	fmt.Printf("  extensive use. From v1.0 onwards, the application will switch to using a regular\n")
-	fmt.Printf("  Google Gemini account.\n")
+Using the Free or Experimental Version of Google Gemini AI:
+  - Google may use all input data provided to the free/experimental service to improve Gemini AI.
+  - Therefore, do not submit any private or confidential information when using this version.
 
-	fmt.Printf("\nTerms of service apply to 'Google Gemini AI':\n")
-	fmt.Printf("  The Google Terms of Service (policies.google.com/terms) and the Generative AI\n")
-	fmt.Printf("  Prohibited Use Policy (policies.google.com/terms/generative-ai/use-policy) apply\n")
-	fmt.Printf("  to 'Google Gemini AI' service. Visit the Gemini Apps Privacy Hub\n")
-	fmt.Printf("  (support.google.com/gemini?p=privacy_help) to learn more about how Google uses\n")
-	fmt.Printf("  your Gemini Apps data. See also the Gemini Apps FAQ (gemini.google.com/faq).\n")
+Using the Paid Version of Google Gemini AI:
+  - Google does not use input data provided via the paid service to improve Gemini AI.
+  - Connecting your API key to a Google Cloud Platform (GCP) billing account enables access to paid service features.
 
-	fmt.Printf("\nNotes concerning the freely available version of 'Google Gemini AI'\n")
-	fmt.Printf("  - All input data will be used by Google to improve 'Gemini AI'.\n")
-	fmt.Printf("  - Therefore, do not process any private or confidential data.\n")
+Required Setup:
+  - Obtain a personal Gemini API Key from Google AI Studio (ai.google.dev).
+  - Configure the API Key in your shell environment:
+    macOS, Linux   : export GEMINI_API_KEY="Your-API-Key"
+    Windows (cmd)  : set GEMINI_API_KEY=Your-API-Key
+    Windows (Pwsh) : $env:GEMINI_API_KEY="Your-API-Key"
+  - Optional: Associate your Gemini API Key with a GCP billing account for paid usage.
+ 
+Tip:
+  The included 'prompt-input.html' file provides a basic web interface for crafting prompts 
+  and sending them to 'gem-pro' (requires localhost input configuration). 
+  A web browser is also helpful for rendering HTML-formatted output from the tool.
+`
 
-	fmt.Printf("\nRequired:\n")
-	fmt.Printf("  - Obtain a personal 'Gemini API Key' from Google.\n")
-	fmt.Printf("  - Configure the API Key in your program environment:\n")
-	fmt.Printf("    macOS, Linux : export GEMINI_API_KEY=Your-API-Key\n")
-	fmt.Printf("    Windows      : set GEMINI_API_KEY Your-API-Key\n")
-
-	fmt.Printf("\nTip:\n")
-	fmt.Printf("  In practice, a browser is useful for both creating prompts and presenting\n")
-	fmt.Printf("  the output. The simple 'prompt-input.html' webpage can be used for creating\n")
-	fmt.Printf("  and sending prompts to 'localhost'.\n")
-
-	fmt.Printf("\n")
+	fmt.Printf("%s\n", help)
 	os.Exit(1)
 }
 
