@@ -20,8 +20,8 @@ import (
 	"iter"
 )
 
-// ErrPageDone is the error returned by Next when no more page is available.
-var ErrPageDone = errors.New("PageDone")
+// ErrPageDone is the error returned by an iterator's Next method when no more pages are available.
+var ErrPageDone = errors.New("no more pages")
 
 // Page represents a page of results from a paginated API call.
 // It contains a slice of items and information about the next page.

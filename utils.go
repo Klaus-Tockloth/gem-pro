@@ -29,6 +29,22 @@ func fileExists(filename string) bool {
 }
 
 /*
+dirExists checks if a directory exists at the given path. It returns true if the path exists and
+is a directory, otherwise false.
+*/
+func dirExists(dir string) bool {
+	info, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		return false // path does not exist
+	}
+	if err != nil {
+		// another error occurred (e.g., permissions): for simplicity, we treat any other error as "does not exist or cannot check"
+		return false
+	}
+	return info.IsDir() // path exists, check if it's a directory
+}
+
+/*
 wrapString wraps a long string to a specified width for better readability in terminal output. It takes a
 long string and formats it by wrapping it to a specified width, inserting line breaks and indentation for
 improved terminal display.

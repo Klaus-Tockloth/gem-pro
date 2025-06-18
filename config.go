@@ -14,7 +14,11 @@ import (
 type ProgConfig struct {
 	// Gemini configration
 	GeminiAPIKey                   string   `yaml:"GeminiAPIKey"`
-	GeminiAiModel                  string   `yaml:"GeminiAiModel"`
+	GeminiAiModel                  string   // one of the following models
+	GeminiLiteAiModel              string   `yaml:"GeminiLiteAiModel"`
+	GeminiFlashAiModel             string   `yaml:"GeminiFlashAiModel"`
+	GeminiProAiModel               string   `yaml:"GeminiProAiModel"`
+	GeminiDefaultAiModel           string   `yaml:"GeminiDefaultAiModel"`
 	GeminiResponseModalities       []string `yaml:"GeminiResponseModalities"`
 	GeminiCandidateCount           int32    `yaml:"GeminiCandidateCount"`
 	GeminiMaxOutputTokens          int32    `yaml:"GeminiMaxOutputTokens"`
@@ -23,6 +27,10 @@ type ProgConfig struct {
 	GeminiTopK                     float32  `yaml:"GeminiTopK"`
 	GeminiSystemInstruction        string   `yaml:"GeminiSystemInstruction"`
 	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
+	GeminiMaxThinkingBudget        int32    `yaml:"GeminiMaxThinkingBudget"`
+	GeminiIncludeThoughts          bool     `yaml:"GeminiIncludeThoughts"`
+	GeminiCacheName                string   `yaml:"GeminiCacheName"`
+	GeminiCacheTimeToLive          int      `yaml:"GeminiCacheTimeToLive"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -119,11 +127,11 @@ func loadConfiguration(configFile string) error {
 	if progConfig.GeminiAPIKey == "" {
 		return fmt.Errorf("empty GeminiAPIKey not allowed")
 	}
-	if progConfig.GeminiAiModel == "" {
-		return fmt.Errorf("empty GeminiAiModel not allowed")
-	}
 	if progConfig.GeminiCandidateCount <= 0 {
 		return fmt.Errorf("empty GeminiCandidateCount not allowed")
+	}
+	if progConfig.GeminiMaxThinkingBudget < 0 || progConfig.GeminiMaxThinkingBudget > 24576 {
+		return fmt.Errorf("GeminiMaxThinkingBudget must be between 0 and 24576")
 	}
 
 	// markdown
@@ -320,12 +328,17 @@ func initializeProgram() {
 			fmt.Printf("error [%v] at os.Mkdir()\n", err)
 			os.Exit(1)
 		}
-		err = os.Mkdir(progConfig.HTMLHistoryDirectory+"/assets", 0750)
-		if err != nil && !os.IsExist(err) {
-			fmt.Printf("error [%v] at os.Mkdir()\n", err)
-			os.Exit(1)
+
+		// 'assets' in history directory (to render HTML files in history directory)
+		directory := progConfig.HTMLHistoryDirectory + "/assets"
+		if !dirExists(directory) {
+			err = os.Mkdir(directory, 0750)
+			if err != nil && !os.IsExist(err) {
+				fmt.Printf("error [%v] at os.Mkdir()\n", err)
+				os.Exit(1)
+			}
+			writeAssets(progConfig.HTMLHistoryDirectory)
 		}
-		writeAssets(progConfig.HTMLHistoryDirectory)
 	}
 }
 
@@ -334,8 +347,9 @@ generateGeminiModelConfig generates a configuration object for the Gemini AI mod
 genai.GenerateContentConfig object and configures it based on the program settings for interacting
 with the Gemini AI model.
 */
-func generateGeminiModelConfig() *genai.GenerateContentConfig {
+func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 	generateContentConfig := &genai.GenerateContentConfig{
+		// HTTPOptions:
 		// SystemInstruction:
 		// Temperature:
 		// TopP:
@@ -348,9 +362,10 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 		// PresencePenalty:
 		// FrequencyPenalty:
 		// Seed:
-		ResponseMIMEType: "text/plain", // expected: plain text with markdown tags
+		ResponseMIMEType: "text/plain", // always expected: plain text with markdown tags
 		// ResponseSchema:
 		// RoutingConfig:
+		// ModelSelectionConfig:
 		// SafetySettings:
 		// Tools:
 		// ToolConfig:
@@ -364,7 +379,7 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 	}
 	// configure AI model parameters
 	if progConfig.GeminiCandidateCount > -1 {
-		generateContentConfig.CandidateCount = genai.Ptr(progConfig.GeminiCandidateCount)
+		generateContentConfig.CandidateCount = progConfig.GeminiCandidateCount
 	}
 	if len(progConfig.GeminiResponseModalities) > 0 {
 		generateContentConfig.ResponseModalities = append(generateContentConfig.ResponseModalities, progConfig.GeminiResponseModalities...)
@@ -379,21 +394,29 @@ func generateGeminiModelConfig() *genai.GenerateContentConfig {
 		generateContentConfig.TopK = genai.Ptr(progConfig.GeminiTopK)
 	}
 	if progConfig.GeminiMaxOutputTokens > -1 {
-		generateContentConfig.MaxOutputTokens = genai.Ptr(progConfig.GeminiMaxOutputTokens)
+		generateContentConfig.MaxOutputTokens = progConfig.GeminiMaxOutputTokens
 	}
 	if progConfig.GeminiSystemInstruction != "" {
-		generateContentConfig.SystemInstruction = genai.NewContentFromText(progConfig.GeminiSystemInstruction, "user")
+		// read file with Gemini system instruction
+		systemInstruction, err := os.ReadFile(progConfig.GeminiSystemInstruction)
+		if err != nil {
+			fmt.Printf("error [%v] reading system instruction file\n", err)
+			os.Exit(1)
+		}
+		generateContentConfig.SystemInstruction = genai.NewContentFromText(string(systemInstruction), "user")
 	}
 	if progConfig.GeminiGroundigWithGoogleSearch {
 		generateContentConfig.Tools = []*genai.Tool{
 			{GoogleSearch: &genai.GoogleSearch{}},
 		}
 	}
-
-	// as of 03/2025: thoughts are only available via Google AI Studio (not longer via API)
-	// generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
-	// 	IncludeThoughts: true,
-	// }
+	if cacheName != "" {
+		generateContentConfig.CachedContent = cacheName
+	}
+	generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
+		IncludeThoughts: progConfig.GeminiIncludeThoughts,
+		ThinkingBudget:  &progConfig.GeminiMaxThinkingBudget,
+	}
 
 	return generateContentConfig
 }
@@ -419,12 +442,8 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if geminiModelConfig.TopK != nil {
 		fmt.Printf("  TopK              : %v\n", *geminiModelConfig.TopK)
 	}
-	if geminiModelConfig.CandidateCount != nil {
-		fmt.Printf("  CandidateCount    : %v\n", *geminiModelConfig.CandidateCount)
-	}
-	if geminiModelConfig.MaxOutputTokens != nil {
-		fmt.Printf("  MaxOutputTokens   : %v\n", *geminiModelConfig.MaxOutputTokens)
-	}
+	fmt.Printf("  CandidateCount    : %v\n", geminiModelConfig.CandidateCount)
+	fmt.Printf("  MaxOutputTokens   : %v\n", geminiModelConfig.MaxOutputTokens)
 	if geminiModelConfig.ResponseMIMEType != "" {
 		fmt.Printf("  ResponseMIMEType  : %v\n", geminiModelConfig.ResponseMIMEType)
 	}
@@ -435,5 +454,8 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	}
 	if geminiModelConfig.ResponseModalities != nil {
 		fmt.Printf("  ResponseModalities: %v\n", strings.Join(geminiModelConfig.ResponseModalities, ", "))
+	}
+	if geminiModelConfig.CachedContent != "" {
+		fmt.Printf("  CachedContent     : %v\n", geminiModelConfig.CachedContent)
 	}
 }

@@ -13,6 +13,7 @@ Releases:
   - v0.3.2 - 2025-03-28: web search sources as numbered list, clean up markdown data revised
   - v0.4.0 - 2025-04-02: libs updated, chat mode feature added, compiled with go v1.24.2
   - v0.4.1 - 2025-04-05: user info concerning prompt processing mode (chat, non-chat)
+  - v0.5.0 - 2025-06-18: file and cache support, thoughts support, libs updated, go v1.24.4, options added
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -26,6 +27,12 @@ Contact:
 Remarks:
 - none
 
+ToDos:
+- Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
+- Support for "Code execution".
+- Support for "Function calling".
+- Support for "Stop sequence".
+
 Links:
 - https://pkg.go.dev/google.golang.org/genai
 */
@@ -35,6 +42,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -54,8 +62,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.4.1"
-	progDate    = "2025-04-05"
+	progVersion = "v0.5.0"
+	progDate    = "2025-06-18"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -69,18 +77,52 @@ var (
 // markdown to html parser
 var markdownParser goldmark.Markdown
 
-// FileToUpload represents all files to uploaded to Gemini
-type FileToUpload struct {
-	state        string
-	filepath     string
-	lastUpdate   string
-	fileSize     string
-	mimeType     string
-	errorMessage string
+// FileToHandle represents all files to handle in prompt or Gemini context
+type FileToHandle struct {
+	State        string
+	Filepath     string
+	LastUpdate   string
+	FileSize     string
+	MimeType     string
+	ErrorMessage string
 }
 
-// filesToUpload holds list of files to upload to Gemini
-var filesToUpload []FileToUpload
+// filesToHandle holds list of files to handle in prompt or Gemini context
+var filesToHandle []FileToHandle
+
+// CacheToHandle represents all tokenized files in AI model specific cache
+type CacheToHandle struct {
+	CachedContent  genai.CachedContent
+	FilesTokenized []FileToHandle
+}
+
+// cacheToHandle holds all data concerning AI model specific cache
+var cacheToHandle CacheToHandle
+
+// command line parameters
+var (
+	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
+	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
+	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
+	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
+	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
+	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
+	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
+	topk         = flag.Int("topk", -1, "Sets the maximum number of tokens to consider at each sampling step (Top-K sampling).\nOverrides the value in the YAML config.")
+	maxtokens    = flag.Int("maxtokens", -1, "Sets the maximum number of tokens for the generated response. Useful for constraining output length.\nOverrides the value in the YAML config.")
+	filelist     = flag.String("filelist", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
+	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	listModels   = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
+	chatmode     = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
+	uploadFiles  = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
+	deleteFiles  = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
+	listFiles    = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
+	includeFiles = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
+	createCache  = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
+	deleteCache  = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
+	listCache    = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
+	includeCache = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
+)
 
 /*
 main starts this program. It is the entry point of the application, responsible for parsing command-line
@@ -101,14 +143,17 @@ func main() {
 		terminalWidth = 132
 	}
 
-	// command line parameter
-	candidates, temperature, topp, topk, maxtokens, uploads, config, models, chatmode := processCommandLineFlags()
+	flag.Usage = printUsage
+	flag.Parse()
 
 	if !fileExists(*config) {
 		writeConfig()
 	}
-	if !fileExists("./assets") {
-		err = os.Mkdir("./assets", 0750)
+
+	// 'assets' in current directory (to render current HTML file in current directory)
+	directory := "./assets"
+	if !dirExists(directory) {
+		err = os.Mkdir(directory, 0750)
 		if err != nil && !os.IsExist(err) {
 			fmt.Printf("error [%v] at os.Mkdir()\n", err)
 			os.Exit(1)
@@ -126,29 +171,72 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *models {
-		showAvailableGeminiModels(terminalWidth)
+	// set Gemini AI model
+	progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
+	switch {
+	case *liteModel:
+		progConfig.GeminiAiModel = progConfig.GeminiLiteAiModel
+	case *flashModel:
+		progConfig.GeminiAiModel = progConfig.GeminiFlashAiModel
+	case *proModel:
+		progConfig.GeminiAiModel = progConfig.GeminiProAiModel
+	case *defaultModel:
+		progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
+	}
+	if progConfig.GeminiAiModel == "" {
+		fmt.Printf("empty Gemini AI model not allowed\n")
 		os.Exit(1)
 	}
 
 	// build list of files given via command line
-	filesToUpload = buildGivenFiles(flag.Args(), *uploads)
+	filesToHandle = buildGivenFiles(flag.Args(), *filelist)
 
 	// shows files given via command line
 	fmt.Printf("\nFiles given via command line:\n")
-	if len(filesToUpload) == 0 {
+	if len(filesToHandle) == 0 {
 		fmt.Printf("  none\n")
 	} else {
-		for _, fileToUpload := range filesToUpload {
-			if fileToUpload.state != "error" {
+		for _, fileToHandle := range filesToHandle {
+			if fileToHandle.State != "error" {
 				fmt.Printf("  %-5s %s (%s, %s, %s)\n",
-					fileToUpload.state, fileToUpload.filepath,
-					fileToUpload.lastUpdate, fileToUpload.fileSize, fileToUpload.mimeType)
+					fileToHandle.State, fileToHandle.Filepath,
+					fileToHandle.LastUpdate, fileToHandle.FileSize, fileToHandle.MimeType)
 			} else {
 				fmt.Printf("  %-5s %s %s\n",
-					fileToUpload.state, fileToUpload.filepath, fileToUpload.errorMessage)
+					fileToHandle.State, fileToHandle.Filepath, fileToHandle.ErrorMessage)
 			}
 		}
+	}
+
+	// handle standalone actions
+	handleStandaloneFileActions()
+	handleStandaloneCacheActions()
+
+	if *listModels {
+		showAvailableGeminiModels(terminalWidth)
+		os.Exit(0)
+	}
+
+	if *includeFiles {
+		filelist := listFilesUploadedToGemini("  ")
+		fmt.Printf("\nInclude files given via Google file store:\n")
+		if len(filelist) == 0 {
+			fmt.Printf("  none\n")
+		} else {
+			fmt.Printf("%s", filelist)
+		}
+	}
+
+	cacheName := ""
+	cacheDetails := ""
+	if *includeCache {
+		cacheName, cacheDetails = listAIModelSpecificCache("  ")
+		fmt.Printf("\nInclude AI model specific cache:\n")
+		if len(cacheName) == 0 {
+			fmt.Printf("  error: no AI model specific cache found\n\n")
+			os.Exit(1)
+		}
+		fmt.Printf("%s", cacheDetails)
 	}
 
 	// show configuration
@@ -162,7 +250,7 @@ func main() {
 
 	// create markdown parser (WithUnsafe() ensures to render potentially dangerous links like "file:///Users/...")
 	markdownParser = goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(extension.GFM, &TargetBlankExtension{}),
 		goldmark.WithRendererOptions(html.WithUnsafe()),
 	)
 
@@ -210,8 +298,8 @@ func main() {
 	}
 	printGeminiModelInfo(geminiModelInfo, terminalWidth)
 
-	// generate and print Gemini model configuration
-	geminiModelConfig := generateGeminiModelConfig()
+	// generate and print Gemini model configuration (adds cache if defined)
+	geminiModelConfig := generateGeminiModelConfig(cacheName)
 	printGeminiModelConfig(geminiModelConfig, terminalWidth)
 
 	// define prompt channel
@@ -249,7 +337,8 @@ func main() {
 		}
 	}
 
-	// main loop: 'Prompt Google Gemini AI'
+	// start main loop: Prompt Gemini AI
+	// ---------------------------------
 	var resp *genai.GenerateContentResponse
 	var respErr error
 	for {
@@ -272,36 +361,57 @@ func main() {
 
 		// build prompt parts (filedata, text prompt) of type '[]*genai.Content' for non-chat mode
 		if !*chatmode {
-			for _, fileToUpload := range filesToUpload {
-				if fileToUpload.state == "error" {
+			// handle files from commandline
+			for _, fileToHandle := range filesToHandle {
+				if fileToHandle.State == "error" {
 					continue
 				}
 				// convert file to content
-				content, err := convertFileToContent(fileToUpload.filepath)
+				content, err := convertFileToContent(fileToHandle.Filepath)
 				if err != nil {
 					fmt.Printf("error [%v] converting file to content\n", err)
 					continue
 				}
 				contents = append(contents, content)
 			}
+			if *includeFiles {
+				// handle uploaded files from Google file store
+				for file, err := range client.Files.All(ctx) {
+					if err != nil {
+						log.Fatalf("error [%v] iterating over uploaded files", err)
+					}
+					contents = append(contents, genai.NewContentFromURI(file.URI, file.MIMEType, "user"))
+				}
+			}
+			// add text prompt
 			contents = append(contents, genai.NewContentFromText(prompt, "user"))
 		}
 
-		// build prompt parts (filedata, text prompt) of type '[]genai.Part' for chat mode
+		// build prompt parts (filedata, uploaded files, text prompt) of type '[]genai.Part' for chat mode
 		if *chatmode {
+			// in chat mode we only add filedata to initial chat prompt
 			if chatNumber == 1 {
-				// in chat mode we only add filedata to initial chat prompt
-				for _, fileToUpload := range filesToUpload {
-					if fileToUpload.state == "error" {
+				// handle files from commandline
+				for _, fileToHandle := range filesToHandle {
+					if fileToHandle.State == "error" {
 						continue
 					}
 					// convert file to content
-					content, err := convertFileToContent(fileToUpload.filepath)
+					content, err := convertFileToContent(fileToHandle.Filepath)
 					if err != nil {
 						fmt.Printf("error [%v] converting file to content\n", err)
 						continue
 					}
 					parts = append(parts, *content.Parts[0])
+				}
+				if *includeFiles {
+					// handle uploaded files from Google file store
+					for file, err := range client.Files.All(ctx) {
+						if err != nil {
+							log.Fatalf("error [%v] iterating over uploaded files", err)
+						}
+						parts = append(parts, *genai.NewPartFromFile(*file))
+					}
 				}
 			}
 			parts = append(parts, *genai.NewPartFromText(prompt))
@@ -348,29 +458,8 @@ func main() {
 			chatNumber++
 		}
 	}
-}
-
-/*
-processCommandLineFlags parses command-line flags and returns pointers to their values. It uses the flag package
-to define and parse command-line flags, making configuration options available when the program is run.
-*/
-func processCommandLineFlags() (*int, *float64, *float64, *int, *int, *string, *string, *bool, *bool) {
-	candidates := flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
-	temperature := flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
-	topp := flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
-	topk := flag.Int("topk", -1, "Sets the maximum number of tokens to consider at each sampling step (Top-K sampling).\nOverrides the value in the YAML config.")
-	maxtokens := flag.Int("maxtokens", -1, "Sets the maximum number of tokens for the generated response. Useful for constraining output length.\nOverrides the value in the YAML config.")
-	uploads := flag.String("uploads", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
-	dir, _ := filepath.Split(os.Args[0])
-	defaultConfigFile := dir + progName + ".yaml"
-	config := flag.String("config", defaultConfigFile, "Specifies the name of the YAML configuration file.")
-	models := flag.Bool("models", false, "Displays available Google Gemini AI models and exits.")
-	chatmode := flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
-
-	flag.Usage = printUsage
-	flag.Parse()
-
-	return candidates, temperature, topp, topk, maxtokens, uploads, config, models, chatmode
+	// end main loop: Prompt Gemini AI
+	// -------------------------------
 }
 
 /*
@@ -524,7 +613,7 @@ func startInputReaders(promptChannel chan string, config ProgConfig) []string {
 				fmt.Printf("error [%v] creating input prompt text file\n", err)
 				return inputPossibilities
 			}
-			file.Close()
+			_ = file.Close()
 		}
 		go readPromptFromFile(config.InputFile, promptChannel)
 		inputPossibilities = append(inputPossibilities, "File")
@@ -549,15 +638,15 @@ func startInputReaders(promptChannel chan string, config ProgConfig) []string {
 
 /*
 buildGivenFiles builds a list of files provided via command-line (list, args). It processes file paths from
-command-line arguments and a file list, checks their state, and prepares a list of FileToUpload structures
+command-line arguments and a file list, checks their state, and prepares a list of FileToHandle structures
 for further processing.
 */
-func buildGivenFiles(args []string, uploads string) []FileToUpload {
+func buildGivenFiles(args []string, filelist string) []FileToHandle {
 	var filesFromList []string
 	var err error
 
-	if uploads != "" {
-		filesFromList, err = slurpFile(uploads)
+	if filelist != "" {
+		filesFromList, err = slurpFile(filelist)
 		if err != nil {
 			fmt.Printf("error [%v] reading list of files to upload to AI\n", err)
 		}
@@ -567,12 +656,12 @@ func buildGivenFiles(args []string, uploads string) []FileToUpload {
 	files = append(files, args...)
 
 	for _, file := range files {
-		fileToUpload := FileToUpload{filepath: file}
+		fileToHandle := FileToHandle{Filepath: file}
 
 		fileInfo, err := os.Stat(file)
 		if err != nil {
-			fileToUpload.state = "error"
-			fileToUpload.errorMessage = fmt.Sprintf("error [%v] at os.Stat()", err)
+			fileToHandle.State = "error"
+			fileToHandle.ErrorMessage = fmt.Sprintf("error [%v] at os.Stat()", err)
 		} else {
 			mimeType, err := getFileMimeType(file)
 			info := "ok"
@@ -583,17 +672,87 @@ func buildGivenFiles(args []string, uploads string) []FileToUpload {
 				info = "warn"
 			}
 			if err == nil {
-				fileToUpload.state = info
-				fileToUpload.fileSize = fmt.Sprintf("%.1f KiB", float64(fileInfo.Size())/1024.0)
-				fileToUpload.lastUpdate = fileInfo.ModTime().Format("20060102-150405")
-				fileToUpload.mimeType = mimeType
+				fileToHandle.State = info
+				fileToHandle.FileSize = fmt.Sprintf("%.1f KiB", float64(fileInfo.Size())/1024.0)
+				fileToHandle.LastUpdate = fileInfo.ModTime().Format("20060102-150405")
+				fileToHandle.MimeType = mimeType
 			} else {
-				fileToUpload.state = info
-				fileToUpload.errorMessage = fmt.Sprintf("error [%v] at getFileMimeType()", err)
+				fileToHandle.State = info
+				fileToHandle.ErrorMessage = fmt.Sprintf("error [%v] at getFileMimeType()", err)
 			}
 		}
-		filesToUpload = append(filesToUpload, fileToUpload)
+		filesToHandle = append(filesToHandle, fileToHandle)
 	}
 
-	return filesToUpload
+	return filesToHandle
+}
+
+/*
+handleStandaloneFileActions handles file upload, delete and list.
+*/
+func handleStandaloneFileActions() {
+	switch {
+	case *uploadFiles:
+		fmt.Printf("\nUploading files to Google file store:\n")
+		uploadFilesToGemini(filesToHandle)
+		fmt.Printf("\n")
+		os.Exit(0)
+
+	case *deleteFiles:
+		fmt.Printf("\nDeleting files from Google file store:\n")
+		deleteFilesFromGemini()
+		fmt.Printf("\n")
+		os.Exit(0)
+
+	case *listFiles:
+		filelist := listFilesUploadedToGemini("  ")
+		fmt.Printf("\nFiles in Google file store:\n")
+		if len(filelist) == 0 {
+			fmt.Printf("  none\n\n")
+		} else {
+			fmt.Printf("%s\n", filelist)
+		}
+		os.Exit(0)
+	}
+}
+
+/*
+handleStandaloneCacheActions handles cache create, delete and list.
+*/
+func handleStandaloneCacheActions() {
+	switch {
+	case *createCache:
+		fmt.Printf("\nCreating AI model specific cache:\n")
+		createAIModelSpecificCache(filesToHandle)
+		filename := progConfig.GeminiCacheName + "." + filepath.Base(progConfig.GeminiAiModel) + ".gob"
+		err := saveCacheDetailsToFile(filename)
+		if err != nil {
+			fmt.Printf("error [%v] saving cache details to file\n", err)
+		}
+		_, cacheDetails := listAIModelSpecificCache("  ")
+		fmt.Printf("\nAI model specific cache created:\n")
+		if len(cacheDetails) == 0 {
+			fmt.Printf("  none\n\n")
+		} else {
+			fmt.Printf("%s\n", cacheDetails)
+		}
+		os.Exit(0)
+
+	case *deleteCache:
+		fmt.Printf("\nDeleting AI model specific cache:\n")
+		deleteAIModelSpecificCache()
+		_, cacheDetails := listAIModelSpecificCache("  ")
+		fmt.Printf("%s\n", cacheDetails)
+		os.Exit(0)
+
+	case *listCache:
+		_, cacheDetails := listAIModelSpecificCache("  ")
+		fmt.Printf("\nListing AI model specific cache:\n")
+		if len(cacheDetails) == 0 {
+			fmt.Printf("  none\n\n")
+		} else {
+			fmt.Printf("%s\n", cacheDetails)
+		}
+		os.Exit(0)
+	}
 }

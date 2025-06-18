@@ -20,11 +20,13 @@ func printUsage() {
 
 	fmt.Printf("\nExamples:\n")
 	fmt.Printf("  %s\n", progName)
+	fmt.Printf("  %s -model alternate\n", progName)
 	fmt.Printf("  %s -chatmode\n", progName)
 	fmt.Printf("  %s -candidates 2\n", progName)
 	fmt.Printf("  %s -temperature 1.8\n", progName)
 	fmt.Printf("  %s *.go README.md\n", progName)
-	fmt.Printf("  %s -uploads ganymed-project-files.txt\n", progName)
+	fmt.Printf("  %s -includefiles *.go README.md\n", progName)
+	fmt.Printf("  %s -filelist ganymed-project-files.txt\n", progName)
 
 	fmt.Printf("\nOptions:\n")
 	flag.PrintDefaults()
@@ -38,7 +40,7 @@ Notes:
   - Integrate Gemini AI responses into your workflow by prompting via this tool.
   - Submit prompts via the following input channels: Terminal, File, localhost.
   - Output is available in Markdown, HTML, or ANSI format.
-  - Files specified on the command line or via the -uploads option are sent to Gemini AI as part of the prompt context.
+  - Files specified on the command line or via the -filelist option are sent to Gemini AI as part of the prompt context.
 
 Notes Concerning Non-Chat Mode (Default):
   - Each prompt is treated independently.

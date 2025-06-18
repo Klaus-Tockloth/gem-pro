@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.4 - 2025/04/01: corresponding to program release
+# - v0.5 - 2025-06-18: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -13,31 +13,6 @@
 #
 # Useful links:
 # - https://ai.google.dev/gemini-api/docs/models/generative-models#model-parameters
-# - https://ai.google.dev/gemini-api/docs/text-generation?lang=go#system-instructions
-#
-# AI model configurations (some examples):
-#
-# GeminiAiModel: gemini-2.0-flash
-# GeminiResponseModalities:
-# - TEXT
-# GeminiGroundigWithGoogleSearch: true
-#
-# GeminiAiModel: gemini-2.0-flash-thinking-exp
-# GeminiResponseModalities:
-# - TEXT
-# GeminiGroundigWithGoogleSearch: true
-#
-# GeminiAiModel: gemini-2.0-flash-exp
-# GeminiResponseModalities:
-# - TEXT
-# - IMAGE
-# GeminiGroundigWithGoogleSearch: false
-#
-# GeminiAiModel: models/gemini-2.5-pro-exp-03-25
-# GeminiResponseModalities:
-# - TEXT
-# GeminiGroundigWithGoogleSearch: true
-#
 # --------------------------------------------------
 
 # Gemini configuration section
@@ -49,9 +24,14 @@
 # 'pass:api-key': pass contains the api-key
 GeminiAPIKey: 'env:GEMINI_API_KEY'
 
-# Gemini AI model
-# use option '-models' to list all available models
-GeminiAiModel: gemini-2.0-flash
+# Gemini AI model family (options: -lite, -flash, -pro, -default)
+GeminiLiteAiModel: models/gemini-2.5-flash-lite-preview-06-17
+GeminiFlashAiModel: models/gemini-2.5-flash
+GeminiProAiModel: models/gemini-2.5-pro
+GeminiDefaultAiModel: models/gemini-2.5-flash
+
+# Gemini alternate AI model (e.g. pro model)
+GeminiAlternateAiModel: models/gemini-2.5-pro-preview-05-06
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
 GeminiResponseModalities:
@@ -105,17 +85,33 @@ GeminiMaxOutputTokens:
 # - 'Don't use technical terms in your response.'
 # System instructions let you steer the behavior of a model based on your specific needs and use cases.
 # By giving the model system instructions, you provide the model additional context to understand the
-# task, generate more customized responses, and adhere to specific guidelines over the full user
-# interaction with the model. 
+# task, generate more customized responses, and adhere to specific guidelines over the full user interaction 
+# with the model. System instructions are provided via text file (e.g. gemini-system-instruction.txt).
 GeminiSystemInstruction:
 
 # ground responses with Google Search (not supported by all AI models, affects other settings)
 GeminiGroundigWithGoogleSearch: true
 
+# max thinking budget (e.g. 0-24576) (AI model must support this setting, 0 disables thinking)
+GeminiMaxThinkingBudget: 8000
+
+# include thoughts in the response (true, false) (AI model must support this setting)
+GeminiIncludeThoughts: true
+
+# (logical) name of cache handled by this application (note: only one cache can be added to a prompt)
+# This logical cache name is used for all cache operations (create, list, delete, include).
+# Caching must be supported by AI model.
+GeminiCacheName: gem-pro-cache
+
+# time to live (ttl) for cached items in hours
+# Keep in mind that caching objects has costs.
+GeminiCacheTimeToLive: 1
+
 # Markdown rendering section
 # --------------------------
 
 # handling of current prompt/response pair (valid filename is mandatory)
+# MarkdownRendering: not configurable, the native AI response has already markdown formatting
 MarkdownPromptResponseFile: prompt-response.md
 
 # output of current prompt/response pair (%s = placeholder for name of file)
@@ -126,7 +122,7 @@ MarkdownOutputApplicationWindows:
 MarkdownOutputApplicationOther:
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
-MarkdownHistory: true
+MarkdownHistory: false
 MarkdownHistoryDirectory: ./history-markdown
 
 # Ansi (terminal) rendering section
@@ -137,10 +133,10 @@ AnsiRendering: true
 AnsiPromptResponseFile: prompt-response.ansi
 
 # output of current prompt/response pair
-AnsiOutput: true
+AnsiOutput: false
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
-AnsiHistory: true
+AnsiHistory: false
 AnsiHistoryDirectory: ./history-ansi
 
 # Ansi color codes to replace or remove (modifies Ansi output)
@@ -157,6 +153,7 @@ HTMLRendering: true
 HTMLPromptResponseFile: prompt-response.html
 
 # output of current prompt/response pair (%s = placeholder for name of file)
+# it is also possible to specify the browser (e.g. 'open -a "Google Chrome" %s')
 HTMLOutput: true
 HTMLOutputApplicationMacOS: 'open %s'
 HTMLOutputApplicationLinux: 'xdg-open %s'

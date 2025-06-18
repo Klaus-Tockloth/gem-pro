@@ -10,6 +10,17 @@ Das Programm ist für BSD, Linux, macOS und Windows verfügbar.
 
 Dieses Programm erlaubt die Nutzung verschiedener Modelle der Google Gemini KI-Familie. Viele Parameter des KI-Modells, wie z.B. die Anzahl der Antworten oder die Varianz, können in der Konfiguration angepasst werden.
 
+### Google Gemini KI-Modelle
+
+Die Gemini KI-Familie besteht aus folgenden Modellen:
+
+|  | Lite | Flash | Pro |
+|---|---|---|---|
+| Am Besten geeignet für | viele kosteneffiziente Anfragen | Standardanfragen bei guter Leistung | Programmierung und komplexe Anfragen |
+| Geschwindigkeit | hoch | mittel | niedrig |
+| Leistung | niedrig | mittel | hoch |
+| Kosten | niedrig | mittel | hoch |
+
 ### Funktionsumfang
 
 * Mehrere Eingabequellen (Terminal, Datei-Polling, HTTP).
@@ -68,7 +79,7 @@ Siehe auch [häufig gestellte Fragen zu Gemini-Apps](https://gemini.google.com/f
 
 ### Technische Hinweise
 
-Jedes Gemini-KI-Modell hat ein maximales Output-Token-Limit, welches die Antwortlänge begrenzt. Ein Token entspricht dabei grob zirka 4 Zeichen, 100 Token in etwa 60 bis 80 englischen Wörtern. Wenn das KI-Modell das Output-Token-Limit beispielsweise auf 8192 Tokens definiert, entspricht dies einer maximalen Antwortlänge von 4900 bis 6500 englischen Wörtern.
+Jedes Gemini-KI-Modell hat ein maximales Output-Token-Limit, welches die Antwortlänge begrenzt. Ein Token entspricht dabei grob zirka 4 Zeichen, 100 Token in etwa 60 bis 80 englischen Wörtern. Wenn das KI-Modell das Output-Token-Limit beispielsweise auf 65536 Tokens definiert, entspricht dies einer maximalen Antwortlänge von 39300 bis 52400 englischen Wörtern.
 
 ### Voraussetzungen und Konfiguration
 
@@ -77,6 +88,46 @@ Für die Nutzung ist ein persönlicher Gemini API-Key von Google erforderlich. K
 * Konfiguration des API-Keys im Programm-Environment:
   * macOS, Linux: ```export GEMINI_API_KEY=Your-API-Key```
   * Windows: ```setx GEMINI_API_KEY Your-API-Key``` (erfordert Neustart des Terminals)
+
+### Umgang mit Dateien
+
+Abhängig vom Einsatzfall stehen verschiedene Möglichkeiten zur Nutzung von Dateiinhalten im Kontext "Prompt" zur Verfügung.
+
+* Ein textueller Dateiinhalt wird direkt in den Prompt eingefügt.
+* Ein Satz an Dateien (1-n) wird über die Kommandozeile definiert:
+  * Die Dateien werden anschließend automatisch Bestandteil des Prompts.
+* Ein Satz an Dateien (1-n) wird zunächst in den Google-File-Store hochgeladen:
+  * Über die Option '-include-files' werden die Dateien anschließend Bestandteil des Prompts.
+
+Die vorgenannten Varianten sind kombinierbar und unterscheiden sich in ihrer Wirkung auf den Prompt nicht. Liegt der zu berücksichtigende Satz an Dateien bereits im Google-File-Store vor, so genügt es im Prompt darauf zu referenzieren. Ein wiederholtes, zeitaufwändiges Hochladen mit jedem neuen Prompt ist somit nicht notwendig. Die Lebensdauer der Dateien im Google-File-Store ist begrenzt. Die Dateien werden nach einer bestimmten Zeit (z.B. 48 Stunden) automatisch gelöscht. Der Satz an Dateien im Google-File-Store wird als 'Einheit' betrachtet und immer vollständig im Prompt referenziert.
+
+### Umgang mit einem expliziten Cache
+
+Ein Cache beinhaltet 1-n Dateien. Die Dateien werden bei der Erzeugung des Caches tokenisiert. Ein Cache bietet somit zwei Vorteile:
+
+* Im Prompt kann auf den Cache referenziert werden.
+* Die aufwändige Tokenisierung erfolgt nur einmal.
+
+Je größer der Cache ist, desto vorteilhafter ist dessen Nutzung. Ein Cache ist kostenpflicht. Richtig eingesetzt sind schnellere Antwortzeiten und geringere Gesamtkosten möglich. Die Lebensdauer eines Caches kann konfiguriert werden (z.B. 4 h). Das gewählte KI-Modell muss 'Caching' unterstützen. Beim Anlegen wird der Cache vom aktuell gewählten KI-Modell tokenisiert. Anschließend kann der Cache auch nur von diesem KI-Modell genutzt werden.
+
+In einem Prompt kann nur ein Cache referenziert werden kann. Alle Cache-Operationen wirken deshalb immer auf einen modell-spezifischen Cache mit dem logischen Namen "gem-pro-cache" (konfigurierbar). Dieser wird über die Option '-include-cache' in den Prompt übernommen. 
+
+### Impliziter Cache im Chat-Modus
+
+Eine hervorragende Möglichkeit des (impliziten) Cachings bietet der Chat-Modus. Hier werden die Dateien nur bei Eröffnung einer Session, also als Bestandteil des ersten Prompts, übertragen und tokenisiert. Gemini cached diese Daten, sodass sie bei nachfolgenden Prompts (implizit) zur Verfügung stehen.
+
+### Gemini KI-Modelle
+
+Im Kontext dieser Applikation sind folgende KI-Modell-Linien von besonderem Interesse:
+
+* **Flash**-Linie mit den Stärken hohe Geschwindigkeit und Kosteneffizienz, Vielseitigkeit
+* **Pro**-Linie mit den Stärken maximale Leistung und Genauigkeit, fortgeschrittenes Schlussfolgern
+
+Je nach Aufgabenstellung kann auch die Nutzung beider Modell-Linien hilfreich sein:
+
+* Flash-Linie: Generierung mehrerer Lösungsvarianten
+* Benutzer: Auswahl der besten Lösungsvariante
+* Pro-Linie: Verfeinerung der ausgewählten Lösungsvariante
 
 ### Support und Programme
 
@@ -97,6 +148,18 @@ The program is available for BSD, Linux, macOS, and Windows.
 ### Google Gemini AI
 
 This program allows the use of various models from the Google Gemini AI family. Many parameters of the AI model, such as the number of responses or variance, can be adjusted in the configuration.
+
+
+### Google Gemini KI models
+
+The Gemini AI family consists of the following models:
+
+|  | Lite | Flash | Pro |
+|---|---|---|---|
+| Best for | high volume cost-efficient tasks | fast performance on everyday tasks | coding and highly complex tasks |
+| Speed | high | medium | low |
+| Performance | low | medium | high |
+| Cost | low | medium | high |
 
 ### Features
 
@@ -156,7 +219,7 @@ See also [Gemini Apps FAQ](https://gemini.google.com/faq?hl=en).
 
 ### Technical Notes
 
-Each Gemini AI model has a maximum output token limit, which restricts the response length. One token roughly corresponds to approximately 4 characters, 100 tokens to about 60 to 80 English words. If, for example, the AI model defines the output token limit as 8192 tokens, that corresponds to a maximum response length of 4900 to 6500 English words.
+Each Gemini AI model has a maximum output token limit, which restricts the response length. One token roughly corresponds to approximately 4 characters, 100 tokens to about 60 to 80 English words. If, for example, the AI model defines the output token limit as 65536 tokens, that corresponds to a maximum response length of 39300 to 52400 English words.
 
 ### Required Prerequisites
 
@@ -165,6 +228,45 @@ A personal Gemini API key from Google is required for use. Configure the API key
 * Configure the API key in the program environment:
   * macOS, Linux: ```export GEMINI_API_KEY=Your-API-Key```
   * Windows: ```setx GEMINI_API_KEY Your-API-Key``` (requires terminal restart)
+
+### File Handling
+
+Depending on the use case, various options are available for utilizing file contents within the "Prompt" context.
+
+* The content of a textual file is directly inserted into the prompt.
+* A set of files (1 or more) is defined via the command line:
+  * The files subsequently automatically become part of the prompt.
+* A set of files (1 or more) is first uploaded to the Google File Store:
+  * Via the '-include-files' option, the files subsequently become part of the prompt.
+  
+The aforementioned variants can be combined and do not differ in their effect on the prompt. If the set of files to be considered already exists in the Google File Store, it is sufficient to reference it in the prompt. Repeated, time-consuming uploading with every new prompt is therefore not required. The lifespan of the files in the Google File Store is limited. The files are automatically deleted after a certain time (e.g., 48 hours). The set of files in the Google File Store is considered as a 'unit' and is always fully referenced in the prompt.
+
+### Handling an Explicit Cache
+A cache contains 1-n files. The files are tokenized when the cache is created. A cache therefore offers two advantages:
+
+* The cache can be referenced in the prompt.
+* The complex tokenization process is only performed once.
+
+The larger the cache, the more advantageous its use. A cache is chargeable. When used correctly, faster response times and lower total costs are possible. The lifespan of a cache can be configured (e.g., 4 hours). The chosen AI model must support 'Caching'. Upon creation, the cache is tokenized by the currently selected AI model. Subsequently, the cache can only be used by this AI model.
+
+In a prompt, only one cache can be referenced. Therefore, all cache operations always act on a model-specific cache with the logical name "gem-pro-cache" (configurable). This is included in the prompt using the option '-include-cache'.
+
+### Implicit Cache in Chat Mode
+
+Chat mode offers an excellent way of (implicit) caching. Here, the files are only transferred and tokenized when a session is opened, i.e., as part of the first prompt. Gemini caches this data so that it is (implicitly) available for subsequent prompts.
+
+### Gemini AI models
+
+In the context of this application, the following AI model lines are of particular interest:
+
+* **Flash** line with strengths in high speed and cost-efficiency, versatility
+* **Pro** line with strengths in maximum performance and accuracy, advanced reasoning
+
+Depending on the task, using both model lines can also be helpful:
+
+* Flash line: Generation of multiple solution variants
+* User: Selection of the best solution variant
+* Pro line: Refinement of the selected solution variant
 
 ### Support and Programs
 

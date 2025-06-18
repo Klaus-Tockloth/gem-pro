@@ -91,6 +91,10 @@ func createCachedContentConfigToMldev(ac *apiClient, fromObject map[string]any, 
 		setValueByPath(parentObject, []string{"toolConfig"}, fromToolConfig)
 	}
 
+	if getValueByPath(fromObject, []string{"kmsKeyName"}) != nil {
+		return nil, fmt.Errorf("kmsKeyName parameter is not supported in Gemini API")
+	}
+
 	return toObject, nil
 }
 
@@ -302,6 +306,11 @@ func createCachedContentConfigToVertex(ac *apiClient, fromObject map[string]any,
 		}
 
 		setValueByPath(parentObject, []string{"toolConfig"}, fromToolConfig)
+	}
+
+	fromKmsKeyName := getValueByPath(fromObject, []string{"kmsKeyName"})
+	if fromKmsKeyName != nil {
+		setValueByPath(parentObject, []string{"encryption_spec", "kmsKeyName"}, fromKmsKeyName)
 	}
 
 	return toObject, nil
@@ -971,8 +980,12 @@ func (m Caches) List(ctx context.Context, config *ListCachedContentsConfig) (Pag
 // content entry one by one. You do not need to manage pagination
 // tokens or make multiple calls to retrieve all data.
 func (m Caches) All(ctx context.Context) iter.Seq2[*CachedContent, error] {
-	listFunc := func(ctx context.Context, _ map[string]any) ([]*CachedContent, string, error) {
-		resp, err := m.list(ctx, &ListCachedContentsConfig{})
+	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, error) {
+		var c ListCachedContentsConfig
+		if err := mapToStruct(config, &c); err != nil {
+			return nil, "", err
+		}
+		resp, err := m.list(ctx, &c)
 		if err != nil {
 			return nil, "", err
 		}

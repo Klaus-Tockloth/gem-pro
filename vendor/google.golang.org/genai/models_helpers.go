@@ -14,14 +14,10 @@
 
 package genai
 
-const (
-	roleUser = "user"
-)
-
 // Text returns a slice of Content with a single Part with the given text.
 func Text(text string) []*Content {
 	return []*Content{{
-		Role:  roleUser,
+		Role:  RoleUser,
 		Parts: []*Part{{Text: text}},
 	}}
 }
@@ -40,6 +36,6 @@ func (c *Content) setDefaults() {
 		return
 	}
 	if c.Role == "" {
-		c.Role = roleUser
+		c.Role = RoleUser
 	}
 }

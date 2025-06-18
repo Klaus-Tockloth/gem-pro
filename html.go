@@ -21,8 +21,15 @@ func renderMarkdown2HTML(md string) string {
 		fmt.Printf("error [%v] at markdownParser.Convert()", err)
 	}
 
-	// replace HTML elements
 	htmlDataModified := string(buf.String())
+
+	// wrap 'Gemini AI thoughts' in HTML object '<details><summary> ... </summary> ...</details>'
+	htmlDataModified = strings.ReplaceAll(htmlDataModified, "<!-- AI_THOUGHT_SUMMARY_START -->", "<details><summary>Thoughts - Considerations for answering the prompt:")
+	htmlDataModified = strings.ReplaceAll(htmlDataModified, "<!-- AI_THOUGHT_SUMMARY_END -->", "</summary>")
+	htmlDataModified = strings.ReplaceAll(htmlDataModified, "<!-- AI_THOUGHT_CONTENT_START -->", "") // remove marker
+	htmlDataModified = strings.ReplaceAll(htmlDataModified, "<!-- AI_THOUGHT_CONTENT_END -->", "</details>")
+
+	// replace HTML elements
 	for _, item := range progConfig.HTMLReplaceElements {
 		for key, value := range item {
 			htmlDataModified = strings.ReplaceAll(htmlDataModified, key, value)

@@ -6,6 +6,7 @@
 #
 # Releases:
 # - v1.0.0 - 2025/03/11: initial release
+# - v1.1.0 - 2025/05/19: gosec added
 # ------------------------------------
 
 set -v -o verbose
@@ -21,8 +22,9 @@ go mod vendor
 golangci-lint run --no-config --enable gocritic
 revive
 
-# check for known vulnerabilities
+# security
 govulncheck ./...
+gosec -ai-api-provider="gemini" -exclude=G115,G302,G304,G306 ./...
 
 # show compiler version
 go version

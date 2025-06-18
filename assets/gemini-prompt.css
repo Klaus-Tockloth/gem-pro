@@ -1,7 +1,20 @@
-/* default style for gemini-prompt application */
-/* version v0.1.0 - 2025/02/14
-
 /*
+Purpose:
+- Default style for gem-pro (Gemini Prompt) application.
+
+Releases:
+  - v0.1.0 - 2025-02-14: initial release
+  - v0.2.0 - 2025-04-18: minor improvements
+  - v0.3.0 - 2025-05-24: minor improvements
+
+Copyright:
+- © 2025 | Klaus Tockloth
+
+License:
+- MIT License
+
+Description:
+
 Rendering Markdown to HTML - Potential HTML Elements
 ----------------------------------------------------
 gemini-prompt uses the goldmark parser to render Markdown to HTML. goldmark aims for CommonMark compliance, but
@@ -148,6 +161,7 @@ pre {
   overflow-x: auto;
   overflow-y: auto;
   border-radius: 3px;
+  border: 1px solid #e7e7e7;
 }
 
 pre code {
@@ -201,16 +215,15 @@ del { text-decoration: line-through; }
 ins { text-decoration: underline; }
 
 details {
-  margin-bottom: 1em;
-  border: 1px solid #cccccc;
-  padding: 1em;
-  border-radius: 5px;
+  padding: 0.2em 0.4em;
+  border: 1px solid #e7e7e7;
+  border-radius: 3px;
 }
 
 summary {
-  font-weight: bold;
+  font-weight: normal;
   cursor: pointer;
-  padding: 0.5em 0;
+  padding: 0.2em 0;
 }
 
 /* specific goldmark extensions */
@@ -302,6 +315,7 @@ pre[class*="language-"] {
   pre {
     background-color: #333333; /* darker pre background */
     color: #eeeeee;
+    border: 1px solid #555555; /* darker pre border */
   }
 
   hr {

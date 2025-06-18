@@ -19,10 +19,8 @@ package genai
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 func getOperationParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
@@ -226,8 +224,6 @@ func (m Operations) fetchPredictVideosOperation(ctx context.Context, operationNa
 	return response, nil
 }
 
-var experimentalWarningOperationsGetVideosOperation sync.Once
-
 // GetVideosOperation retrieves the status and result of a long-running video generation operation.
 //
 // If the operation is still in progress, the returned GenerateVideosOperation
@@ -235,10 +231,6 @@ var experimentalWarningOperationsGetVideosOperation sync.Once
 // Done will be true, and the Result field will contain the result. If the
 // operation failed, Done will be true, and the Error field will be populated.
 func (m Operations) GetVideosOperation(ctx context.Context, operation *GenerateVideosOperation, config *GetOperationConfig) (*GenerateVideosOperation, error) {
-	experimentalWarningOperationsGetVideosOperation.Do(func() {
-		log.Println("Warning: The method Operations.GetVideosOperation is experimental and may change in future versions.")
-	})
-
 	operationName := operation.Name
 	if operationName == "" {
 		return nil, fmt.Errorf("Operation name is empty")
