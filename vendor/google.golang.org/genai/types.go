@@ -89,6 +89,14 @@ const (
 	HarmCategorySexuallyExplicit HarmCategory = "HARM_CATEGORY_SEXUALLY_EXPLICIT"
 	// Deprecated: Election filter is not longer supported. The harm category is civic integrity.
 	HarmCategoryCivicIntegrity HarmCategory = "HARM_CATEGORY_CIVIC_INTEGRITY"
+	// The harm category is image hate.
+	HarmCategoryImageHate HarmCategory = "HARM_CATEGORY_IMAGE_HATE"
+	// The harm category is image dangerous content.
+	HarmCategoryImageDangerousContent HarmCategory = "HARM_CATEGORY_IMAGE_DANGEROUS_CONTENT"
+	// The harm category is image harassment.
+	HarmCategoryImageHarassment HarmCategory = "HARM_CATEGORY_IMAGE_HARASSMENT"
+	// The harm category is image sexually explicit content.
+	HarmCategoryImageSexuallyExplicit HarmCategory = "HARM_CATEGORY_IMAGE_SEXUALLY_EXPLICIT"
 )
 
 // Specify if the threshold is used for probability or severity score. If not specified,
@@ -149,6 +157,40 @@ const (
 	AuthTypeOauth AuthType = "OAUTH"
 	// OpenID Connect (OIDC) Auth.
 	AuthTypeOidcAuth AuthType = "OIDC_AUTH"
+)
+
+// The API spec that the external API implements.
+type APISpec string
+
+const (
+	// Unspecified API spec. This value should not be used.
+	APISpecUnspecified APISpec = "API_SPEC_UNSPECIFIED"
+	// Simple search API spec.
+	APISpecSimpleSearch APISpec = "SIMPLE_SEARCH"
+	// Elastic search API spec.
+	APISpecElasticSearch APISpec = "ELASTIC_SEARCH"
+)
+
+// The environment being operated.
+type Environment string
+
+const (
+	// Defaults to browser.
+	EnvironmentUnspecified Environment = "ENVIRONMENT_UNSPECIFIED"
+	// Operates in a web browser.
+	EnvironmentBrowser Environment = "ENVIRONMENT_BROWSER"
+)
+
+// Status of the URL retrieval.
+type URLRetrievalStatus string
+
+const (
+	// Default value. This value is unused
+	URLRetrievalStatusUnspecified URLRetrievalStatus = "URL_RETRIEVAL_STATUS_UNSPECIFIED"
+	// URL retrieval is successful.
+	URLRetrievalStatusSuccess URLRetrievalStatus = "URL_RETRIEVAL_STATUS_SUCCESS"
+	// URL retrieval is failed due to error.
+	URLRetrievalStatusError URLRetrievalStatus = "URL_RETRIEVAL_STATUS_ERROR"
 )
 
 // The reason why the model stopped generating tokens.
@@ -232,6 +274,8 @@ const (
 	BlockedReasonBlocklist BlockedReason = "BLOCKLIST"
 	// Candidates blocked due to prohibited content.
 	BlockedReasonProhibitedContent BlockedReason = "PROHIBITED_CONTENT"
+	// Candidates blocked due to unsafe image generation content.
+	BlockedReasonImageSafety BlockedReason = "IMAGE_SAFETY"
 )
 
 // Traffic type. This shows whether a request consumes Pay-As-You-Go or Provisioned
@@ -328,18 +372,6 @@ const (
 	FunctionCallingConfigModeNone FunctionCallingConfigMode = "NONE"
 )
 
-// Status of the URL retrieval.
-type UrlRetrievalStatus string
-
-const (
-	// Default value. This value is unused
-	URLRetrievalStatusUnspecified UrlRetrievalStatus = "URL_RETRIEVAL_STATUS_UNSPECIFIED"
-	// URL retrieval is successful.
-	URLRetrievalStatusSuccess UrlRetrievalStatus = "URL_RETRIEVAL_STATUS_SUCCESS"
-	// URL retrieval is failed due to error.
-	URLRetrievalStatusError UrlRetrievalStatus = "URL_RETRIEVAL_STATUS_ERROR"
-)
-
 // Enum that controls the safety filter level for objectionable content.
 type SafetyFilterLevel string
 
@@ -354,9 +386,12 @@ const (
 type PersonGeneration string
 
 const (
-	PersonGenerationDontAllow  PersonGeneration = "DONT_ALLOW"
+	// Block generation of images of people.
+	PersonGenerationDontAllow PersonGeneration = "DONT_ALLOW"
+	// Generate images of adults, but not children.
 	PersonGenerationAllowAdult PersonGeneration = "ALLOW_ADULT"
-	PersonGenerationAllowAll   PersonGeneration = "ALLOW_ALL"
+	// Generate images that include adults and children.
+	PersonGenerationAllowAll PersonGeneration = "ALLOW_ALL"
 )
 
 // Enum that specifies the language of the text in the prompt.
@@ -415,6 +450,18 @@ const (
 	EditModeProductImage      EditMode = "EDIT_MODE_PRODUCT_IMAGE"
 )
 
+// Enum that controls the compression quality of the generated videos.
+type VideoCompressionQuality string
+
+const (
+	// Optimized video compression quality. This will produce videos
+	// with a compressed, smaller file size.
+	VideoCompressionQualityOptimized VideoCompressionQuality = "OPTIMIZED"
+	// Lossless video compression quality. This will produce videos
+	// with a larger file size.
+	VideoCompressionQualityLossless VideoCompressionQuality = "LOSSLESS"
+)
+
 // State for the lifecycle of a File.
 type FileState string
 
@@ -432,6 +479,38 @@ const (
 	FileSourceUnspecified FileSource = "SOURCE_UNSPECIFIED"
 	FileSourceUploaded    FileSource = "UPLOADED"
 	FileSourceGenerated   FileSource = "GENERATED"
+)
+
+// Job state.
+type JobState string
+
+const (
+	// The job state is unspecified.
+	JobStateUnspecified JobState = "JOB_STATE_UNSPECIFIED"
+	// The job has been just created or resumed and processing has not yet begun.
+	JobStateQueued JobState = "JOB_STATE_QUEUED"
+	// The service is preparing to run the job.
+	JobStatePending JobState = "JOB_STATE_PENDING"
+	// The job is in progress.
+	JobStateRunning JobState = "JOB_STATE_RUNNING"
+	// The job completed successfully.
+	JobStateSucceeded JobState = "JOB_STATE_SUCCEEDED"
+	// The job failed.
+	JobStateFailed JobState = "JOB_STATE_FAILED"
+	// The job is being cancelled. From this state the job may only go to either `JOB_STATE_SUCCEEDED`,
+	// `JOB_STATE_FAILED` or `JOB_STATE_CANCELLED`.
+	JobStateCancelling JobState = "JOB_STATE_CANCELLING"
+	// The job has been cancelled.
+	JobStateCancelled JobState = "JOB_STATE_CANCELLED"
+	// The job has been stopped, and can be resumed.
+	JobStatePaused JobState = "JOB_STATE_PAUSED"
+	// The job has expired.
+	JobStateExpired JobState = "JOB_STATE_EXPIRED"
+	// The job is being updated. Only jobs in the `JOB_STATE_RUNNING` state can be updated.
+	// After updating, the job goes back to the `JOB_STATE_RUNNING` state.
+	JobStateUpdating JobState = "JOB_STATE_UPDATING"
+	// The job is partially succeeded, some results may be missing due to errors.
+	JobStatePartiallySucceeded JobState = "JOB_STATE_PARTIALLY_SUCCEEDED"
 )
 
 // Server content modalities.
@@ -609,8 +688,8 @@ type FileData struct {
 	MIMEType string `json:"mimeType,omitempty"`
 }
 
-// Result of executing the [ExecutableCode]. Always follows a `part` containing the
-// [ExecutableCode].
+// Result of executing the [ExecutableCode]. Only generated when using the [CodeExecution]
+// tool, and always follows a `part` containing the [ExecutableCode].
 type CodeExecutionResult struct {
 	// Required. Outcome of the code execution.
 	Outcome Outcome `json:"outcome,omitempty"`
@@ -620,8 +699,9 @@ type CodeExecutionResult struct {
 }
 
 // Code generated by the model that is meant to be executed, and the result returned
-// to the model. Generated when using the [FunctionDeclaration] tool and [FunctionCallingConfig]
-// mode is set to [Mode.CODE].
+// to the model. Generated when using the [CodeExecution] tool, in which the code will
+// be automatically executed, and a corresponding [CodeExecutionResult] will also be
+// generated.
 type ExecutableCode struct {
 	// Required. The code to be executed.
 	Code string `json:"code,omitempty"`
@@ -896,6 +976,8 @@ type HTTPOptions struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	// Optional. Additional HTTP headers to be sent with the request.
 	Headers http.Header `json:"headers,omitempty"`
+	// Optional. Timeout for the request in milliseconds.
+	Timeout *time.Duration `json:"timeout,omitempty"`
 	// Optional. [Experimental] No forward compatibility is guaranteed for this feature.
 	// Usage of this field is strongly discouraged.
 	ExtrasRequestProvider ExtrasRequestProvider `json:"-"`
@@ -904,6 +986,8 @@ type HTTPOptions struct {
 // [Experimental] No forward compatibility is guaranteed for this feature.
 // Usage of this field is strongly discouraged.
 type ExtrasRequestProvider = func(body map[string]any) map[string]any
+
+type UrlRetrievalStatus = URLRetrievalStatus
 
 // Schema is used to define the format of input/output data.
 // Represents a select subset of an [OpenAPI 3.0 schema
@@ -1002,10 +1086,21 @@ type FunctionDeclaration struct {
 	// 1 optional parameter: type: OBJECT properties: param1: type: STRING param2: type:
 	// INTEGER required: - param1
 	Parameters *Schema `json:"parameters,omitempty"`
+	// Optional. Describes the parameters to the function in JSON Schema format. The schema
+	// must describe an object where the properties are the parameters to the function.
+	// For example: ``` { "type": "object", "properties": { "name": { "type": "string" },
+	// "age": { "type": "integer" } }, "additionalProperties": false, "required": ["name",
+	// "age"], "propertyOrdering": ["name", "age"] } ``` This field is mutually exclusive
+	// with `parameters`.
+	ParametersJsonSchema any `json:"parametersJsonSchema,omitempty"`
 	// Optional. Describes the output from this function in JSON Schema format. Reflects
 	// the Open API 3.03 Response Object. The Schema defines the type used for the response
 	// value of the function.
 	Response *Schema `json:"response,omitempty"`
+	// Optional. Describes the output from this function in JSON Schema format. The value
+	// specified by the schema is the response value of the function. This field is mutually
+	// exclusive with `response`.
+	ResponseJsonSchema any `json:"responseJsonSchema,omitempty"`
 }
 
 // Represents a time interval, encoded as a start time (inclusive) and an end time (exclusive).
@@ -1124,6 +1219,54 @@ type GoogleMaps struct {
 type URLContext struct {
 }
 
+// The API secret.
+type APIAuthAPIKeyConfig struct {
+	// Required. The SecretManager secret version resource name storing API key. e.g. projects/{project}/secrets/{secret}/versions/{version}
+	APIKeySecretVersion string `json:"apiKeySecretVersion,omitempty"`
+	// The API key string. Either this or `api_key_secret_version` must be set.
+	APIKeyString string `json:"apiKeyString,omitempty"`
+}
+
+// The generic reusable API auth config. Deprecated. Please use AuthConfig (google/cloud/aiplatform/master/auth.proto)
+// instead.
+type APIAuth struct {
+	// The API secret.
+	APIKeyConfig *APIAuthAPIKeyConfig `json:"apiKeyConfig,omitempty"`
+}
+
+// The search parameters to use for the ELASTIC_SEARCH spec.
+type ExternalAPIElasticSearchParams struct {
+	// The ElasticSearch index to use.
+	Index string `json:"index,omitempty"`
+	// Optional. Number of hits (chunks) to request. When specified, it is passed to Elasticsearch
+	// as the `num_hits` param.
+	NumHits *int32 `json:"numHits,omitempty"`
+	// The ElasticSearch search template to use.
+	SearchTemplate string `json:"searchTemplate,omitempty"`
+}
+
+// The search parameters to use for SIMPLE_SEARCH spec.
+type ExternalAPISimpleSearchParams struct {
+}
+
+// Retrieve from data source powered by external API for grounding. The external API
+// is not owned by Google, but need to follow the pre-defined API spec.
+type ExternalAPI struct {
+	// The authentication config to access the API. Deprecated. Please use auth_config instead.
+	APIAuth *APIAuth `json:"apiAuth,omitempty"`
+	// The API spec that the external API implements.
+	APISpec APISpec `json:"apiSpec,omitempty"`
+	// The authentication config to access the API.
+	AuthConfig *AuthConfig `json:"authConfig,omitempty"`
+	// Parameters for the elastic search API.
+	ElasticSearchParams *ExternalAPIElasticSearchParams `json:"elasticSearchParams,omitempty"`
+	// The endpoint of the external API. The system will call the API at this endpoint to
+	// retrieve the data for grounding. Example: https://acme.com:443/search
+	Endpoint string `json:"endpoint,omitempty"`
+	// Parameters for the simple search API.
+	SimpleSearchParams *ExternalAPISimpleSearchParams `json:"simpleSearchParams,omitempty"`
+}
+
 // Define data stores within engine to filter on in a search call and configurations
 // for those data stores. For more information, see https://cloud.google.com/generative-ai-app-builder/docs/reference/rpc/google.cloud.discoveryengine.v1#datastorespec
 type VertexAISearchDataStoreSpec struct {
@@ -1238,6 +1381,8 @@ type VertexRAGStore struct {
 type Retrieval struct {
 	// Optional. Deprecated. This option is no longer supported.
 	DisableAttribution bool `json:"disableAttribution,omitempty"`
+	// Use data source powered by external API for grounding.
+	ExternalAPI *ExternalAPI `json:"externalApi,omitempty"`
 	// Set to use data source powered by Vertex AI Search.
 	VertexAISearch *VertexAISearch `json:"vertexAiSearch,omitempty"`
 	// Set to use data source powered by Vertex RAG store. User data is uploaded via the
@@ -1249,6 +1394,12 @@ type Retrieval struct {
 // to the model. See also [ExecutableCode]and [CodeExecutionResult] which are input
 // and output to this tool.
 type ToolCodeExecution struct {
+}
+
+// Tool to support computer use.
+type ToolComputerUse struct {
+	// Required. The environment being operated.
+	Environment Environment `json:"environment,omitempty"`
 }
 
 // Tool details of a tool that the model may use to generate a response.
@@ -1275,6 +1426,9 @@ type Tool struct {
 	URLContext *URLContext `json:"urlContext,omitempty"`
 	// Optional. CodeExecution tool type. Enables the model to execute code as part of generation.
 	CodeExecution *ToolCodeExecution `json:"codeExecution,omitempty"`
+	// Optional. Tool to support the model interacting directly with the computer. If enabled,
+	// it automatically populates computer-use specific Function Declarations.
+	ComputerUse *ToolComputerUse `json:"computerUse,omitempty"`
 }
 
 // Function calling config.
@@ -1452,6 +1606,22 @@ type GenerateContentConfig struct {
 	// If set, a compatible response_mime_type must also be set.
 	// Compatible mimetypes: `application/json`: Schema for JSON response.
 	ResponseSchema *Schema `json:"responseSchema,omitempty"`
+	// Optional. Output schema of the generated response.
+	// This is an alternative to `response_schema` that accepts [JSON
+	// Schema](https://json-schema.org/). If set, `response_schema` must be
+	// omitted, but `response_mime_type` is required. While the full JSON Schema
+	// may be sent, not all features are supported. Specifically, only the
+	// following properties are supported: - `$id` - `$defs` - `$ref` - `$anchor`
+	//   - `type` - `format` - `title` - `description` - `enum` (for strings and
+	// numbers) - `items` - `prefixItems` - `minItems` - `maxItems` - `minimum` -
+	// `maximum` - `anyOf` - `oneOf` (interpreted the same as `anyOf`) -
+	// `properties` - `additionalProperties` - `required` The non-standard
+	// `propertyOrdering` property may also be set. Cyclic references are
+	// unrolled to a limited degree and, as such, may only be used within
+	// non-required properties. (Nullable properties are not sufficient.) If
+	// `$ref` is set on a sub-schema, no other properties, except for than those
+	// starting as a `$`, may be set.
+	ResponseJsonSchema any `json:"responseJsonSchema,omitempty"`
 	// Optional. Configuration for model router requests.
 	RoutingConfig *GenerationConfigRoutingConfig `json:"routingConfig,omitempty"`
 	// Optional. Configuration for model selection.
@@ -1561,7 +1731,7 @@ type URLMetadata struct {
 	// Optional. The URL retrieved by the tool.
 	RetrievedURL string `json:"retrievedUrl,omitempty"`
 	// Optional. Status of the URL retrieval.
-	URLRetrievalStatus UrlRetrievalStatus `json:"urlRetrievalStatus,omitempty"`
+	URLRetrievalStatus URLRetrievalStatus `json:"urlRetrievalStatus,omitempty"`
 }
 
 // Metadata related to URL context retrieval tool.
@@ -1634,7 +1804,8 @@ type Segment struct {
 // Grounding support.
 type GroundingSupport struct {
 	// Confidence score of the support references. Ranges from 0 to 1. 1 is the most confident.
-	// This list must have the same size as the grounding_chunk_indices.
+	// For Gemini 2.0 and before, this list must have the same size as the grounding_chunk_indices.
+	// For Gemini 2.5 and after, this list will be empty and should be ignored.
 	ConfidenceScores []float32 `json:"confidenceScores,omitempty"`
 	// A list of indices (into 'grounding_chunk') specifying the citations associated with
 	// the claim. For instance [1,3,4] means that grounding_chunk[1], grounding_chunk[3],
@@ -1709,6 +1880,10 @@ type SafetyRating struct {
 	Blocked bool `json:"blocked,omitempty"`
 	// Output only. Harm category.
 	Category HarmCategory `json:"category,omitempty"`
+	// Output only. The overwritten threshold for the safety category of Gemini 2.0 image
+	// out. If minors are detected in the output image, the threshold of each safety category
+	// will be overwritten if user sets a lower threshold.
+	OverwrittenThreshold HarmBlockThreshold `json:"overwrittenThreshold,omitempty"`
 	// Output only. Harm probability levels in the content.
 	Probability HarmProbability `json:"probability,omitempty"`
 	// Output only. Harm probability score.
@@ -2010,7 +2185,8 @@ type GenerateImagesConfig struct {
 	// Optional. Number of images to generate.
 	// If empty, the system will choose a default value (currently 4).
 	NumberOfImages int32 `json:"numberOfImages,omitempty"`
-	// Optional. Aspect ratio of the generated images.
+	// Optional. Aspect ratio of the generated images. Supported values are
+	// "1:1", "3:4", "4:3", "9:16", and "16:9".
 	AspectRatio string `json:"aspectRatio,omitempty"`
 	// Optional. Controls how much the model adheres to the text prompt. Large
 	// values increase output and prompt alignment, but may compromise image
@@ -2221,7 +2397,8 @@ type EditImageConfig struct {
 	// Optional. Number of images to generate.
 	// If empty, the system will choose a default value (currently 4).
 	NumberOfImages int32 `json:"numberOfImages,omitempty"`
-	// Optional. Aspect ratio of the generated images.
+	// Optional. Aspect ratio of the generated images. Supported values are
+	// "1:1", "3:4", "4:3", "9:16", and "16:9".
 	AspectRatio string `json:"aspectRatio,omitempty"`
 	// Optional. Controls how much the model adheres to the text prompt. Large
 	// values increase output and prompt alignment, but may compromise image
@@ -2274,6 +2451,15 @@ type upscaleImageAPIConfig struct {
 	// Optional. The level of compression if the ``output_mime_type`` is
 	// ``image/jpeg``.
 	OutputCompressionQuality *int32 `json:"outputCompressionQuality,omitempty"`
+	// Optional. Whether to add an image enhancing step before upscaling.
+	// It is expected to suppress the noise and JPEG compression artifacts
+	// from the input image.
+	EnhanceInputImage bool `json:"enhanceInputImage,omitempty"`
+	// Optional. With a higher image preservation factor, the original image
+	// pixels are more respected. With a lower image preservation factor, the
+	// output image will have be more different from the input image, but
+	// with finer details and less noise.
+	ImagePreservationFactor *float32 `json:"imagePreservationFactor,omitempty"`
 	// Optional.
 	NumberOfImages int32 `json:"numberOfImages,omitempty"`
 	// Optional.
@@ -2421,8 +2607,7 @@ type GenerationConfigThinkingConfig struct {
 	// Optional. Indicates whether to include thoughts in the response. If true, thoughts
 	// are returned only when available.
 	IncludeThoughts bool `json:"includeThoughts,omitempty"`
-	// Optional. Indicates the thinking budget in tokens. This is only applied when enable_thinking
-	// is true.
+	// Optional. Indicates the thinking budget in tokens.
 	ThinkingBudget *int32 `json:"thinkingBudget,omitempty"`
 }
 
@@ -2436,6 +2621,8 @@ type GenerationConfig struct {
 	// Optional. Number of candidates to generate. If empty, the system will choose a default
 	// value (currently 1).
 	CandidateCount int32 `json:"candidateCount,omitempty"`
+	// Optional. If enabled, the model will detect emotions and adapt its responses accordingly.
+	EnableAffectiveDialog *bool `json:"enableAffectiveDialog,omitempty"`
 	// Optional. Frequency penalties.
 	FrequencyPenalty *float32 `json:"frequencyPenalty,omitempty"`
 	// Optional. Logit probabilities.
@@ -2447,6 +2634,19 @@ type GenerationConfig struct {
 	MediaResolution MediaResolution `json:"mediaResolution,omitempty"`
 	// Optional. Positive penalties.
 	PresencePenalty *float32 `json:"presencePenalty,omitempty"`
+	// Optional. Output schema of the generated response. This is an alternative to `response_schema`
+	// that accepts [JSON Schema](https://json-schema.org/). If set, `response_schema` must
+	// be omitted, but `response_mime_type` is required. While the full JSON Schema may
+	// be sent, not all features are supported. Specifically, only the following properties
+	// are supported: - `$id` - `$defs` - `$ref` - `$anchor` - `type` - `format` - `title`
+	// - `description` - `enum` (for strings and numbers) - `items` - `prefixItems` - `minItems`
+	// - `maxItems` - `minimum` - `maximum` - `anyOf` - `oneOf` (interpreted the same as
+	// `anyOf`) - `properties` - `additionalProperties` - `required` The non-standard `propertyOrdering`
+	// property may also be set. Cyclic references are unrolled to a limited degree and,
+	// as such, may only be used within non-required properties. (Nullable properties are
+	// not sufficient.) If `$ref` is set on a sub-schema, no other properties, except for
+	// than those starting as a `$`, may be set.
+	ResponseJsonSchema any `json:"responseJsonSchema,omitempty"`
 	// Optional. If true, export the logprobs results in response.
 	ResponseLogprobs bool `json:"responseLogprobs,omitempty"`
 	// Optional. Output response mimetype of the generated candidate text. Supported mimetype:
@@ -2612,6 +2812,8 @@ type GenerateVideosConfig struct {
 	// Optional. Image to use as the last frame of generated videos. Only supported for
 	// image to video use cases.
 	LastFrame *Image `json:"lastFrame,omitempty"`
+	// Optional. Compression quality of the generated videos.
+	CompressionQuality VideoCompressionQuality `json:"compressionQuality,omitempty"`
 }
 
 // A generated video.
@@ -3043,6 +3245,163 @@ type DeleteFileConfig struct {
 type DeleteFileResponse struct {
 }
 
+// Config for inlined request.
+type InlinedRequest struct {
+	// ID of the model to use. For a list of models, see `Google models
+	// <https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models>`_.
+	Model string `json:"model,omitempty"`
+	// Content of the request.
+	Contents []*Content `json:"contents,omitempty"`
+	// Optional. Configuration that contains optional model parameters.
+	Config *GenerateContentConfig `json:"config,omitempty"`
+}
+
+// Config for `src` parameter.
+type BatchJobSource struct {
+	// Storage format of the input files. Must be one of:
+	// 'jsonl', 'bigquery'.
+	Format string `json:"format,omitempty"`
+	// Optional. The Google Cloud Storage URIs to input files.
+	GCSURI []string `json:"gcsUri,omitempty"`
+	// Optional. The BigQuery URI to input table.
+	BigqueryURI string `json:"bigqueryUri,omitempty"`
+	// Optional. The Gemini Developer API's file resource name of the input data
+	// (e.g. "files/12345").
+	FileName string `json:"fileName,omitempty"`
+	// Optional. The Gemini Developer API's inlined input data to run batch job.
+	InlinedRequests []*InlinedRequest `json:"inlinedRequests,omitempty"`
+}
+
+// Job error.
+type JobError struct {
+	// A list of messages that carry the error details. There is a common set of message
+	// types for APIs to use.
+	Details []string `json:"details,omitempty"`
+	// The status code.
+	Code *int32 `json:"code,omitempty"`
+	// A developer-facing error message, which should be in English. Any user-facing error
+	// message should be localized and sent in the `details` field.
+	Message string `json:"message,omitempty"`
+}
+
+// Config for `inlined_responses` parameter.
+type InlinedResponse struct {
+	// The response to the request.
+	Response *GenerateContentResponse `json:"response,omitempty"`
+	// Optional. The error encountered while processing the request.
+	Error *JobError `json:"error,omitempty"`
+}
+
+// Config for `des` parameter.
+type BatchJobDestination struct {
+	// Storage format of the output files. Must be one of:
+	// 'jsonl', 'bigquery'.
+	Format string `json:"format,omitempty"`
+	// Optional. The Google Cloud Storage URI to the output file.
+	GCSURI string `json:"gcsUri,omitempty"`
+	// Optional. The BigQuery URI to the output table.
+	BigqueryURI string `json:"bigqueryUri,omitempty"`
+	// Optional. The Gemini Developer API's file resource name of the output data
+	// (e.g. "files/12345"). The file will be a JSONL file with a single response
+	// per line. The responses will be GenerateContentResponse messages formatted
+	// as JSON. The responses will be written in the same order as the input
+	// requests.
+	FileName string `json:"fileName,omitempty"`
+	// Optional. The responses to the requests in the batch. Returned when the batch was
+	// built using inlined requests. The responses will be in the same order as
+	// the input requests.
+	InlinedResponses []*InlinedResponse `json:"inlinedResponses,omitempty"`
+}
+
+// Config for optional parameters.
+type CreateBatchJobConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+	// Optional. The user-defined name of this BatchJob.
+	DisplayName string `json:"displayName,omitempty"`
+	// GCS or BigQuery URI prefix for the output predictions. Example:
+	// "gs://path/to/output/data" or "bq://projectId.bqDatasetId.bqTableId".
+	Dest *BatchJobDestination `json:"dest,omitempty"`
+}
+
+// Config for batches.create return value.
+type BatchJob struct {
+	// The resource name of the BatchJob. Output only.".
+	Name string `json:"name,omitempty"`
+	// The display name of the BatchJob.
+	DisplayName string `json:"displayName,omitempty"`
+	// The state of the BatchJob.
+	State JobState `json:"state,omitempty"`
+	// Output only. Only populated when the job's state is JOB_STATE_FAILED or JOB_STATE_CANCELLED.
+	Error *JobError `json:"error,omitempty"`
+	// The time when the BatchJob was created.
+	CreateTime time.Time `json:"createTime,omitempty"`
+	// Output only. Time when the Job for the first time entered the `JOB_STATE_RUNNING`
+	// state.
+	StartTime time.Time `json:"startTime,omitempty"`
+	// The time when the BatchJob was completed.
+	EndTime time.Time `json:"endTime,omitempty"`
+	// The time when the BatchJob was last updated.
+	UpdateTime time.Time `json:"updateTime,omitempty"`
+	// The name of the model that produces the predictions via the BatchJob.
+	Model string `json:"model,omitempty"`
+	// Configuration for the input data.
+	Src *BatchJobSource `json:"src,omitempty"`
+	// Configuration for the output data.
+	Dest *BatchJobDestination `json:"dest,omitempty"`
+}
+
+// Optional parameters.
+type GetBatchJobConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+}
+
+// Optional parameters.
+type CancelBatchJobConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+}
+
+// Config for optional parameters.
+type ListBatchJobsConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+	// Optional. PageSize specifies the maximum number of cached contents to return per
+	// API call. If zero, the server will use a default value.
+	PageSize int32 `json:"pageSize,omitempty"`
+	// Optional. PageToken represents a token used for pagination in API responses. It's
+	// an opaque string that should be passed to subsequent requests to retrieve the next
+	// page of results. An empty PageToken typically indicates that there are no further
+	// pages available.
+	PageToken string `json:"pageToken,omitempty"`
+	// Optional.
+	Filter string `json:"filter,omitempty"`
+}
+
+// Config for batches.list return value.
+type ListBatchJobsResponse struct {
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	BatchJobs []*BatchJob `json:"batchJobs,omitempty"`
+}
+
+// Optional parameters for models.get method.
+type DeleteBatchJobConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+}
+
+// The return value of delete operation.
+type DeleteResourceJob struct {
+	// Optional.
+	Name string `json:"name,omitempty"`
+	// Optional.
+	Done bool `json:"done,omitempty"`
+	// Optional.
+	Error *JobError `json:"error,omitempty"`
+}
+
 type GetOperationConfig struct {
 	// Optional. Used to override HTTP request options.
 	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
@@ -3157,6 +3516,15 @@ type UpscaleImageConfig struct {
 	OutputMIMEType string `json:"outputMimeType,omitempty"`
 	// Optional. The level of compression if the OutputMIMEType is image/jpeg.
 	OutputCompressionQuality *int32 `json:"outputCompressionQuality,omitempty"`
+	// Optional. Whether to add an image enhancing step before upscaling.
+	// It is expected to suppress the noise and JPEG compression artifacts
+	// from the input image.
+	EnhanceInputImage bool `json:"enhanceInputImage,omitempty"`
+	// Optional. With a higher image preservation factor, the original image
+	// pixels are more respected. With a lower image preservation factor, the
+	// output image will have be more different from the input image, but
+	// with finer details and less noise.
+	ImagePreservationFactor *float32 `json:"imagePreservationFactor,omitempty"`
 }
 
 // A raw reference image.
@@ -3282,6 +3650,8 @@ func (r *SubjectReferenceImage) referenceImageAPI() *referenceImageAPI {
 
 // Sent in response to a `LiveGenerateContentSetup` message from the client.
 type LiveServerSetupComplete struct {
+	// Optional. The session ID of the live session.
+	SessionID string `json:"sessionId,omitempty"`
 }
 
 // Audio transcription in Server Conent.

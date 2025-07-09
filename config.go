@@ -458,4 +458,5 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if geminiModelConfig.CachedContent != "" {
 		fmt.Printf("  CachedContent     : %v\n", geminiModelConfig.CachedContent)
 	}
+	fmt.Printf("  ThinkingBudget    : %d\n", progConfig.GeminiMaxThinkingBudget)
 }

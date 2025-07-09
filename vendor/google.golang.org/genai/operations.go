@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-func getOperationParametersToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+func getOperationParametersToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
 	fromOperationName := getValueByPath(fromObject, []string{"operationName"})
@@ -39,7 +39,7 @@ func getOperationParametersToMldev(ac *apiClient, fromObject map[string]any, par
 	return toObject, nil
 }
 
-func getOperationParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+func getOperationParametersToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
 	fromOperationName := getValueByPath(fromObject, []string{"operationName"})
@@ -55,7 +55,7 @@ func getOperationParametersToVertex(ac *apiClient, fromObject map[string]any, pa
 	return toObject, nil
 }
 
-func fetchPredictOperationParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+func fetchPredictOperationParametersToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
 	fromOperationName := getValueByPath(fromObject, []string{"operationName"})
@@ -98,8 +98,8 @@ func (m Operations) getVideosOperation(ctx context.Context, operationName string
 	}
 	var response = new(GenerateVideosOperation)
 	var responseMap map[string]any
-	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
-	var toConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
+	var fromConverter func(map[string]any, map[string]any) (map[string]any, error)
+	var toConverter func(map[string]any, map[string]any) (map[string]any, error)
 	if m.apiClient.clientConfig.Backend == BackendVertexAI {
 		toConverter = getOperationParametersToVertex
 		fromConverter = generateVideosOperationFromVertex
@@ -108,7 +108,7 @@ func (m Operations) getVideosOperation(ctx context.Context, operationName string
 		fromConverter = generateVideosOperationFromMldev
 	}
 
-	body, err := toConverter(m.apiClient, parameterMap, nil)
+	body, err := toConverter(parameterMap, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (m Operations) getVideosOperation(ctx context.Context, operationName string
 	if err != nil {
 		return nil, err
 	}
-	responseMap, err = fromConverter(m.apiClient, responseMap, nil)
+	responseMap, err = fromConverter(responseMap, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +168,8 @@ func (m Operations) fetchPredictVideosOperation(ctx context.Context, operationNa
 	}
 	var response = new(GenerateVideosOperation)
 	var responseMap map[string]any
-	var fromConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
-	var toConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
+	var fromConverter func(map[string]any, map[string]any) (map[string]any, error)
+	var toConverter func(map[string]any, map[string]any) (map[string]any, error)
 	if m.apiClient.clientConfig.Backend == BackendVertexAI {
 		toConverter = fetchPredictOperationParametersToVertex
 		fromConverter = generateVideosOperationFromVertex
@@ -179,7 +179,7 @@ func (m Operations) fetchPredictVideosOperation(ctx context.Context, operationNa
 
 	}
 
-	body, err := toConverter(m.apiClient, parameterMap, nil)
+	body, err := toConverter(parameterMap, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (m Operations) fetchPredictVideosOperation(ctx context.Context, operationNa
 	if err != nil {
 		return nil, err
 	}
-	responseMap, err = fromConverter(m.apiClient, responseMap, nil)
+	responseMap, err = fromConverter(responseMap, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.14.0](https://github.com/googleapis/go-genai/compare/v1.13.0...v1.14.0) (2025-07-01)
+
+
+### Features
+
+* Enable HttpOptions timeout ([1ca3aaf](https://github.com/googleapis/go-genai/commit/1ca3aaf8f4cfa786226eba1dbfb361dda574f2f7))
+* Support Batches delete ([b2cf7bb](https://github.com/googleapis/go-genai/commit/b2cf7bb6b1f091fb18e4a8bb40e07480e7d448a4))
+* Support different media input in Vertex Live API ([b6650b5](https://github.com/googleapis/go-genai/commit/b6650b51d88028cab0eb674028aef130185ae560))
+
+## [1.13.0](https://github.com/googleapis/go-genai/compare/v1.12.0...v1.13.0) (2025-06-25)
+
+
+### Features
+
+* Add compressionQuality enum for generate_videos ([061e567](https://github.com/googleapis/go-genai/commit/061e5674e1744d3bdaade62d3fb8f94c65e77c4c))
+* Add enhance_input_image and image_preservation_factor fields for upscale_image ([6b9e07f](https://github.com/googleapis/go-genai/commit/6b9e07fee4864b54690e84ee9b67cf8a588d89d9))
+* Batches support in Go ([dcae33f](https://github.com/googleapis/go-genai/commit/dcae33f83abfbad8b3cd14930ca0514a61a217d8))
+* expose the responseJsonSchema in GenerateContentConfig ([611adde](https://github.com/googleapis/go-genai/commit/611adde2f1989e66b6e5d029f7d077e7630ada71))
+
+## [1.12.0](https://github.com/googleapis/go-genai/compare/v1.11.1...v1.12.0) (2025-06-18)
+
+
+### Features
+
+* enable json schema for controlled output and function declaration. ([f2abe6b](https://github.com/googleapis/go-genai/commit/f2abe6b739b57ef46b1f7b459b9ce1fed3a6956c))
+
 ## [1.11.1](https://github.com/googleapis/go-genai/compare/v1.11.0...v1.11.1) (2025-06-13)
 
 

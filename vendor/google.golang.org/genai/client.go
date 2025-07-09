@@ -42,6 +42,8 @@ type Client struct {
 	Files *Files
 	// Operations provides access to long-running operations.
 	Operations *Operations
+	// Batches provides access to the Batch service.
+	Batches *Batches
 }
 
 // Backend is the GenAI backend to use for the client.
@@ -323,6 +325,7 @@ func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 		Chats:        &Chats{apiClient: ac},
 		Operations:   &Operations{apiClient: ac},
 		Files:        &Files{apiClient: ac},
+		Batches:      &Batches{apiClient: ac},
 	}
 	return c, nil
 }

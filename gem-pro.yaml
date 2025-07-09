@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.5 - 2025-06-18: corresponding to program release
+# - v0.5.1 - 2025-07-06: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -29,9 +29,6 @@ GeminiLiteAiModel: models/gemini-2.5-flash-lite-preview-06-17
 GeminiFlashAiModel: models/gemini-2.5-flash
 GeminiProAiModel: models/gemini-2.5-pro
 GeminiDefaultAiModel: models/gemini-2.5-flash
-
-# Gemini alternate AI model (e.g. pro model)
-GeminiAlternateAiModel: models/gemini-2.5-pro-preview-05-06
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
 GeminiResponseModalities:
