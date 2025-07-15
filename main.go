@@ -14,7 +14,8 @@ Releases:
   - v0.4.0 - 2025-04-02: libs updated, chat mode feature added, compiled with go v1.24.2
   - v0.4.1 - 2025-04-05: user info concerning prompt processing mode (chat, non-chat)
   - v0.5.0 - 2025-06-18: file and cache support, thoughts support, libs updated, go v1.24.4, options added
-  - v0.5.1 - 2025-07-05: control output ThinkingBudget, libs updated
+  - v0.5.1 - 2025-07-05: control output ThinkingBudget, libs updated, CSS improved
+  - v0.5.2 - 2025-07-13: CSS improved, markdown cleanup before parsing, libs updated, compiled with go v1.24.5
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -63,8 +64,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.5.1"
-	progDate    = "2025-07-05"
+	progVersion = "v0.5.2"
+	progDate    = "2025-07-13"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

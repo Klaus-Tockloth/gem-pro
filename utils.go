@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -395,4 +396,56 @@ func removeSpacesBetweenNewlineAndCodeblock(input string) string {
 		}
 	}
 	return output.String()
+}
+
+/*
+cleanMarkdownIndentation corrects faulty indentations, but preserves the indentation of list items.
+It aims to preserve indentation for:
+- Lines within code blocks (which start and end with three backticks).
+- List items (lines starting with *, -, +, or a number followed by a period).
+For all other lines, it removes leading spaces to ensure the content is left-aligned.
+*/
+func cleanMarkdownIndentation(markdown string) string {
+	var result strings.Builder
+	scanner := bufio.NewScanner(strings.NewReader(markdown))
+
+	inFencedCodeBlock := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmedLine := strings.TrimSpace(line)
+
+		if strings.HasPrefix(trimmedLine, "```") { // also cover ```go etc.
+			inFencedCodeBlock = !inFencedCodeBlock
+			result.WriteString(line + "\n")
+			continue
+		}
+
+		if inFencedCodeBlock {
+			result.WriteString(line + "\n")
+		} else {
+			// Check if the line is a list item. Yes: preserve original line with its indentation. No: remove indentation.
+			if isListItem(strings.TrimLeft(line, " ")) {
+				result.WriteString(line + "\n")
+			} else {
+				correctedLine := strings.TrimLeft(line, " ")
+				result.WriteString(correctedLine + "\n")
+			}
+		}
+	}
+	return strings.TrimSuffix(result.String(), "\n")
+}
+
+/*
+isListItem checks if a line looks like a list item after trimming.
+*/
+func isListItem(trimmedLine string) bool {
+	if strings.HasPrefix(trimmedLine, "* ") ||
+		strings.HasPrefix(trimmedLine, "- ") ||
+		strings.HasPrefix(trimmedLine, "+ ") {
+		return true
+	}
+	// checks for numbered lists like "1. ", "12. " etc.
+	matched, _ := regexp.MatchString(`^\d+\.\s`, trimmedLine)
+	return matched
 }

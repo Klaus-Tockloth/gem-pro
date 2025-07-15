@@ -192,7 +192,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 						regularContent.WriteString(fmt.Sprintf("[%s](%s)\n\n", filename, encodedURL))
 					}
 				}
-				if part.Text != "" { // Sicherstellen, dass part.Text nicht von einem Thought stammt
+				if part.Text != "" { // ensure that part.Text is nit from Thought
 					regularContent.WriteString(removeSpacesBetweenNewlineAndCodeblock(part.Text))
 					regularContent.WriteString("\n")
 				}
@@ -211,7 +211,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 
 		// add regular content
 		responseString.WriteString(regularContent.String())
-		responseString.WriteString("\n") // Eine zusätzliche neue Zeile nach dem regulären Inhalt
+		responseString.WriteString("\n")
 
 		// build list of text citation source URIs
 		citationURIs := []string{}
@@ -357,9 +357,12 @@ to the current request / response files in Markdown, ANSI, and HTML formats.
 func appendResponseString(responseString strings.Builder) {
 	originalMarkdownWithHTMLComments := responseString.String()
 
+	// cleanup Markdown
+	cleanedMarkdown := cleanMarkdownIndentation(originalMarkdownWithHTMLComments)
+
 	// 1. prepare Markdown for direct file saving (and ANSI rendering)
 	// replace HTML comment tags with pure Markdown equivalents
-	markdownForFileAndAnsi := originalMarkdownWithHTMLComments
+	markdownForFileAndAnsi := cleanedMarkdown
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_SUMMARY_START -->", "**Thoughts - Considerations for answering the prompt:**\n\n")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_SUMMARY_END -->", "")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_CONTENT_START -->", "")

@@ -6,6 +6,7 @@ Releases:
   - v0.1.0 - 2025-02-14: initial release
   - v0.2.0 - 2025-04-18: minor improvements
   - v0.3.0 - 2025-05-24: minor improvements
+  - v0.4.0 - 2025-07-12: minor improvements
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -158,10 +159,12 @@ code {
 
 pre {
   max-height: 50em;
-  overflow-x: auto;
+  /* overflow-x: auto; */
   overflow-y: auto;
   border-radius: 3px;
   border: 1px solid #e7e7e7;
+  white-space: pre-wrap;
+  overflow-wrap: break-all;
 }
 
 pre code {

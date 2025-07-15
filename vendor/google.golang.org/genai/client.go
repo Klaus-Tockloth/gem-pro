@@ -264,7 +264,7 @@ func NewClient(ctx context.Context, cc *ClientConfig) (*Client, error) {
 		}
 	}
 
-	if cc.Backend == BackendVertexAI && cc.Credentials == nil && cc.APIKey == "" {
+	if cc.Backend == BackendVertexAI && cc.Credentials == nil && cc.APIKey == "" && cc.HTTPClient == nil {
 		cred, err := credentials.DetectDefault(&credentials.DetectOptions{
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		})
