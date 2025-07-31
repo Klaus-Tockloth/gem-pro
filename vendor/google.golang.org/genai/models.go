@@ -290,15 +290,6 @@ func schemaToMldev(fromObject map[string]any, parentObject map[string]any) (toOb
 	return toObject, nil
 }
 
-func modelSelectionConfigToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"featureSelectionPreference"}) != nil {
-		return nil, fmt.Errorf("featureSelectionPreference parameter is not supported in Gemini API")
-	}
-
-	return toObject, nil
-}
-
 func safetySettingToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 	if getValueByPath(fromObject, []string{"method"}) != nil {
@@ -418,64 +409,6 @@ func googleSearchRetrievalToMldev(fromObject map[string]any, parentObject map[st
 		}
 
 		setValueByPath(toObject, []string{"dynamicRetrievalConfig"}, fromDynamicRetrievalConfig)
-	}
-
-	return toObject, nil
-}
-
-func enterpriseWebSearchToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	return toObject, nil
-}
-
-func apiKeyConfigToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"apiKeyString"}) != nil {
-		return nil, fmt.Errorf("apiKeyString parameter is not supported in Gemini API")
-	}
-
-	return toObject, nil
-}
-
-func authConfigToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"apiKeyConfig"}) != nil {
-		return nil, fmt.Errorf("apiKeyConfig parameter is not supported in Gemini API")
-	}
-
-	fromAuthType := getValueByPath(fromObject, []string{"authType"})
-	if fromAuthType != nil {
-		setValueByPath(toObject, []string{"authType"}, fromAuthType)
-	}
-
-	fromGoogleServiceAccountConfig := getValueByPath(fromObject, []string{"googleServiceAccountConfig"})
-	if fromGoogleServiceAccountConfig != nil {
-		setValueByPath(toObject, []string{"googleServiceAccountConfig"}, fromGoogleServiceAccountConfig)
-	}
-
-	fromHttpBasicAuthConfig := getValueByPath(fromObject, []string{"httpBasicAuthConfig"})
-	if fromHttpBasicAuthConfig != nil {
-		setValueByPath(toObject, []string{"httpBasicAuthConfig"}, fromHttpBasicAuthConfig)
-	}
-
-	fromOauthConfig := getValueByPath(fromObject, []string{"oauthConfig"})
-	if fromOauthConfig != nil {
-		setValueByPath(toObject, []string{"oauthConfig"}, fromOauthConfig)
-	}
-
-	fromOidcConfig := getValueByPath(fromObject, []string{"oidcConfig"})
-	if fromOidcConfig != nil {
-		setValueByPath(toObject, []string{"oidcConfig"}, fromOidcConfig)
-	}
-
-	return toObject, nil
-}
-
-func googleMapsToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"authConfig"}) != nil {
-		return nil, fmt.Errorf("authConfig parameter is not supported in Gemini API")
 	}
 
 	return toObject, nil
@@ -1124,6 +1057,10 @@ func generateImagesConfigToMldev(fromObject map[string]any, parentObject map[str
 		return nil, fmt.Errorf("addWatermark parameter is not supported in Gemini API")
 	}
 
+	if getValueByPath(fromObject, []string{"imageSize"}) != nil {
+		return nil, fmt.Errorf("imageSize parameter is not supported in Gemini API")
+	}
+
 	if getValueByPath(fromObject, []string{"enhancePrompt"}) != nil {
 		return nil, fmt.Errorf("enhancePrompt parameter is not supported in Gemini API")
 	}
@@ -1381,27 +1318,26 @@ func imageToMldev(fromObject map[string]any, parentObject map[string]any) (toObj
 	return toObject, nil
 }
 
-func videoToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+func generateVideosSourceToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
-	fromUri := getValueByPath(fromObject, []string{"uri"})
-	if fromUri != nil {
-		setValueByPath(toObject, []string{"video", "uri"}, fromUri)
+	fromPrompt := getValueByPath(fromObject, []string{"prompt"})
+	if fromPrompt != nil {
+		setValueByPath(parentObject, []string{"instances[0]", "prompt"}, fromPrompt)
 	}
 
-	fromVideoBytes := getValueByPath(fromObject, []string{"videoBytes"})
-	if fromVideoBytes != nil {
-		fromVideoBytes, err = tBytes(fromVideoBytes)
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToMldev(fromImage.(map[string]any), toObject)
 		if err != nil {
 			return nil, err
 		}
 
-		setValueByPath(toObject, []string{"video", "encodedVideo"}, fromVideoBytes)
+		setValueByPath(parentObject, []string{"instances[0]", "image"}, fromImage)
 	}
 
-	fromMimeType := getValueByPath(fromObject, []string{"mimeType"})
-	if fromMimeType != nil {
-		setValueByPath(toObject, []string{"encoding"}, fromMimeType)
+	if getValueByPath(fromObject, []string{"video"}) != nil {
+		return nil, fmt.Errorf("video parameter is not supported in Gemini API")
 	}
 
 	return toObject, nil
@@ -1501,6 +1437,20 @@ func generateVideosParametersToMldev(ac *apiClient, fromObject map[string]any, p
 		}
 
 		setValueByPath(toObject, []string{"instances[0]", "image"}, fromImage)
+	}
+
+	if getValueByPath(fromObject, []string{"video"}) != nil {
+		return nil, fmt.Errorf("video parameter is not supported in Gemini API")
+	}
+
+	fromSource := getValueByPath(fromObject, []string{"source"})
+	if fromSource != nil {
+		fromSource, err = generateVideosSourceToMldev(fromSource.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromSource)
 	}
 
 	fromConfig := getValueByPath(fromObject, []string{"config"})
@@ -2189,28 +2139,6 @@ func voiceConfigToVertex(fromObject map[string]any, parentObject map[string]any)
 	return toObject, nil
 }
 
-func speakerVoiceConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"speaker"}) != nil {
-		return nil, fmt.Errorf("speaker parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"voiceConfig"}) != nil {
-		return nil, fmt.Errorf("voiceConfig parameter is not supported in Vertex AI")
-	}
-
-	return toObject, nil
-}
-
-func multiSpeakerVoiceConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"speakerVoiceConfigs"}) != nil {
-		return nil, fmt.Errorf("speakerVoiceConfigs parameter is not supported in Vertex AI")
-	}
-
-	return toObject, nil
-}
-
 func speechConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -2644,6 +2572,11 @@ func generateImagesConfigToVertex(fromObject map[string]any, parentObject map[st
 		setValueByPath(parentObject, []string{"parameters", "addWatermark"}, fromAddWatermark)
 	}
 
+	fromImageSize := getValueByPath(fromObject, []string{"imageSize"})
+	if fromImageSize != nil {
+		setValueByPath(parentObject, []string{"parameters", "sampleImageSize"}, fromImageSize)
+	}
+
 	fromEnhancePrompt := getValueByPath(fromObject, []string{"enhancePrompt"})
 	if fromEnhancePrompt != nil {
 		setValueByPath(parentObject, []string{"parameters", "enhancePrompt"}, fromEnhancePrompt)
@@ -2905,6 +2838,11 @@ func editImageConfigToVertex(fromObject map[string]any, parentObject map[string]
 	fromOutputCompressionQuality := getValueByPath(fromObject, []string{"outputCompressionQuality"})
 	if fromOutputCompressionQuality != nil {
 		setValueByPath(parentObject, []string{"parameters", "outputOptions", "compressionQuality"}, fromOutputCompressionQuality)
+	}
+
+	fromAddWatermark := getValueByPath(fromObject, []string{"addWatermark"})
+	if fromAddWatermark != nil {
+		setValueByPath(parentObject, []string{"parameters", "addWatermark"}, fromAddWatermark)
 	}
 
 	fromEditMode := getValueByPath(fromObject, []string{"editMode"})
@@ -3318,6 +3256,37 @@ func videoToVertex(fromObject map[string]any, parentObject map[string]any) (toOb
 	return toObject, nil
 }
 
+func generateVideosSourceToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromPrompt := getValueByPath(fromObject, []string{"prompt"})
+	if fromPrompt != nil {
+		setValueByPath(parentObject, []string{"instances[0]", "prompt"}, fromPrompt)
+	}
+
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToVertex(fromImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "image"}, fromImage)
+	}
+
+	fromVideo := getValueByPath(fromObject, []string{"video"})
+	if fromVideo != nil {
+		fromVideo, err = videoToVertex(fromVideo.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "video"}, fromVideo)
+	}
+
+	return toObject, nil
+}
+
 func generateVideosConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3425,6 +3394,26 @@ func generateVideosParametersToVertex(ac *apiClient, fromObject map[string]any, 
 		}
 
 		setValueByPath(toObject, []string{"instances[0]", "image"}, fromImage)
+	}
+
+	fromVideo := getValueByPath(fromObject, []string{"video"})
+	if fromVideo != nil {
+		fromVideo, err = videoToVertex(fromVideo.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"instances[0]", "video"}, fromVideo)
+	}
+
+	fromSource := getValueByPath(fromObject, []string{"source"})
+	if fromSource != nil {
+		fromSource, err = generateVideosSourceToVertex(fromSource.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromSource)
 	}
 
 	fromConfig := getValueByPath(fromObject, []string{"config"})
@@ -3730,12 +3719,6 @@ func generateContentResponseFromMldev(fromObject map[string]any, parentObject ma
 	return toObject, nil
 }
 
-func contentEmbeddingStatisticsFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	return toObject, nil
-}
-
 func contentEmbeddingFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3878,12 +3861,6 @@ func generateImagesResponseFromMldev(fromObject map[string]any, parentObject map
 	return toObject, nil
 }
 
-func endpointFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	return toObject, nil
-}
-
 func tunedModelInfoFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3901,12 +3878,6 @@ func tunedModelInfoFromMldev(fromObject map[string]any, parentObject map[string]
 	if fromUpdateTime != nil {
 		setValueByPath(toObject, []string{"updateTime"}, fromUpdateTime)
 	}
-
-	return toObject, nil
-}
-
-func checkpointFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
 
 	return toObject, nil
 }
@@ -5046,6 +5017,7 @@ func (m Models) generateContentStream(ctx context.Context, model string, content
 	}
 	delete(body, "_url")
 	delete(body, "config")
+
 	err = sendStreamRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions, &rs)
 	if err != nil {
 		return yieldErrorAndEndIterator[GenerateContentResponse](err)
@@ -5794,10 +5766,10 @@ func (m Models) ComputeTokens(ctx context.Context, model string, contents []*Con
 }
 
 // GenerateVideos creates a long-running video generation operation.
-func (m Models) GenerateVideos(ctx context.Context, model string, prompt string, image *Image, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
+func (m Models) generateVideos(ctx context.Context, model string, prompt string, image *Image, video *Video, source *GenerateVideosSource, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
 	parameterMap := make(map[string]any)
 
-	kwargs := map[string]any{"model": model, "prompt": prompt, "image": image, "config": config}
+	kwargs := map[string]any{"model": model, "prompt": prompt, "image": image, "video": video, "source": source, "config": config}
 	deepMarshal(kwargs, &parameterMap)
 
 	var httpOptions *HTTPOptions
@@ -5984,4 +5956,20 @@ func (m Models) EditImage(ctx context.Context, model, prompt string, referenceIm
 		refImages[i] = img.referenceImageAPI()
 	}
 	return m.editImage(ctx, model, prompt, refImages, config)
+}
+
+// GenerateVideos creates a long-running video generation operation.
+// This method is kept for backward compatibility. Use GenerateVideosFromSource instead.
+func (m Models) GenerateVideos(ctx context.Context, model string, prompt string, image *Image, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
+	// Does not support Video or GenerateVideosSource.
+	return m.generateVideos(ctx, model, prompt, image, nil, nil, config)
+}
+
+// GenerateVideos creates a long-running video generation operation.
+func (m Models) GenerateVideosFromSource(ctx context.Context, model string, source *GenerateVideosSource, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
+	if source == nil {
+		return nil, fmt.Errorf("source is required")
+	}
+	// Rely on backend validation for combinations of prompt, image, and video.
+	return m.generateVideos(ctx, model, "", nil, nil, source, config)
 }

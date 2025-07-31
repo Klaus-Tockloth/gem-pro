@@ -1,7 +1,7 @@
-# cloud.google.com/go v0.121.3
+# cloud.google.com/go v0.121.4
 ## explicit; go 1.23.0
 cloud.google.com/go/civil
-# cloud.google.com/go/auth v0.16.2
+# cloud.google.com/go/auth v0.16.3
 ## explicit; go 1.23.0
 cloud.google.com/go/auth
 cloud.google.com/go/auth/credentials
@@ -170,7 +170,7 @@ github.com/mitchellh/go-wordwrap
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/yuin/goldmark v1.7.12
+# github.com/yuin/goldmark v1.7.13
 ## explicit; go 1.22
 github.com/yuin/goldmark
 github.com/yuin/goldmark/ast
@@ -262,13 +262,13 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genai v1.15.0
+# google.golang.org/genai v1.17.0
 ## explicit; go 1.23
 google.golang.org/genai
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0
 ## explicit; go 1.23.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.73.0
+# google.golang.org/grpc v1.74.2
 ## explicit; go 1.23.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes

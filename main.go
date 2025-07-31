@@ -16,6 +16,7 @@ Releases:
   - v0.5.0 - 2025-06-18: file and cache support, thoughts support, libs updated, go v1.24.4, options added
   - v0.5.1 - 2025-07-05: control output ThinkingBudget, libs updated, CSS improved
   - v0.5.2 - 2025-07-13: CSS improved, markdown cleanup before parsing, libs updated, compiled with go v1.24.5
+  - v0.5.3 - 2025-07-30: libs updated, fix for panic: 'interface conversion: ast.Node is *ast.AutoLink, not *ast.Link'
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -64,8 +65,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.5.2"
-	progDate    = "2025-07-13"
+	progVersion = "v0.5.3"
+	progDate    = "2025-07-30"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

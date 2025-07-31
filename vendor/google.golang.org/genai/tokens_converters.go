@@ -16,9 +16,7 @@
 
 package genai
 
-import (
-	"fmt"
-)
+import ()
 
 func liveConnectConstraintsToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
@@ -41,19 +39,6 @@ func liveConnectConstraintsToMldev(ac *apiClient, fromObject map[string]any, par
 		}
 
 		setValueByPath(toObject, []string{"config"}, fromConfig)
-	}
-
-	return toObject, nil
-}
-
-func liveConnectConstraintsToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-	if getValueByPath(fromObject, []string{"model"}) != nil {
-		return nil, fmt.Errorf("model parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"config"}) != nil {
-		return nil, fmt.Errorf("config parameter is not supported in Vertex AI")
 	}
 
 	return toObject, nil
@@ -90,32 +75,6 @@ func createAuthTokenConfigToMldev(ac *apiClient, fromObject map[string]any, pare
 	fromLockAdditionalFields := getValueByPath(fromObject, []string{"lockAdditionalFields"})
 	if fromLockAdditionalFields != nil {
 		setValueByPath(parentObject, []string{"fieldMask"}, fromLockAdditionalFields)
-	}
-
-	return toObject, nil
-}
-
-func createAuthTokenConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
-	toObject = make(map[string]any)
-
-	if getValueByPath(fromObject, []string{"expireTime"}) != nil {
-		return nil, fmt.Errorf("expireTime parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"newSessionExpireTime"}) != nil {
-		return nil, fmt.Errorf("newSessionExpireTime parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"uses"}) != nil {
-		return nil, fmt.Errorf("uses parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"liveConnectConstraints"}) != nil {
-		return nil, fmt.Errorf("liveConnectConstraints parameter is not supported in Vertex AI")
-	}
-
-	if getValueByPath(fromObject, []string{"lockAdditionalFields"}) != nil {
-		return nil, fmt.Errorf("lockAdditionalFields parameter is not supported in Vertex AI")
 	}
 
 	return toObject, nil

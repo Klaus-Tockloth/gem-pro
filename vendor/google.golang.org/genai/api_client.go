@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"reflect"
 	"runtime"
 	"slices"
 	"strconv"
@@ -184,6 +185,9 @@ func patchHTTPOptions(options, patchOptions HTTPOptions) (*HTTPOptions, error) {
 	if patchOptions.ExtrasRequestProvider != nil {
 		copyOption.ExtrasRequestProvider = patchOptions.ExtrasRequestProvider
 	}
+	if patchOptions.ExtraBody != nil {
+		copyOption.ExtraBody = patchOptions.ExtraBody
+	}
 	// Request timeout config overrides client timeout config.
 	// So we need a pointer type so that we know the request timeout
 	// is explicitly set or not.
@@ -227,8 +231,11 @@ func buildRequest(ctx context.Context, ac *apiClient, path string, body map[stri
 		return nil, nil, err
 	}
 
+	if patchedHTTPOptions.ExtraBody != nil {
+		recursiveMapMerge(body, patchedHTTPOptions.ExtraBody)
+	}
+
 	if patchedHTTPOptions.ExtrasRequestProvider != nil {
-		log.Printf("Warning: Usage of ExtrasRequestProvider is strongly discouraged. No forward compatibility is guaranteed.")
 		body = httpOptions.ExtrasRequestProvider(body)
 	}
 
@@ -257,6 +264,36 @@ func buildRequest(ctx context.Context, ac *apiClient, path string, body map[stri
 	}
 
 	return req, patchedHTTPOptions, nil
+}
+
+// recursiveMapMerge recursively merges key-value pairs from a source map (`src`)
+// into a destination map (`dest`), modifying `dest` in-place.
+//
+// If a key exists in both maps and both corresponding values are maps
+// of type `map[string]any`, it merges them recursively. Otherwise, the value
+// from `src` overwrites the value in `dest`.
+//
+// The function logs a warning if a key's value in `dest` is overwritten by a
+// value of a different type from `src`.
+func recursiveMapMerge(dest, src map[string]any) {
+	if dest == nil || src == nil {
+		return
+	}
+	for key, value := range src {
+		targetVal, keyExists := dest[key]
+		destMap, isDestMap := targetVal.(map[string]any)
+		srcMap, isSrcMap := value.(map[string]any)
+
+		if keyExists && isDestMap && isSrcMap {
+			recursiveMapMerge(destMap, srcMap)
+		} else if keyExists && targetVal != nil && value != nil &&
+			reflect.TypeOf(targetVal) != reflect.TypeOf(value) {
+			log.Printf("Warning: Type mismatch for key '%s'. Existing type: %T, new type: %T. Overwriting.", key, targetVal, value)
+			dest[key] = value
+		} else {
+			dest[key] = value
+		}
+	}
 }
 
 // TODO(b/428730853): HTTP Client timeout should be considered.
@@ -326,7 +363,12 @@ func deserializeUnaryResponse(resp *http.Response) (map[string]any, error) {
 			return nil, fmt.Errorf("deserializeUnaryResponse: error unmarshalling response: %w\n%s", err, respBody)
 		}
 	}
-	output["httpHeaders"] = resp.Header
+
+	httpResponse := map[string]any{
+		"headers": resp.Header,
+		"body":    respBody,
+	}
+	output["sdkHttpResponse"] = httpResponse
 	return output, nil
 }
 
