@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.5.3 - 2025-07-30: corresponding to program release
+# - v0.6.0 - 2025-09-17: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -86,11 +86,17 @@ GeminiMaxOutputTokens:
 # with the model. System instructions are provided via text file (e.g. gemini-system-instruction.txt).
 GeminiSystemInstruction:
 
+# allows the AI model to generate and execute program code (in a sandbox) to find the correct solution
+GeminiCodeExecution: true
+
 # ground responses with Google Search (not supported by all AI models, affects other settings)
 GeminiGroundigWithGoogleSearch: true
 
-# max thinking budget (e.g. 0-24576) (AI model must support this setting, 0 disables thinking)
-GeminiMaxThinkingBudget: 8000
+# max thinking budget (AI model must support this setting, 0 disables thinking)
+# Lite, Flash : 0-24576 (24576 = use as much budget as possible)
+# Pro         : 0-32768 (32768 = use as much budget as possible)
+# Warning: Unlimited thinking can result in high prompt costs.
+GeminiMaxThinkingBudget: 8192
 
 # include thoughts in the response (true, false) (AI model must support this setting)
 GeminiIncludeThoughts: true

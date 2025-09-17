@@ -1,5 +1,19 @@
 # Changes
 
+## [0.8.1](https://github.com/googleapis/google-cloud-go/compare/compute/metadata/v0.8.0...compute/metadata/v0.8.1) (2025-09-16)
+
+
+### Bug Fixes
+
+* **compute/metadata:** Use separate client for subscribe methods  ([#12885](https://github.com/googleapis/google-cloud-go/issues/12885)) ([76b80f8](https://github.com/googleapis/google-cloud-go/commit/76b80f8df9bf9339d175407e8c15936fe1ac1c9c))
+
+## [0.8.0](https://github.com/googleapis/google-cloud-go/compare/compute/metadata/v0.7.0...compute/metadata/v0.8.0) (2025-08-06)
+
+
+### Features
+
+* **compute/metadata:** Add Options.UseDefaultClient ([#12657](https://github.com/googleapis/google-cloud-go/issues/12657)) ([1a88209](https://github.com/googleapis/google-cloud-go/commit/1a8820900f20e038291c4bb2c5284a449196e81f)), refs [#11078](https://github.com/googleapis/google-cloud-go/issues/11078)
+
 ## [0.7.0](https://github.com/googleapis/google-cloud-go/compare/compute/metadata/v0.6.0...compute/metadata/v0.7.0) (2025-05-13)
 
 

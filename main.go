@@ -1,3 +1,4 @@
+//go:fmt off
 /*
 Purpose:
 - gemini prompt (gem-pro)
@@ -17,6 +18,9 @@ Releases:
   - v0.5.1 - 2025-07-05: control output ThinkingBudget, libs updated, CSS improved
   - v0.5.2 - 2025-07-13: CSS improved, markdown cleanup before parsing, libs updated, compiled with go v1.24.5
   - v0.5.3 - 2025-07-30: libs updated, fix for panic: 'interface conversion: ast.Node is *ast.AutoLink, not *ast.Link'
+  - v0.6.0 - 2025-09-17: 'code execution' support added, 'Tool use tokens' added to 'Tokens' details,
+                         thinking config handling modified, option '-replace-mimetypes' added,
+						 libs updated, compiled with go v1.25.1
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -32,13 +36,16 @@ Remarks:
 
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support for "Code execution".
-- Support for "Function calling".
-- Support for "Stop sequence".
+- Support for "URL Content" (e.g. via option '-urllist file').
+- Support for "Function Calling" (probably not possible for this general purpose application).
+- Support for "Stop Sequence".
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
 */
+//go:fmt on
+
+// main package
 package main
 
 import (
@@ -65,8 +72,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.5.3"
-	progDate    = "2025-07-30"
+	progVersion = "v0.6.0"
+	progDate    = "2025-09-17"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -102,29 +109,33 @@ type CacheToHandle struct {
 // cacheToHandle holds all data concerning AI model specific cache
 var cacheToHandle CacheToHandle
 
+// ReplacementMIMETypeMap holds two MIME types for replacing 'key' with 'value'
+var ReplacementMIMETypeMap map[string]string
+
 // command line parameters
 var (
-	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
-	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
-	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
-	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
-	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
-	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
-	topk         = flag.Int("topk", -1, "Sets the maximum number of tokens to consider at each sampling step (Top-K sampling).\nOverrides the value in the YAML config.")
-	maxtokens    = flag.Int("maxtokens", -1, "Sets the maximum number of tokens for the generated response. Useful for constraining output length.\nOverrides the value in the YAML config.")
-	filelist     = flag.String("filelist", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
-	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
-	listModels   = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
-	chatmode     = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
-	uploadFiles  = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
-	deleteFiles  = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
-	listFiles    = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
-	includeFiles = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
-	createCache  = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
-	deleteCache  = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
-	listCache    = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
-	includeCache = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
+	liteModel        = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
+	flashModel       = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
+	proModel         = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
+	defaultModel     = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
+	candidates       = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
+	temperature      = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
+	topp             = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
+	topk             = flag.Int("topk", -1, "Sets the maximum number of tokens to consider at each sampling step (Top-K sampling).\nOverrides the value in the YAML config.")
+	maxtokens        = flag.Int("maxtokens", -1, "Sets the maximum number of tokens for the generated response. Useful for constraining output length.\nOverrides the value in the YAML config.")
+	filelist         = flag.String("filelist", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
+	config           = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	listModels       = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
+	chatmode         = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
+	uploadFiles      = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
+	deleteFiles      = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
+	listFiles        = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
+	includeFiles     = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
+	createCache      = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
+	deleteCache      = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
+	listCache        = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
+	includeCache     = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
+	replaceMIMETypes = flag.String("replace-mimetypes", "", "Replaces MIME type 'A' with 'B' (e.g. 'text/x-perl=text/plain').\nExpects a comma separates key-value list of MIME type pairs.")
 )
 
 /*
@@ -148,6 +159,15 @@ func main() {
 
 	flag.Usage = printUsage
 	flag.Parse()
+
+	// build replacement MIME type map
+	if *replaceMIMETypes != "" {
+		ReplacementMIMETypeMap, err = parseMIMETypeList(*replaceMIMETypes)
+		if err != nil {
+			fmt.Printf("error [%v] parsing replacement MIME type list\n", err)
+			os.Exit(1)
+		}
+	}
 
 	if !fileExists(*config) {
 		writeConfig()
@@ -201,9 +221,16 @@ func main() {
 	} else {
 		for _, fileToHandle := range filesToHandle {
 			if fileToHandle.State != "error" {
+				// add replacement MIME type (e.g. 'text/x-perl -> text/plain')
+				mimeType := fileToHandle.MimeType
+				if ReplacementMIMETypeMap != nil {
+					replacement, ok := ReplacementMIMETypeMap[fileToHandle.MimeType]
+					if ok {
+						mimeType += fmt.Sprintf(" -> %s", replacement)
+					}
+				}
 				fmt.Printf("  %-5s %s (%s, %s, %s)\n",
-					fileToHandle.State, fileToHandle.Filepath,
-					fileToHandle.LastUpdate, fileToHandle.FileSize, fileToHandle.MimeType)
+					fileToHandle.State, fileToHandle.Filepath, fileToHandle.LastUpdate, fileToHandle.FileSize, mimeType)
 			} else {
 				fmt.Printf("  %-5s %s %s\n",
 					fileToHandle.State, fileToHandle.Filepath, fileToHandle.ErrorMessage)

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"reflect"
 )
 
 func videoMetadataToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
@@ -82,6 +83,27 @@ func fileDataToMldev(fromObject map[string]any, parentObject map[string]any) (to
 	return toObject, nil
 }
 
+func functionCallToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromId := getValueByPath(fromObject, []string{"id"})
+	if fromId != nil {
+		setValueByPath(toObject, []string{"id"}, fromId)
+	}
+
+	fromArgs := getValueByPath(fromObject, []string{"args"})
+	if fromArgs != nil {
+		setValueByPath(toObject, []string{"args"}, fromArgs)
+	}
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		setValueByPath(toObject, []string{"name"}, fromName)
+	}
+
+	return toObject, nil
+}
+
 func partToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -125,6 +147,16 @@ func partToMldev(fromObject map[string]any, parentObject map[string]any) (toObje
 		setValueByPath(toObject, []string{"thoughtSignature"}, fromThoughtSignature)
 	}
 
+	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
+	if fromFunctionCall != nil {
+		fromFunctionCall, err = functionCallToMldev(fromFunctionCall.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
+	}
+
 	fromCodeExecutionResult := getValueByPath(fromObject, []string{"codeExecutionResult"})
 	if fromCodeExecutionResult != nil {
 		setValueByPath(toObject, []string{"codeExecutionResult"}, fromCodeExecutionResult)
@@ -133,11 +165,6 @@ func partToMldev(fromObject map[string]any, parentObject map[string]any) (toObje
 	fromExecutableCode := getValueByPath(fromObject, []string{"executableCode"})
 	if fromExecutableCode != nil {
 		setValueByPath(toObject, []string{"executableCode"}, fromExecutableCode)
-	}
-
-	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
-	if fromFunctionCall != nil {
-		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
 	}
 
 	fromFunctionResponse := getValueByPath(fromObject, []string{"functionResponse"})
@@ -379,6 +406,10 @@ func googleSearchToMldev(fromObject map[string]any, parentObject map[string]any)
 		setValueByPath(toObject, []string{"timeRangeFilter"}, fromTimeRangeFilter)
 	}
 
+	if getValueByPath(fromObject, []string{"excludeDomains"}) != nil {
+		return nil, fmt.Errorf("excludeDomains parameter is not supported in Gemini API")
+	}
+
 	return toObject, nil
 }
 
@@ -416,6 +447,17 @@ func googleSearchRetrievalToMldev(fromObject map[string]any, parentObject map[st
 
 func urlContextToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	return toObject, nil
+}
+
+func toolComputerUseToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromEnvironment := getValueByPath(fromObject, []string{"environment"})
+	if fromEnvironment != nil {
+		setValueByPath(toObject, []string{"environment"}, fromEnvironment)
+	}
 
 	return toObject, nil
 }
@@ -475,14 +517,19 @@ func toolToMldev(fromObject map[string]any, parentObject map[string]any) (toObje
 		setValueByPath(toObject, []string{"urlContext"}, fromUrlContext)
 	}
 
+	fromComputerUse := getValueByPath(fromObject, []string{"computerUse"})
+	if fromComputerUse != nil {
+		fromComputerUse, err = toolComputerUseToMldev(fromComputerUse.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"computerUse"}, fromComputerUse)
+	}
+
 	fromCodeExecution := getValueByPath(fromObject, []string{"codeExecution"})
 	if fromCodeExecution != nil {
 		setValueByPath(toObject, []string{"codeExecution"}, fromCodeExecution)
-	}
-
-	fromComputerUse := getValueByPath(fromObject, []string{"computerUse"})
-	if fromComputerUse != nil {
-		setValueByPath(toObject, []string{"computerUse"}, fromComputerUse)
 	}
 
 	return toObject, nil
@@ -1057,8 +1104,9 @@ func generateImagesConfigToMldev(fromObject map[string]any, parentObject map[str
 		return nil, fmt.Errorf("addWatermark parameter is not supported in Gemini API")
 	}
 
-	if getValueByPath(fromObject, []string{"imageSize"}) != nil {
-		return nil, fmt.Errorf("imageSize parameter is not supported in Gemini API")
+	fromImageSize := getValueByPath(fromObject, []string{"imageSize"})
+	if fromImageSize != nil {
+		setValueByPath(parentObject, []string{"parameters", "sampleImageSize"}, fromImageSize)
 	}
 
 	if getValueByPath(fromObject, []string{"enhancePrompt"}) != nil {
@@ -1373,8 +1421,9 @@ func generateVideosConfigToMldev(fromObject map[string]any, parentObject map[str
 		setValueByPath(parentObject, []string{"parameters", "aspectRatio"}, fromAspectRatio)
 	}
 
-	if getValueByPath(fromObject, []string{"resolution"}) != nil {
-		return nil, fmt.Errorf("resolution parameter is not supported in Gemini API")
+	fromResolution := getValueByPath(fromObject, []string{"resolution"})
+	if fromResolution != nil {
+		setValueByPath(parentObject, []string{"parameters", "resolution"}, fromResolution)
 	}
 
 	fromPersonGeneration := getValueByPath(fromObject, []string{"personGeneration"})
@@ -1402,6 +1451,14 @@ func generateVideosConfigToMldev(fromObject map[string]any, parentObject map[str
 
 	if getValueByPath(fromObject, []string{"lastFrame"}) != nil {
 		return nil, fmt.Errorf("lastFrame parameter is not supported in Gemini API")
+	}
+
+	if getValueByPath(fromObject, []string{"referenceImages"}) != nil {
+		return nil, fmt.Errorf("referenceImages parameter is not supported in Gemini API")
+	}
+
+	if getValueByPath(fromObject, []string{"mask"}) != nil {
+		return nil, fmt.Errorf("mask parameter is not supported in Gemini API")
 	}
 
 	if getValueByPath(fromObject, []string{"compressionQuality"}) != nil {
@@ -1529,6 +1586,27 @@ func fileDataToVertex(fromObject map[string]any, parentObject map[string]any) (t
 	return toObject, nil
 }
 
+func functionCallToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromId := getValueByPath(fromObject, []string{"id"})
+	if fromId != nil {
+		setValueByPath(toObject, []string{"id"}, fromId)
+	}
+
+	fromArgs := getValueByPath(fromObject, []string{"args"})
+	if fromArgs != nil {
+		setValueByPath(toObject, []string{"args"}, fromArgs)
+	}
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		setValueByPath(toObject, []string{"name"}, fromName)
+	}
+
+	return toObject, nil
+}
+
 func partToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -1572,6 +1650,16 @@ func partToVertex(fromObject map[string]any, parentObject map[string]any) (toObj
 		setValueByPath(toObject, []string{"thoughtSignature"}, fromThoughtSignature)
 	}
 
+	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
+	if fromFunctionCall != nil {
+		fromFunctionCall, err = functionCallToVertex(fromFunctionCall.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
+	}
+
 	fromCodeExecutionResult := getValueByPath(fromObject, []string{"codeExecutionResult"})
 	if fromCodeExecutionResult != nil {
 		setValueByPath(toObject, []string{"codeExecutionResult"}, fromCodeExecutionResult)
@@ -1580,11 +1668,6 @@ func partToVertex(fromObject map[string]any, parentObject map[string]any) (toObj
 	fromExecutableCode := getValueByPath(fromObject, []string{"executableCode"})
 	if fromExecutableCode != nil {
 		setValueByPath(toObject, []string{"executableCode"}, fromExecutableCode)
-	}
-
-	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
-	if fromFunctionCall != nil {
-		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
 	}
 
 	fromFunctionResponse := getValueByPath(fromObject, []string{"functionResponse"})
@@ -1837,6 +1920,11 @@ func googleSearchToVertex(fromObject map[string]any, parentObject map[string]any
 		setValueByPath(toObject, []string{"timeRangeFilter"}, fromTimeRangeFilter)
 	}
 
+	fromExcludeDomains := getValueByPath(fromObject, []string{"excludeDomains"})
+	if fromExcludeDomains != nil {
+		setValueByPath(toObject, []string{"excludeDomains"}, fromExcludeDomains)
+	}
+
 	return toObject, nil
 }
 
@@ -1874,6 +1962,11 @@ func googleSearchRetrievalToVertex(fromObject map[string]any, parentObject map[s
 
 func enterpriseWebSearchToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromExcludeDomains := getValueByPath(fromObject, []string{"excludeDomains"})
+	if fromExcludeDomains != nil {
+		setValueByPath(toObject, []string{"excludeDomains"}, fromExcludeDomains)
+	}
 
 	return toObject, nil
 }
@@ -1952,6 +2045,17 @@ func urlContextToVertex(fromObject map[string]any, parentObject map[string]any) 
 	return toObject, nil
 }
 
+func toolComputerUseToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromEnvironment := getValueByPath(fromObject, []string{"environment"})
+	if fromEnvironment != nil {
+		setValueByPath(toObject, []string{"environment"}, fromEnvironment)
+	}
+
+	return toObject, nil
+}
+
 func toolToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -2020,14 +2124,19 @@ func toolToVertex(fromObject map[string]any, parentObject map[string]any) (toObj
 		setValueByPath(toObject, []string{"urlContext"}, fromUrlContext)
 	}
 
+	fromComputerUse := getValueByPath(fromObject, []string{"computerUse"})
+	if fromComputerUse != nil {
+		fromComputerUse, err = toolComputerUseToVertex(fromComputerUse.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"computerUse"}, fromComputerUse)
+	}
+
 	fromCodeExecution := getValueByPath(fromObject, []string{"codeExecution"})
 	if fromCodeExecution != nil {
 		setValueByPath(toObject, []string{"codeExecution"}, fromCodeExecution)
-	}
-
-	fromComputerUse := getValueByPath(fromObject, []string{"computerUse"})
-	if fromComputerUse != nil {
-		setValueByPath(toObject, []string{"computerUse"}, fromComputerUse)
 	}
 
 	return toObject, nil
@@ -2902,6 +3011,11 @@ func editImageParametersToVertex(ac *apiClient, fromObject map[string]any, paren
 func upscaleImageAPIConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromOutputGcsUri := getValueByPath(fromObject, []string{"outputGcsUri"})
+	if fromOutputGcsUri != nil {
+		setValueByPath(parentObject, []string{"parameters", "storageUri"}, fromOutputGcsUri)
+	}
+
 	fromIncludeRaiReason := getValueByPath(fromObject, []string{"includeRaiReason"})
 	if fromIncludeRaiReason != nil {
 		setValueByPath(parentObject, []string{"parameters", "includeRaiReason"}, fromIncludeRaiReason)
@@ -2971,6 +3085,259 @@ func upscaleImageAPIParametersToVertex(ac *apiClient, fromObject map[string]any,
 	fromConfig := getValueByPath(fromObject, []string{"config"})
 	if fromConfig != nil {
 		fromConfig, err = upscaleImageAPIConfigToVertex(fromConfig.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func productImageToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromProductImage := getValueByPath(fromObject, []string{"productImage"})
+	if fromProductImage != nil {
+		fromProductImage, err = imageToVertex(fromProductImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"image"}, fromProductImage)
+	}
+
+	return toObject, nil
+}
+
+func recontextImageSourceToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromPrompt := getValueByPath(fromObject, []string{"prompt"})
+	if fromPrompt != nil {
+		setValueByPath(parentObject, []string{"instances[0]", "prompt"}, fromPrompt)
+	}
+
+	fromPersonImage := getValueByPath(fromObject, []string{"personImage"})
+	if fromPersonImage != nil {
+		fromPersonImage, err = imageToVertex(fromPersonImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "personImage", "image"}, fromPersonImage)
+	}
+
+	fromProductImages := getValueByPath(fromObject, []string{"productImages"})
+	if fromProductImages != nil {
+		fromProductImages, err = applyConverterToSlice(fromProductImages.([]any), productImageToVertex)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "productImages"}, fromProductImages)
+	}
+
+	return toObject, nil
+}
+
+func recontextImageConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromNumberOfImages := getValueByPath(fromObject, []string{"numberOfImages"})
+	if fromNumberOfImages != nil {
+		setValueByPath(parentObject, []string{"parameters", "sampleCount"}, fromNumberOfImages)
+	}
+
+	fromBaseSteps := getValueByPath(fromObject, []string{"baseSteps"})
+	if fromBaseSteps != nil {
+		setValueByPath(parentObject, []string{"parameters", "editConfig", "baseSteps"}, fromBaseSteps)
+	}
+
+	fromOutputGcsUri := getValueByPath(fromObject, []string{"outputGcsUri"})
+	if fromOutputGcsUri != nil {
+		setValueByPath(parentObject, []string{"parameters", "storageUri"}, fromOutputGcsUri)
+	}
+
+	fromSeed := getValueByPath(fromObject, []string{"seed"})
+	if fromSeed != nil {
+		setValueByPath(parentObject, []string{"parameters", "seed"}, fromSeed)
+	}
+
+	fromSafetyFilterLevel := getValueByPath(fromObject, []string{"safetyFilterLevel"})
+	if fromSafetyFilterLevel != nil {
+		setValueByPath(parentObject, []string{"parameters", "safetySetting"}, fromSafetyFilterLevel)
+	}
+
+	fromPersonGeneration := getValueByPath(fromObject, []string{"personGeneration"})
+	if fromPersonGeneration != nil {
+		setValueByPath(parentObject, []string{"parameters", "personGeneration"}, fromPersonGeneration)
+	}
+
+	fromAddWatermark := getValueByPath(fromObject, []string{"addWatermark"})
+	if fromAddWatermark != nil {
+		setValueByPath(parentObject, []string{"parameters", "addWatermark"}, fromAddWatermark)
+	}
+
+	fromOutputMimeType := getValueByPath(fromObject, []string{"outputMimeType"})
+	if fromOutputMimeType != nil {
+		setValueByPath(parentObject, []string{"parameters", "outputOptions", "mimeType"}, fromOutputMimeType)
+	}
+
+	fromOutputCompressionQuality := getValueByPath(fromObject, []string{"outputCompressionQuality"})
+	if fromOutputCompressionQuality != nil {
+		setValueByPath(parentObject, []string{"parameters", "outputOptions", "compressionQuality"}, fromOutputCompressionQuality)
+	}
+
+	fromEnhancePrompt := getValueByPath(fromObject, []string{"enhancePrompt"})
+	if fromEnhancePrompt != nil {
+		setValueByPath(parentObject, []string{"parameters", "enhancePrompt"}, fromEnhancePrompt)
+	}
+
+	return toObject, nil
+}
+
+func recontextImageParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromModel := getValueByPath(fromObject, []string{"model"})
+	if fromModel != nil {
+		fromModel, err = tModel(ac, fromModel)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_url", "model"}, fromModel)
+	}
+
+	fromSource := getValueByPath(fromObject, []string{"source"})
+	if fromSource != nil {
+		fromSource, err = recontextImageSourceToVertex(fromSource.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromSource)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		fromConfig, err = recontextImageConfigToVertex(fromConfig.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromConfig)
+	}
+
+	return toObject, nil
+}
+
+func scribbleImageToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToVertex(fromImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"image"}, fromImage)
+	}
+
+	return toObject, nil
+}
+
+func segmentImageSourceToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromPrompt := getValueByPath(fromObject, []string{"prompt"})
+	if fromPrompt != nil {
+		setValueByPath(parentObject, []string{"instances[0]", "prompt"}, fromPrompt)
+	}
+
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToVertex(fromImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "image"}, fromImage)
+	}
+
+	fromScribbleImage := getValueByPath(fromObject, []string{"scribbleImage"})
+	if fromScribbleImage != nil {
+		fromScribbleImage, err = scribbleImageToVertex(fromScribbleImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "scribble"}, fromScribbleImage)
+	}
+
+	return toObject, nil
+}
+
+func segmentImageConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromMode := getValueByPath(fromObject, []string{"mode"})
+	if fromMode != nil {
+		setValueByPath(parentObject, []string{"parameters", "mode"}, fromMode)
+	}
+
+	fromMaxPredictions := getValueByPath(fromObject, []string{"maxPredictions"})
+	if fromMaxPredictions != nil {
+		setValueByPath(parentObject, []string{"parameters", "maxPredictions"}, fromMaxPredictions)
+	}
+
+	fromConfidenceThreshold := getValueByPath(fromObject, []string{"confidenceThreshold"})
+	if fromConfidenceThreshold != nil {
+		setValueByPath(parentObject, []string{"parameters", "confidenceThreshold"}, fromConfidenceThreshold)
+	}
+
+	fromMaskDilation := getValueByPath(fromObject, []string{"maskDilation"})
+	if fromMaskDilation != nil {
+		setValueByPath(parentObject, []string{"parameters", "maskDilation"}, fromMaskDilation)
+	}
+
+	fromBinaryColorThreshold := getValueByPath(fromObject, []string{"binaryColorThreshold"})
+	if fromBinaryColorThreshold != nil {
+		setValueByPath(parentObject, []string{"parameters", "binaryColorThreshold"}, fromBinaryColorThreshold)
+	}
+
+	return toObject, nil
+}
+
+func segmentImageParametersToVertex(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromModel := getValueByPath(fromObject, []string{"model"})
+	if fromModel != nil {
+		fromModel, err = tModel(ac, fromModel)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_url", "model"}, fromModel)
+	}
+
+	fromSource := getValueByPath(fromObject, []string{"source"})
+	if fromSource != nil {
+		fromSource, err = segmentImageSourceToVertex(fromSource.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"config"}, fromSource)
+	}
+
+	fromConfig := getValueByPath(fromObject, []string{"config"})
+	if fromConfig != nil {
+		fromConfig, err = segmentImageConfigToVertex(fromConfig.(map[string]any), toObject)
 		if err != nil {
 			return nil, err
 		}
@@ -3287,6 +3654,48 @@ func generateVideosSourceToVertex(fromObject map[string]any, parentObject map[st
 	return toObject, nil
 }
 
+func videoGenerationReferenceImageToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToVertex(fromImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"image"}, fromImage)
+	}
+
+	fromReferenceType := getValueByPath(fromObject, []string{"referenceType"})
+	if fromReferenceType != nil {
+		setValueByPath(toObject, []string{"referenceType"}, fromReferenceType)
+	}
+
+	return toObject, nil
+}
+
+func videoGenerationMaskToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromImage := getValueByPath(fromObject, []string{"image"})
+	if fromImage != nil {
+		fromImage, err = imageToVertex(fromImage.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"_self"}, fromImage)
+	}
+
+	fromMaskMode := getValueByPath(fromObject, []string{"maskMode"})
+	if fromMaskMode != nil {
+		setValueByPath(toObject, []string{"maskMode"}, fromMaskMode)
+	}
+
+	return toObject, nil
+}
+
 func generateVideosConfigToVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3358,6 +3767,26 @@ func generateVideosConfigToVertex(fromObject map[string]any, parentObject map[st
 		}
 
 		setValueByPath(parentObject, []string{"instances[0]", "lastFrame"}, fromLastFrame)
+	}
+
+	fromReferenceImages := getValueByPath(fromObject, []string{"referenceImages"})
+	if fromReferenceImages != nil {
+		fromReferenceImages, err = applyConverterToSlice(fromReferenceImages.([]any), videoGenerationReferenceImageToVertex)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "referenceImages"}, fromReferenceImages)
+	}
+
+	fromMask := getValueByPath(fromObject, []string{"mask"})
+	if fromMask != nil {
+		fromMask, err = videoGenerationMaskToVertex(fromMask.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(parentObject, []string{"instances[0]", "mask"}, fromMask)
 	}
 
 	fromCompressionQuality := getValueByPath(fromObject, []string{"compressionQuality"})
@@ -3482,6 +3911,27 @@ func fileDataFromMldev(fromObject map[string]any, parentObject map[string]any) (
 	return toObject, nil
 }
 
+func functionCallFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromId := getValueByPath(fromObject, []string{"id"})
+	if fromId != nil {
+		setValueByPath(toObject, []string{"id"}, fromId)
+	}
+
+	fromArgs := getValueByPath(fromObject, []string{"args"})
+	if fromArgs != nil {
+		setValueByPath(toObject, []string{"args"}, fromArgs)
+	}
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		setValueByPath(toObject, []string{"name"}, fromName)
+	}
+
+	return toObject, nil
+}
+
 func partFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -3525,6 +3975,16 @@ func partFromMldev(fromObject map[string]any, parentObject map[string]any) (toOb
 		setValueByPath(toObject, []string{"thoughtSignature"}, fromThoughtSignature)
 	}
 
+	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
+	if fromFunctionCall != nil {
+		fromFunctionCall, err = functionCallFromMldev(fromFunctionCall.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
+	}
+
 	fromCodeExecutionResult := getValueByPath(fromObject, []string{"codeExecutionResult"})
 	if fromCodeExecutionResult != nil {
 		setValueByPath(toObject, []string{"codeExecutionResult"}, fromCodeExecutionResult)
@@ -3533,11 +3993,6 @@ func partFromMldev(fromObject map[string]any, parentObject map[string]any) (toOb
 	fromExecutableCode := getValueByPath(fromObject, []string{"executableCode"})
 	if fromExecutableCode != nil {
 		setValueByPath(toObject, []string{"executableCode"}, fromExecutableCode)
-	}
-
-	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
-	if fromFunctionCall != nil {
-		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
 	}
 
 	fromFunctionResponse := getValueByPath(fromObject, []string{"functionResponse"})
@@ -3691,6 +4146,11 @@ func candidateFromMldev(fromObject map[string]any, parentObject map[string]any) 
 func generateContentResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromCandidates := getValueByPath(fromObject, []string{"candidates"})
 	if fromCandidates != nil {
 		fromCandidates, err = applyConverterToSlice(fromCandidates.([]any), candidateFromMldev)
@@ -3709,6 +4169,11 @@ func generateContentResponseFromMldev(fromObject map[string]any, parentObject ma
 	fromPromptFeedback := getValueByPath(fromObject, []string{"promptFeedback"})
 	if fromPromptFeedback != nil {
 		setValueByPath(toObject, []string{"promptFeedback"}, fromPromptFeedback)
+	}
+
+	fromResponseId := getValueByPath(fromObject, []string{"responseId"})
+	if fromResponseId != nil {
+		setValueByPath(toObject, []string{"responseId"}, fromResponseId)
 	}
 
 	fromUsageMetadata := getValueByPath(fromObject, []string{"usageMetadata"})
@@ -3738,6 +4203,11 @@ func embedContentMetadataFromMldev(fromObject map[string]any, parentObject map[s
 
 func embedContentResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromEmbeddings := getValueByPath(fromObject, []string{"embeddings"})
 	if fromEmbeddings != nil {
@@ -3838,6 +4308,11 @@ func generatedImageFromMldev(fromObject map[string]any, parentObject map[string]
 func generateImagesResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromGeneratedImages := getValueByPath(fromObject, []string{"predictions"})
 	if fromGeneratedImages != nil {
 		fromGeneratedImages, err = applyConverterToSlice(fromGeneratedImages.([]any), generatedImageFromMldev)
@@ -3936,6 +4411,11 @@ func modelFromMldev(fromObject map[string]any, parentObject map[string]any) (toO
 func listModelsResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
 		setValueByPath(toObject, []string{"nextPageToken"}, fromNextPageToken)
@@ -3962,11 +4442,21 @@ func listModelsResponseFromMldev(fromObject map[string]any, parentObject map[str
 func deleteModelResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	return toObject, nil
 }
 
 func countTokensResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromTotalTokens := getValueByPath(fromObject, []string{"totalTokens"})
 	if fromTotalTokens != nil {
@@ -4148,6 +4638,27 @@ func fileDataFromVertex(fromObject map[string]any, parentObject map[string]any) 
 	return toObject, nil
 }
 
+func functionCallFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromId := getValueByPath(fromObject, []string{"id"})
+	if fromId != nil {
+		setValueByPath(toObject, []string{"id"}, fromId)
+	}
+
+	fromArgs := getValueByPath(fromObject, []string{"args"})
+	if fromArgs != nil {
+		setValueByPath(toObject, []string{"args"}, fromArgs)
+	}
+
+	fromName := getValueByPath(fromObject, []string{"name"})
+	if fromName != nil {
+		setValueByPath(toObject, []string{"name"}, fromName)
+	}
+
+	return toObject, nil
+}
+
 func partFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -4191,6 +4702,16 @@ func partFromVertex(fromObject map[string]any, parentObject map[string]any) (toO
 		setValueByPath(toObject, []string{"thoughtSignature"}, fromThoughtSignature)
 	}
 
+	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
+	if fromFunctionCall != nil {
+		fromFunctionCall, err = functionCallFromVertex(fromFunctionCall.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
+	}
+
 	fromCodeExecutionResult := getValueByPath(fromObject, []string{"codeExecutionResult"})
 	if fromCodeExecutionResult != nil {
 		setValueByPath(toObject, []string{"codeExecutionResult"}, fromCodeExecutionResult)
@@ -4199,11 +4720,6 @@ func partFromVertex(fromObject map[string]any, parentObject map[string]any) (toO
 	fromExecutableCode := getValueByPath(fromObject, []string{"executableCode"})
 	if fromExecutableCode != nil {
 		setValueByPath(toObject, []string{"executableCode"}, fromExecutableCode)
-	}
-
-	fromFunctionCall := getValueByPath(fromObject, []string{"functionCall"})
-	if fromFunctionCall != nil {
-		setValueByPath(toObject, []string{"functionCall"}, fromFunctionCall)
 	}
 
 	fromFunctionResponse := getValueByPath(fromObject, []string{"functionResponse"})
@@ -4357,6 +4873,11 @@ func candidateFromVertex(fromObject map[string]any, parentObject map[string]any)
 func generateContentResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromCandidates := getValueByPath(fromObject, []string{"candidates"})
 	if fromCandidates != nil {
 		fromCandidates, err = applyConverterToSlice(fromCandidates.([]any), candidateFromVertex)
@@ -4372,11 +4893,6 @@ func generateContentResponseFromVertex(fromObject map[string]any, parentObject m
 		setValueByPath(toObject, []string{"createTime"}, fromCreateTime)
 	}
 
-	fromResponseId := getValueByPath(fromObject, []string{"responseId"})
-	if fromResponseId != nil {
-		setValueByPath(toObject, []string{"responseId"}, fromResponseId)
-	}
-
 	fromModelVersion := getValueByPath(fromObject, []string{"modelVersion"})
 	if fromModelVersion != nil {
 		setValueByPath(toObject, []string{"modelVersion"}, fromModelVersion)
@@ -4385,6 +4901,11 @@ func generateContentResponseFromVertex(fromObject map[string]any, parentObject m
 	fromPromptFeedback := getValueByPath(fromObject, []string{"promptFeedback"})
 	if fromPromptFeedback != nil {
 		setValueByPath(toObject, []string{"promptFeedback"}, fromPromptFeedback)
+	}
+
+	fromResponseId := getValueByPath(fromObject, []string{"responseId"})
+	if fromResponseId != nil {
+		setValueByPath(toObject, []string{"responseId"}, fromResponseId)
 	}
 
 	fromUsageMetadata := getValueByPath(fromObject, []string{"usageMetadata"})
@@ -4445,6 +4966,11 @@ func embedContentMetadataFromVertex(fromObject map[string]any, parentObject map[
 
 func embedContentResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromEmbeddings := getValueByPath(fromObject, []string{"predictions[]", "embeddings"})
 	if fromEmbeddings != nil {
@@ -4555,6 +5081,11 @@ func generatedImageFromVertex(fromObject map[string]any, parentObject map[string
 func generateImagesResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromGeneratedImages := getValueByPath(fromObject, []string{"predictions"})
 	if fromGeneratedImages != nil {
 		fromGeneratedImages, err = applyConverterToSlice(fromGeneratedImages.([]any), generatedImageFromVertex)
@@ -4581,6 +5112,11 @@ func generateImagesResponseFromVertex(fromObject map[string]any, parentObject ma
 func editImageResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromGeneratedImages := getValueByPath(fromObject, []string{"predictions"})
 	if fromGeneratedImages != nil {
 		fromGeneratedImages, err = applyConverterToSlice(fromGeneratedImages.([]any), generatedImageFromVertex)
@@ -4597,6 +5133,11 @@ func editImageResponseFromVertex(fromObject map[string]any, parentObject map[str
 func upscaleImageResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromGeneratedImages := getValueByPath(fromObject, []string{"predictions"})
 	if fromGeneratedImages != nil {
 		fromGeneratedImages, err = applyConverterToSlice(fromGeneratedImages.([]any), generatedImageFromVertex)
@@ -4605,6 +5146,80 @@ func upscaleImageResponseFromVertex(fromObject map[string]any, parentObject map[
 		}
 
 		setValueByPath(toObject, []string{"generatedImages"}, fromGeneratedImages)
+	}
+
+	return toObject, nil
+}
+
+func recontextImageResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromGeneratedImages := getValueByPath(fromObject, []string{"predictions"})
+	if fromGeneratedImages != nil {
+		fromGeneratedImages, err = applyConverterToSlice(fromGeneratedImages.([]any), generatedImageFromVertex)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"generatedImages"}, fromGeneratedImages)
+	}
+
+	return toObject, nil
+}
+
+func entityLabelFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromLabel := getValueByPath(fromObject, []string{"label"})
+	if fromLabel != nil {
+		setValueByPath(toObject, []string{"label"}, fromLabel)
+	}
+
+	fromScore := getValueByPath(fromObject, []string{"score"})
+	if fromScore != nil {
+		setValueByPath(toObject, []string{"score"}, fromScore)
+	}
+
+	return toObject, nil
+}
+
+func generatedImageMaskFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromMask := getValueByPath(fromObject, []string{"_self"})
+	if fromMask != nil {
+		fromMask, err = imageFromVertex(fromMask.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"mask"}, fromMask)
+	}
+
+	fromLabels := getValueByPath(fromObject, []string{"labels"})
+	if fromLabels != nil {
+		fromLabels, err = applyConverterToSlice(fromLabels.([]any), entityLabelFromVertex)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"labels"}, fromLabels)
+	}
+
+	return toObject, nil
+}
+
+func segmentImageResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromGeneratedMasks := getValueByPath(fromObject, []string{"predictions"})
+	if fromGeneratedMasks != nil {
+		fromGeneratedMasks, err = applyConverterToSlice(fromGeneratedMasks.([]any), generatedImageMaskFromVertex)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"generatedMasks"}, fromGeneratedMasks)
 	}
 
 	return toObject, nil
@@ -4737,6 +5352,11 @@ func modelFromVertex(fromObject map[string]any, parentObject map[string]any) (to
 func listModelsResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
 		setValueByPath(toObject, []string{"nextPageToken"}, fromNextPageToken)
@@ -4763,11 +5383,21 @@ func listModelsResponseFromVertex(fromObject map[string]any, parentObject map[st
 func deleteModelResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	return toObject, nil
 }
 
 func countTokensResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromTotalTokens := getValueByPath(fromObject, []string{"totalTokens"})
 	if fromTotalTokens != nil {
@@ -4779,6 +5409,11 @@ func countTokensResponseFromVertex(fromObject map[string]any, parentObject map[s
 
 func computeTokensResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromTokensInfo := getValueByPath(fromObject, []string{"tokensInfo"})
 	if fromTokensInfo != nil {
@@ -4968,6 +5603,7 @@ func (m Models) generateContent(ctx context.Context, model string, contents []*C
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -5017,7 +5653,6 @@ func (m Models) generateContentStream(ctx context.Context, model string, content
 	}
 	delete(body, "_url")
 	delete(body, "config")
-
 	err = sendStreamRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions, &rs)
 	if err != nil {
 		return yieldErrorAndEndIterator[GenerateContentResponse](err)
@@ -5106,9 +5741,11 @@ func (m Models) EmbedContent(ctx context.Context, model string, contents []*Cont
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
+// generateImages private method for generating images.
 func (m Models) generateImages(ctx context.Context, model string, prompt string, config *GenerateImagesConfig) (*GenerateImagesResponse, error) {
 	parameterMap := make(map[string]any)
 
@@ -5178,9 +5815,11 @@ func (m Models) generateImages(ctx context.Context, model string, prompt string,
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
+// editImage private method for editing an image.
 func (m Models) editImage(ctx context.Context, model string, prompt string, referenceImages []*referenceImageAPI, config *EditImageConfig) (*EditImageResponse, error) {
 	parameterMap := make(map[string]any)
 
@@ -5251,9 +5890,11 @@ func (m Models) editImage(ctx context.Context, model string, prompt string, refe
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
+// upscaleImage private method for upscaling an image.
 func (m Models) upscaleImage(ctx context.Context, model string, image *Image, upscaleFactor string, config *upscaleImageAPIConfig) (*UpscaleImageResponse, error) {
 	parameterMap := make(map[string]any)
 
@@ -5324,6 +5965,181 @@ func (m Models) upscaleImage(ctx context.Context, model string, image *Image, up
 	if err != nil {
 		return nil, err
 	}
+
+	return response, nil
+}
+
+// RecontextImage recontextualizes an image.
+// There are two types of recontextualization currently supported:
+// 1) Imagen Product Recontext - Generate images of products in new scenes
+// and contexts.
+// 2) Virtual Try-On: Generate images of persons modeling fashion products.
+func (m Models) RecontextImage(ctx context.Context, model string, source *RecontextImageSource, config *RecontextImageConfig) (*RecontextImageResponse, error) {
+	parameterMap := make(map[string]any)
+
+	kwargs := map[string]any{"model": model, "source": source, "config": config}
+	deepMarshal(kwargs, &parameterMap)
+
+	var httpOptions *HTTPOptions
+	if config == nil || config.HTTPOptions == nil {
+		httpOptions = &HTTPOptions{}
+	} else {
+		httpOptions = config.HTTPOptions
+	}
+	if httpOptions.Headers == nil {
+		httpOptions.Headers = http.Header{}
+	}
+	var response = new(RecontextImageResponse)
+	var responseMap map[string]any
+	var fromConverter func(map[string]any, map[string]any) (map[string]any, error)
+	var toConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
+	if m.apiClient.clientConfig.Backend == BackendVertexAI {
+		toConverter = recontextImageParametersToVertex
+		fromConverter = recontextImageResponseFromVertex
+	} else {
+
+		return nil, fmt.Errorf("method RecontextImage is only supported in the Vertex AI client. You can choose to use Vertex AI by setting ClientConfig.Backend to BackendVertexAI.")
+
+	}
+
+	body, err := toConverter(m.apiClient, parameterMap, nil)
+	if err != nil {
+		return nil, err
+	}
+	var path string
+	var urlParams map[string]any
+	if _, ok := body["_url"]; ok {
+		urlParams = body["_url"].(map[string]any)
+		delete(body, "_url")
+	}
+	if m.apiClient.clientConfig.Backend == BackendVertexAI {
+		path, err = formatMap("{model}:predict", urlParams)
+	} else {
+		path, err = formatMap("None", urlParams)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid url params: %#v.\n%w", urlParams, err)
+	}
+	if _, ok := body["_query"]; ok {
+		query, err := createURLQuery(body["_query"].(map[string]any))
+		if err != nil {
+			return nil, err
+		}
+		path += "?" + query
+		delete(body, "_query")
+	}
+
+	if _, ok := body["config"]; ok {
+		delete(body, "config")
+	}
+	responseMap, err = sendRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions)
+	if err != nil {
+		return nil, err
+	}
+	responseMap, err = fromConverter(responseMap, nil)
+	if err != nil {
+		return nil, err
+	}
+	err = mapToStruct(responseMap, response)
+	if err != nil {
+		return nil, err
+	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
+	return response, nil
+}
+
+// SegmentImage segments an image, creating a mask of a specified area.
+func (m Models) SegmentImage(ctx context.Context, model string, source *SegmentImageSource, config *SegmentImageConfig) (*SegmentImageResponse, error) {
+	parameterMap := make(map[string]any)
+
+	kwargs := map[string]any{"model": model, "source": source, "config": config}
+	deepMarshal(kwargs, &parameterMap)
+
+	var httpOptions *HTTPOptions
+	if config == nil || config.HTTPOptions == nil {
+		httpOptions = &HTTPOptions{}
+	} else {
+		httpOptions = config.HTTPOptions
+	}
+	if httpOptions.Headers == nil {
+		httpOptions.Headers = http.Header{}
+	}
+	var response = new(SegmentImageResponse)
+	var responseMap map[string]any
+	var fromConverter func(map[string]any, map[string]any) (map[string]any, error)
+	var toConverter func(*apiClient, map[string]any, map[string]any) (map[string]any, error)
+	if m.apiClient.clientConfig.Backend == BackendVertexAI {
+		toConverter = segmentImageParametersToVertex
+		fromConverter = segmentImageResponseFromVertex
+	} else {
+
+		return nil, fmt.Errorf("method SegmentImage is only supported in the Vertex AI client. You can choose to use Vertex AI by setting ClientConfig.Backend to BackendVertexAI.")
+
+	}
+
+	body, err := toConverter(m.apiClient, parameterMap, nil)
+	if err != nil {
+		return nil, err
+	}
+	var path string
+	var urlParams map[string]any
+	if _, ok := body["_url"]; ok {
+		urlParams = body["_url"].(map[string]any)
+		delete(body, "_url")
+	}
+	if m.apiClient.clientConfig.Backend == BackendVertexAI {
+		path, err = formatMap("{model}:predict", urlParams)
+	} else {
+		path, err = formatMap("None", urlParams)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid url params: %#v.\n%w", urlParams, err)
+	}
+	if _, ok := body["_query"]; ok {
+		query, err := createURLQuery(body["_query"].(map[string]any))
+		if err != nil {
+			return nil, err
+		}
+		path += "?" + query
+		delete(body, "_query")
+	}
+
+	if _, ok := body["config"]; ok {
+		delete(body, "config")
+	}
+	responseMap, err = sendRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions)
+	if err != nil {
+		return nil, err
+	}
+	responseMap, err = fromConverter(responseMap, nil)
+	if err != nil {
+		return nil, err
+	}
+	err = mapToStruct(responseMap, response)
+	if err != nil {
+		return nil, err
+	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -5397,6 +6213,17 @@ func (m Models) Get(ctx context.Context, model string, config *GetModelConfig) (
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -5469,6 +6296,7 @@ func (m Models) list(ctx context.Context, config *ListModelsConfig) (*ListModels
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -5542,6 +6370,17 @@ func (m Models) Update(ctx context.Context, model string, config *UpdateModelCon
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -5615,6 +6454,7 @@ func (m Models) Delete(ctx context.Context, model string, config *DeleteModelCon
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -5688,6 +6528,7 @@ func (m Models) CountTokens(ctx context.Context, model string, contents []*Conte
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -5762,11 +6603,12 @@ func (m Models) ComputeTokens(ctx context.Context, model string, contents []*Con
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
-// GenerateVideos creates a long-running video generation operation.
-func (m Models) generateVideos(ctx context.Context, model string, prompt string, image *Image, video *Video, source *GenerateVideosSource, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
+// generateVideos private method for generating videos.
+func (m Models) generateVideos(ctx context.Context, model string, prompt *string, image *Image, video *Video, source *GenerateVideosSource, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
 	parameterMap := make(map[string]any)
 
 	kwargs := map[string]any{"model": model, "prompt": prompt, "image": image, "video": video, "source": source, "config": config}
@@ -5835,6 +6677,17 @@ func (m Models) generateVideos(ctx context.Context, model string, prompt string,
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -5856,10 +6709,10 @@ func (m Models) GenerateContentStream(ctx context.Context, model string, content
 
 // List retrieves a paginated list of models resources.
 func (m Models) List(ctx context.Context, config *ListModelsConfig) (Page[Model], error) {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*Model, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*Model, string, *HTTPResponse, error) {
 		var c ListModelsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		if c.QueryBase == nil {
 			c.QueryBase = Ptr(true)
@@ -5872,9 +6725,9 @@ func (m Models) List(ctx context.Context, config *ListModelsConfig) (Page[Model]
 		}
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.Models, resp.NextPageToken, nil
+		return resp.Models, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	c := make(map[string]any)
 	deepMarshal(config, &c)
@@ -5888,10 +6741,10 @@ func (m Models) List(ctx context.Context, config *ListModelsConfig) (Page[Model]
 // content entry one by one. You do not need to manage pagination
 // tokens or make multiple calls to retrieve all data.
 func (m Models) All(ctx context.Context) iter.Seq2[*Model, error] {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*Model, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*Model, string, *HTTPResponse, error) {
 		var c ListModelsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		if c.QueryBase == nil {
 			c.QueryBase = Ptr(true)
@@ -5899,9 +6752,9 @@ func (m Models) All(ctx context.Context) iter.Seq2[*Model, error] {
 
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.Models, resp.NextPageToken, nil
+		return resp.Models, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	p, err := newPage(ctx, "models", map[string]any{}, listFunc)
 	if err != nil {
@@ -5927,9 +6780,15 @@ func (m Models) GenerateImages(ctx context.Context, model string, prompt string,
 		}
 	}
 
+	var sdkHTTPResponse *HTTPResponse
+	if apiResponse.SDKHTTPResponse != nil {
+		sdkHTTPResponse = apiResponse.SDKHTTPResponse
+	}
+
 	return &GenerateImagesResponse{
 		GeneratedImages:                generatedImages,
 		PositivePromptSafetyAttributes: positivePromptSafetyAttributes,
+		SDKHTTPResponse:                sdkHTTPResponse,
 	}, nil
 }
 
@@ -5939,6 +6798,7 @@ func (m Models) UpscaleImage(ctx context.Context, model string, image *Image, up
 	apiConfig := &upscaleImageAPIConfig{Mode: "upscale", NumberOfImages: 1}
 
 	if config != nil {
+		apiConfig.OutputGCSURI = config.OutputGCSURI
 		apiConfig.OutputMIMEType = config.OutputMIMEType
 		apiConfig.OutputCompressionQuality = config.OutputCompressionQuality
 		apiConfig.IncludeRAIReason = config.IncludeRAIReason
@@ -5962,7 +6822,7 @@ func (m Models) EditImage(ctx context.Context, model, prompt string, referenceIm
 // This method is kept for backward compatibility. Use GenerateVideosFromSource instead.
 func (m Models) GenerateVideos(ctx context.Context, model string, prompt string, image *Image, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
 	// Does not support Video or GenerateVideosSource.
-	return m.generateVideos(ctx, model, prompt, image, nil, nil, config)
+	return m.generateVideos(ctx, model, &prompt, image, nil, nil, config)
 }
 
 // GenerateVideos creates a long-running video generation operation.
@@ -5971,5 +6831,5 @@ func (m Models) GenerateVideosFromSource(ctx context.Context, model string, sour
 		return nil, fmt.Errorf("source is required")
 	}
 	// Rely on backend validation for combinations of prompt, image, and video.
-	return m.generateVideos(ctx, model, "", nil, nil, source, config)
+	return m.generateVideos(ctx, model, nil, nil, nil, source, config)
 }

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"reflect"
 )
 
 func inlinedRequestToMldev(ac *apiClient, fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
@@ -523,6 +524,53 @@ func inlinedResponseFromMldev(fromObject map[string]any, parentObject map[string
 	return toObject, nil
 }
 
+func singleEmbedContentResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromEmbedding := getValueByPath(fromObject, []string{"embedding"})
+	if fromEmbedding != nil {
+		fromEmbedding, err = contentEmbeddingFromMldev(fromEmbedding.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"embedding"}, fromEmbedding)
+	}
+
+	fromTokenCount := getValueByPath(fromObject, []string{"tokenCount"})
+	if fromTokenCount != nil {
+		setValueByPath(toObject, []string{"tokenCount"}, fromTokenCount)
+	}
+
+	return toObject, nil
+}
+
+func inlinedEmbedContentResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromResponse := getValueByPath(fromObject, []string{"response"})
+	if fromResponse != nil {
+		fromResponse, err = singleEmbedContentResponseFromMldev(fromResponse.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"response"}, fromResponse)
+	}
+
+	fromError := getValueByPath(fromObject, []string{"error"})
+	if fromError != nil {
+		fromError, err = jobErrorFromMldev(fromError.(map[string]any), toObject)
+		if err != nil {
+			return nil, err
+		}
+
+		setValueByPath(toObject, []string{"error"}, fromError)
+	}
+
+	return toObject, nil
+}
+
 func batchJobDestinationFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -589,6 +637,11 @@ func batchJobFromMldev(fromObject map[string]any, parentObject map[string]any) (
 
 	fromDest := getValueByPath(fromObject, []string{"metadata", "output"})
 	if fromDest != nil {
+		fromDest, err = tRecvBatchJobDestination(fromDest)
+		if err != nil {
+			return nil, err
+		}
+
 		fromDest, err = batchJobDestinationFromMldev(fromDest.(map[string]any), toObject)
 		if err != nil {
 			return nil, err
@@ -602,6 +655,11 @@ func batchJobFromMldev(fromObject map[string]any, parentObject map[string]any) (
 
 func listBatchJobsResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
@@ -623,6 +681,11 @@ func listBatchJobsResponseFromMldev(fromObject map[string]any, parentObject map[
 
 func deleteResourceJobFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromName := getValueByPath(fromObject, []string{"name"})
 	if fromName != nil {
@@ -780,6 +843,11 @@ func batchJobFromVertex(fromObject map[string]any, parentObject map[string]any) 
 
 	fromDest := getValueByPath(fromObject, []string{"outputConfig"})
 	if fromDest != nil {
+		fromDest, err = tRecvBatchJobDestination(fromDest)
+		if err != nil {
+			return nil, err
+		}
+
 		fromDest, err = batchJobDestinationFromVertex(fromDest.(map[string]any), toObject)
 		if err != nil {
 			return nil, err
@@ -793,6 +861,11 @@ func batchJobFromVertex(fromObject map[string]any, parentObject map[string]any) 
 
 func listBatchJobsResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
@@ -814,6 +887,11 @@ func listBatchJobsResponseFromVertex(fromObject map[string]any, parentObject map
 
 func deleteResourceJobFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromName := getValueByPath(fromObject, []string{"name"})
 	if fromName != nil {
@@ -845,7 +923,7 @@ type Batches struct {
 	apiClient *apiClient
 }
 
-func (m Batches) create(ctx context.Context, model string, src *BatchJobSource, config *CreateBatchJobConfig) (*BatchJob, error) {
+func (m Batches) create(ctx context.Context, model *string, src *BatchJobSource, config *CreateBatchJobConfig) (*BatchJob, error) {
 	parameterMap := make(map[string]any)
 
 	kwargs := map[string]any{"model": model, "src": src, "config": config}
@@ -914,6 +992,17 @@ func (m Batches) create(ctx context.Context, model string, src *BatchJobSource, 
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -987,6 +1076,17 @@ func (m Batches) Get(ctx context.Context, name string, config *GetBatchJobConfig
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -1121,6 +1221,7 @@ func (m Batches) list(ctx context.Context, config *ListBatchJobsConfig) (*ListBa
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -1194,6 +1295,7 @@ func (m Batches) Delete(ctx context.Context, name string, config *DeleteBatchJob
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -1217,24 +1319,24 @@ func (b Batches) Create(ctx context.Context, model string, src *BatchJobSource, 
 			return nil, fmt.Errorf("Only one of FileName and InlinedRequests can be set.")
 		}
 		if src.FileName == "" && len(src.InlinedRequests) == 0 {
-			return nil, fmt.Errorf("One of FileName and InlinedRequests must be set.")
+			return nil, fmt.Errorf("one of FileName and InlinedRequests must be set.")
 		}
 	}
-	return b.create(ctx, model, src, config)
+	return b.create(ctx, &model, src, config)
 }
 
 // List retrieves a paginated list of batch jobs.
 func (b Batches) List(ctx context.Context, config *ListBatchJobsConfig) (Page[BatchJob], error) {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*BatchJob, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*BatchJob, string, *HTTPResponse, error) {
 		var c ListBatchJobsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := b.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.BatchJobs, resp.NextPageToken, nil
+		return resp.BatchJobs, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	c := make(map[string]any)
 	deepMarshal(config, &c)
@@ -1248,16 +1350,16 @@ func (b Batches) List(ctx context.Context, config *ListBatchJobsConfig) (Page[Ba
 // content entry one by one. You do not need to manage pagination
 // tokens or make multiple calls to retrieve all data.
 func (b Batches) All(ctx context.Context) iter.Seq2[*BatchJob, error] {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*BatchJob, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*BatchJob, string, *HTTPResponse, error) {
 		var c ListBatchJobsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := b.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.BatchJobs, resp.NextPageToken, nil
+		return resp.BatchJobs, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	p, err := newPage(ctx, "BatchJobs", map[string]any{}, listFunc)
 	if err != nil {

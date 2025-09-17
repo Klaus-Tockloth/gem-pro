@@ -210,7 +210,7 @@ func saveCacheDetailsToFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	encoder := gob.NewEncoder(file)
 	return encoder.Encode(cacheToHandle)
 }
@@ -224,7 +224,7 @@ func loadCacheDetailsFromFile(filename string) (CacheToHandle, error) {
 	if err != nil {
 		return cacheToHandle, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	decoder := gob.NewDecoder(file)
 	err = decoder.Decode(&cacheToHandle)
 	return cacheToHandle, err

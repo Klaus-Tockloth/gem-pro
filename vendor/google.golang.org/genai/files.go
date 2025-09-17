@@ -331,6 +331,11 @@ func fileFromMldev(fromObject map[string]any, parentObject map[string]any) (toOb
 func listFilesResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
 		setValueByPath(toObject, []string{"nextPageToken"}, fromNextPageToken)
@@ -362,6 +367,11 @@ func createFileResponseFromMldev(fromObject map[string]any, parentObject map[str
 
 func deleteFileResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	return toObject, nil
 }
@@ -440,6 +450,7 @@ func (m Files) list(ctx context.Context, config *ListFilesConfig) (*ListFilesRes
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -513,6 +524,7 @@ func (m Files) create(ctx context.Context, file *File, config *CreateFileConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -586,6 +598,7 @@ func (m Files) Get(ctx context.Context, name string, config *GetFileConfig) (*Fi
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -659,21 +672,22 @@ func (m Files) Delete(ctx context.Context, name string, config *DeleteFileConfig
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
 // List retrieves a paginated list of files resources.
 func (m Files) List(ctx context.Context, config *ListFilesConfig) (Page[File], error) {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*File, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*File, string, *HTTPResponse, error) {
 		var c ListFilesConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.Files, resp.NextPageToken, nil
+		return resp.Files, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	c := make(map[string]any)
 	deepMarshal(config, &c)
@@ -687,16 +701,16 @@ func (m Files) List(ctx context.Context, config *ListFilesConfig) (Page[File], e
 // entry one by one. You do not need to manage pagination
 // tokens or make multiple calls to retrieve all data.
 func (m Files) All(ctx context.Context) iter.Seq2[*File, error] {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*File, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*File, string, *HTTPResponse, error) {
 		var c ListFilesConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.Files, resp.NextPageToken, nil
+		return resp.Files, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	p, err := newPage(ctx, "files", map[string]any{}, listFunc)
 	if err != nil {

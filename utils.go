@@ -193,7 +193,7 @@ func slurpFile(filename string) ([]string, error) {
 	if err != nil {
 		return lines, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
@@ -320,8 +320,8 @@ func dumpDataToFile(flag int, objectname string, object interface{}) {
 		fmt.Printf("error [%v] at os.OpenFile()\n", err)
 		return
 	}
-	defer file.Close()
-	fmt.Fprint(file, data)
+	defer func() { _ = file.Close() }()
+	_, _ = fmt.Fprint(file, data)
 }
 
 /*
@@ -448,4 +448,40 @@ func isListItem(trimmedLine string) bool {
 	// checks for numbered lists like "1. ", "12. " etc.
 	matched, _ := regexp.MatchString(`^\d+\.\s`, trimmedLine)
 	return matched
+}
+
+/*
+parseMIMETypeList parses a comma-separated string of MIME type pairs
+(e.g. "key1=value1,key2=value2") and returns them as a map[string]string.
+It returns an error if any pair is malformed.
+*/
+func parseMIMETypeList(input string) (map[string]string, error) {
+	mimeMap := make(map[string]string)
+	pairs := strings.Split(input, ",")
+
+	for _, pair := range pairs {
+		trimmedPair := strings.TrimSpace(pair)
+
+		// Ignore empty parts resulting from trailing or double commas.
+		if trimmedPair == "" {
+			continue
+		}
+
+		// Split the pair at the first '=' into key and value.
+		// Using SplitN with 2 ensures that we only split at the first '='.
+		parts := strings.SplitN(trimmedPair, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid pair format: %q", trimmedPair)
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		if key == "" {
+			return nil, fmt.Errorf("key cannot be empty in pair: %q", trimmedPair)
+		}
+		mimeMap[key] = value
+	}
+
+	return mimeMap, nil
 }

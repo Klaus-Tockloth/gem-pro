@@ -26,6 +26,7 @@ type ProgConfig struct {
 	GeminiTopP                     float32  `yaml:"GeminiTopP"`
 	GeminiTopK                     float32  `yaml:"GeminiTopK"`
 	GeminiSystemInstruction        string   `yaml:"GeminiSystemInstruction"`
+	GeminiCodeExecution            bool     `yaml:"GeminiCodeExecution"`
 	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
 	GeminiMaxThinkingBudget        int32    `yaml:"GeminiMaxThinkingBudget"`
 	GeminiIncludeThoughts          bool     `yaml:"GeminiIncludeThoughts"`
@@ -405,17 +406,24 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 		}
 		generateContentConfig.SystemInstruction = genai.NewContentFromText(string(systemInstruction), "user")
 	}
-	if progConfig.GeminiGroundigWithGoogleSearch {
-		generateContentConfig.Tools = []*genai.Tool{
-			{GoogleSearch: &genai.GoogleSearch{}},
-		}
+
+	generateContentConfig.Tools = []*genai.Tool{}
+	if progConfig.GeminiCodeExecution {
+		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
 	}
+	if progConfig.GeminiGroundigWithGoogleSearch {
+		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
+	}
+
 	if cacheName != "" {
 		generateContentConfig.CachedContent = cacheName
 	}
-	generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
-		IncludeThoughts: progConfig.GeminiIncludeThoughts,
-		ThinkingBudget:  &progConfig.GeminiMaxThinkingBudget,
+
+	if progConfig.GeminiMaxThinkingBudget > 0 {
+		generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
+			IncludeThoughts: progConfig.GeminiIncludeThoughts,
+			ThinkingBudget:  &progConfig.GeminiMaxThinkingBudget,
+		}
 	}
 
 	return generateContentConfig
@@ -448,8 +456,13 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 		fmt.Printf("  ResponseMIMEType  : %v\n", geminiModelConfig.ResponseMIMEType)
 	}
 	if geminiModelConfig.Tools != nil {
-		if geminiModelConfig.Tools[0].GoogleSearch != nil {
-			fmt.Printf("  Tools             : GoogleSearch\n")
+		for _, tool := range geminiModelConfig.Tools {
+			if tool.GoogleSearch != nil {
+				fmt.Printf("  Tool              : GoogleSearch\n")
+			}
+			if tool.CodeExecution != nil {
+				fmt.Printf("  Tool              : CodeExecution\n")
+			}
 		}
 	}
 	if geminiModelConfig.ResponseModalities != nil {

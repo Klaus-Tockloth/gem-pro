@@ -1,5 +1,91 @@
 # Changelog
 
+## [1.25.0](https://github.com/googleapis/go-genai/compare/v1.24.0...v1.25.0) (2025-09-16)
+
+
+### Features
+
+* Add 'turn_complete_reason' and 'waiting_for_input' fields. ([2d48288](https://github.com/googleapis/go-genai/commit/2d48288d405b16474011e018cbb10096c5957c93))
+* Add `VideoGenerationMaskMode` enum for Veo 2 Editing ([65f9058](https://github.com/googleapis/go-genai/commit/65f9058b728748bfe8b83d0178300249c3700d10))
+* local tokenizer for text ([ee46a52](https://github.com/googleapis/go-genai/commit/ee46a52de5e0e8678f0be3269de4cf6a60c90696))
+
+## [1.24.0](https://github.com/googleapis/go-genai/compare/v1.23.0...v1.24.0) (2025-09-09)
+
+
+### Features
+
+* [Python] Implement async embedding batches for MLDev. ([f32fb26](https://github.com/googleapis/go-genai/commit/f32fb26a125e0df212c1a27615de4899f4ba791a))
+* Add labels to create tuning job config ([c13a2a5](https://github.com/googleapis/go-genai/commit/c13a2a5f68d867122d2d7e3a7f2b58784c9df20f))
+* generate the function_call class's converters ([995a3ac](https://github.com/googleapis/go-genai/commit/995a3acc0a7bd9bdf3048fb332f23c21a36a2b62))
+* Support Veo 2 Editing on Vertex ([7fd6940](https://github.com/googleapis/go-genai/commit/7fd694074b5488b0eb2d5d0cf2f4e0d75de16533))
+
+
+### Bug Fixes
+
+* Enable `id` field in `FunctionCall` for Vertex AI. ([a3f3c2b](https://github.com/googleapis/go-genai/commit/a3f3c2b37ef065b43cb4ab27f7b60c0c89a8684c))
+
+## [1.23.0](https://github.com/googleapis/go-genai/compare/v1.22.0...v1.23.0) (2025-09-02)
+
+
+### Features
+
+* Add resolution field for Gemini Developer API Veo 3 generation ([b6a989c](https://github.com/googleapis/go-genai/commit/b6a989cdcad0a3f006a1753f6bac5e91df2914ba))
+
+## [1.22.0](https://github.com/googleapis/go-genai/compare/v1.21.0...v1.22.0) (2025-08-27)
+
+
+### Features
+
+* add `sdkHttpResponse.headers` to *Delete responses. ([ac0e763](https://github.com/googleapis/go-genai/commit/ac0e7632e5760378d0751cc8c9224bbd6a1bad0c))
+* Add add_watermark field for recontext_image (Virtual Try-On, Product Recontext) ([07b6f57](https://github.com/googleapis/go-genai/commit/07b6f573b2941fd22e5d68df09610f0d910b3463))
+* Add output_gcs_uri to Imagen upscale_image ([c08d9f3](https://github.com/googleapis/go-genai/commit/c08d9f35c3dce6da9854842926aeec61593ff02a))
+* Add VALIDATED mode into FunctionCallingConfigMode ([c282e79](https://github.com/googleapis/go-genai/commit/c282e79bed1ac0fd60facbffe3dde74b8d240a01))
+* Add VideoGenerationReferenceType enum for generate_videos ([635b825](https://github.com/googleapis/go-genai/commit/635b825bedd2bbe5d2e84eca78e0d3b08eecdc31))
+* refactor Go SDK to use pointers for optional parameters ([3ff328a](https://github.com/googleapis/go-genai/commit/3ff328ac19ce7b4429ce6d75f2fe2d1ffaf37a37))
+* support tunings.cancel in the genai SDK for Python, Java, JS, and Go ([8c46fd2](https://github.com/googleapis/go-genai/commit/8c46fd26e1985f15d510ed0f4d4cefcdd2110af7))
+
+## [1.21.0](https://github.com/googleapis/go-genai/compare/v1.20.0...v1.21.0) (2025-08-18)
+
+
+### Features
+
+* Support Imagen image segmentation on Vertex ([2a38843](https://github.com/googleapis/go-genai/commit/2a388434bc2bd9d564479e1d8db6eb4ffdadcb68))
+* Support Veo 2 Reference Images to Video Generation on Vertex ([9894324](https://github.com/googleapis/go-genai/commit/9894324c30a4a73614f1c4ed9ce9ebf67eb7a5a9))
+
+
+### Bug Fixes
+
+* Add a missing resp.Body.Close() to deserializeStreamResponse. ([bf3fb3f](https://github.com/googleapis/go-genai/commit/bf3fb3f37172fbff4d4045ebe781d8f03f7fb23a))
+
+## [1.20.0](https://github.com/googleapis/go-genai/compare/v1.19.0...v1.20.0) (2025-08-13)
+
+
+### Features
+
+* enable continuous fine-tuning on a pre-tuned model in the SDK. ([1f20493](https://github.com/googleapis/go-genai/commit/1f204939b8d68d8f5c9d739ade69716a03be28f1))
+* support document name in grounding metadata ([f673e20](https://github.com/googleapis/go-genai/commit/f673e200ce5663de3f62b832a4bafc756494da75))
+* Support exclude_domains in Google Search and Enterprise Web Search ([2547ad1](https://github.com/googleapis/go-genai/commit/2547ad1a4f07ac1111b14a6352a64bc4d7bea5a5))
+
+## [1.19.0](https://github.com/googleapis/go-genai/compare/v1.18.0...v1.19.0) (2025-08-06)
+
+
+### Features
+
+* Add image_size field for Gemini Developer API Imagen 4 generation ([3ccd2b0](https://github.com/googleapis/go-genai/commit/3ccd2b086ecc761dd0492bae030f9ce7501e17c1))
+* Add parts length check ([#444](https://github.com/googleapis/go-genai/issues/444)) ([a4896f3](https://github.com/googleapis/go-genai/commit/a4896f37c756e9cf9b69a9ed38db00bf36e28f0d))
+* allow methods in batch to return headers in sdk_http_response by default ([3a1d6d8](https://github.com/googleapis/go-genai/commit/3a1d6d83a10b53fc44c7cc06e1d3b0426a437c98))
+* enable responseId for Gemini Developer API ([9845a91](https://github.com/googleapis/go-genai/commit/9845a919d768d7ced4857518b3155426105c5d85))
+* support curated history in the Go chats module. ([2b99b83](https://github.com/googleapis/go-genai/commit/2b99b83451ed6e622e985baf68461c3ad03e793e))
+* Support image recontext on Vertex ([fc7ee78](https://github.com/googleapis/go-genai/commit/fc7ee78fcae0f196deeaf8ccac4592905112c60c))
+* Support new enum types for UrlRetrievalStatus ([ef63a73](https://github.com/googleapis/go-genai/commit/ef63a73505062e763df5f33559c6b0ba160e22ca))
+
+## [1.18.0](https://github.com/googleapis/go-genai/compare/v1.17.0...v1.18.0) (2025-07-30)
+
+
+### Features
+
+* support response headers in Go for all methods. ([4865b93](https://github.com/googleapis/go-genai/commit/4865b9366e72f1ee5f124346bd15198d3582e7f1))
+
 ## [1.17.0](https://github.com/googleapis/go-genai/compare/v1.16.0...v1.17.0) (2025-07-17)
 
 

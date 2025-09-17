@@ -97,8 +97,8 @@ func readPromptFromLocalhost(promptChannel chan string) http.HandlerFunc {
 			return
 		}
 		promptChannel <- string(body)
-		defer r.Body.Close()
+		defer func() { _ = r.Body.Close() }()
 
-		fmt.Fprintln(w, "prompt received")
+		_, _ = fmt.Fprintln(w, "prompt received")
 	}
 }

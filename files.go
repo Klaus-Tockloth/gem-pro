@@ -118,8 +118,10 @@ func listFilesUploadedToGemini(indent string) string {
 }
 
 /*
-convertFileToContent converts a file into Gemini genai.Content format. It reads a file from the given path
-and converts its content into a `genai.Content` object, automatically detecting the MIME type.
+convertFileToContent converts a file into a genai.Content object. It reads a
+file from the given path, determines its MIME type, and replaces it if a
+corresponding entry is found in the global ReplacementMIMETypeMap. Finally, it
+returns the file's content as a genai.Content object with the correct MIME type.
 */
 func convertFileToContent(filepath string) (*genai.Content, error) {
 	mimeType, err := getFileMimeType(filepath)
@@ -129,6 +131,14 @@ func convertFileToContent(filepath string) (*genai.Content, error) {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
+	}
+
+	// replace MIME type (e.g. 'text/x-perl' with 'text/plain')
+	if ReplacementMIMETypeMap != nil {
+		replacement, ok := ReplacementMIMETypeMap[mimeType]
+		if ok {
+			mimeType = replacement
+		}
 	}
 
 	return genai.NewContentFromBytes(data, mimeType, "user"), nil

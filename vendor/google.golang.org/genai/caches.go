@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"reflect"
 )
 
 func createCachedContentConfigToMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
@@ -502,11 +503,21 @@ func cachedContentFromMldev(fromObject map[string]any, parentObject map[string]a
 func deleteCachedContentResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	return toObject, nil
 }
 
 func listCachedContentsResponseFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
@@ -570,11 +581,21 @@ func cachedContentFromVertex(fromObject map[string]any, parentObject map[string]
 func deleteCachedContentResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
 	return toObject, nil
 }
 
 func listCachedContentsResponseFromVertex(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := getValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		setValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
 
 	fromNextPageToken := getValueByPath(fromObject, []string{"nextPageToken"})
 	if fromNextPageToken != nil {
@@ -671,6 +692,17 @@ func (m Caches) Create(ctx context.Context, model string, config *CreateCachedCo
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -744,6 +776,17 @@ func (m Caches) Get(ctx context.Context, name string, config *GetCachedContentCo
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -817,6 +860,7 @@ func (m Caches) Delete(ctx context.Context, name string, config *DeleteCachedCon
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
@@ -890,6 +934,17 @@ func (m Caches) Update(ctx context.Context, name string, config *UpdateCachedCon
 	if err != nil {
 		return nil, err
 	}
+
+	if field, ok := reflect.TypeOf(response).Elem().FieldByName("SDKHTTPResponse"); ok {
+		{
+			if reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").IsValid() {
+				{
+					reflect.ValueOf(response).Elem().FieldByName("SDKHTTPResponse").Set(reflect.Zero(field.Type))
+				}
+			}
+		}
+	}
+
 	return response, nil
 }
 
@@ -962,21 +1017,22 @@ func (m Caches) list(ctx context.Context, config *ListCachedContentsConfig) (*Li
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 
 // List retrieves a paginated list of cached content resources.
 func (m Caches) List(ctx context.Context, config *ListCachedContentsConfig) (Page[CachedContent], error) {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, *HTTPResponse, error) {
 		var c ListCachedContentsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.CachedContents, resp.NextPageToken, nil
+		return resp.CachedContents, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	c := make(map[string]any)
 	deepMarshal(config, &c)
@@ -990,16 +1046,16 @@ func (m Caches) List(ctx context.Context, config *ListCachedContentsConfig) (Pag
 // content entry one by one. You do not need to manage pagination
 // tokens or make multiple calls to retrieve all data.
 func (m Caches) All(ctx context.Context) iter.Seq2[*CachedContent, error] {
-	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, error) {
+	listFunc := func(ctx context.Context, config map[string]any) ([]*CachedContent, string, *HTTPResponse, error) {
 		var c ListCachedContentsConfig
 		if err := mapToStruct(config, &c); err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
 		resp, err := m.list(ctx, &c)
 		if err != nil {
-			return nil, "", err
+			return nil, "", nil, err
 		}
-		return resp.CachedContents, resp.NextPageToken, nil
+		return resp.CachedContents, resp.NextPageToken, resp.SDKHTTPResponse, nil
 	}
 	p, err := newPage(ctx, "cachedContents", map[string]any{}, listFunc)
 	if err != nil {

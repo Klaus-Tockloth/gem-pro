@@ -283,6 +283,10 @@ func tBatchJobDestination(dest any) (any, error) {
 	return dest, nil
 }
 
+func tRecvBatchJobDestination(dest any) (any, error) {
+	return dest, nil
+}
+
 func tBatchJobName(ac *apiClient, name any) (any, error) {
 	var (
 		mldevBatchPattern  = regexp.MustCompile("batches/[^/]+$")
