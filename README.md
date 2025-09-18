@@ -116,6 +116,18 @@ In einem Prompt kann nur ein Cache referenziert werden kann. Alle Cache-Operatio
 
 Eine hervorragende Möglichkeit des (impliziten) Cachings bietet der Chat-Modus. Hier werden die Dateien nur bei Eröffnung einer Session, also als Bestandteil des ersten Prompts, übertragen und tokenisiert. Gemini cached diese Daten, sodass sie bei nachfolgenden Prompts (implizit) zur Verfügung stehen.
 
+### Tooling
+
+Um die Fähigkeiten des KI-Modells zu erweitern, können spezialisierte Werkzeuge (Tools) genutzt werden. Diese ermöglichen es dem Modell, auf externe Informationen zuzugreifen oder komplexe Operationen auszuführen, die über die reine Textgenerierung hinausgehen.
+
+#### Google Search
+
+Ist dieses Tool aktiviert, kann das KI-Modell auf Google Search zugreifen, um aktuelle Informationen zu finden und Fakten zu überprüfen. Dies verbessert die Genauigkeit und Relevanz der Antworten, insbesondere bei Fragen zu aktuellen Ereignissen oder spezifischem Wissen.
+
+#### Code Execution
+
+Dieses Tool erlaubt es dem KI-Modell, Code (in der Regel Python) zu generieren, auszuführen und zu validieren, um eine Lösung für eine Anfrage zu finden. Dies ist besonders nützlich für mathematische Berechnungen, Datenanalysen oder logische Probleme, bei denen eine exakte Ausführung von Schritten erforderlich ist. Das Modell kann so Aufgaben lösen, die präzise und wiederholbare Ergebnisse erfordern.
+
 ### Gemini KI-Modelle
 
 Im Kontext dieser Applikation sind folgende KI-Modell-Linien von besonderem Interesse:
@@ -254,6 +266,18 @@ In a prompt, only one cache can be referenced. Therefore, all cache operations a
 ### Implicit Cache in Chat Mode
 
 Chat mode offers an excellent way of (implicit) caching. Here, the files are only transferred and tokenized when a session is opened, i.e., as part of the first prompt. Gemini caches this data so that it is (implicitly) available for subsequent prompts.
+
+### Tooling
+
+To extend the capabilities of the AI model, specialized tools can be utilized. These enable the model to access external information or perform complex operations that go beyond mere text generation.
+
+#### Google Search
+
+When this tool is enabled, the AI model can access Google Search to find up-to-date information and verify facts. This improves the accuracy and relevance of the responses, particularly for questions about current events or specific knowledge.
+
+#### Code Execution
+
+This tool allows the AI model to generate, execute, and validate code (typically Python) to find a solution to a prompt. This is especially useful for mathematical calculations, data analysis, or logical problems that require a precise execution of steps. It enables the model to solve tasks that demand accurate and repeatable results.
 
 ### Gemini AI models
 
