@@ -22,6 +22,8 @@ cloud.google.com/go/compute/metadata v0.8.0 h1:HxMRIbao8w17ZX6wBnjhcDkW6lTFpgcao
 cloud.google.com/go/compute/metadata v0.8.0/go.mod h1:sYOGTp851OV9bOFJ9CH7elVvyzopvWQFNNghtDQ/Biw=
 cloud.google.com/go/compute/metadata v0.8.1 h1:FiBYkOz/hai+AEMCYz7NBN2sSagaQo6jKF/saWKAXqs=
 cloud.google.com/go/compute/metadata v0.8.1/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
+cloud.google.com/go/compute/metadata v0.8.4 h1:oXMa1VMQBVCyewMIOm3WQsnVd9FbKBtm8reqWRaXnHQ=
+cloud.google.com/go/compute/metadata v0.8.4/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/Klaus-Tockloth/go-term-markdown v0.0.0-20250129073703-91600624167c h1:8vDVIfpK0DOO4QqWKZiNeDKJXlyI06YmE8dubIsx5wU=
 github.com/Klaus-Tockloth/go-term-markdown v0.0.0-20250129073703-91600624167c/go.mod h1:N/I7QI6a0FQEzwYCFXKaeCbNupI4uAdmRS+QRI/Z0ho=
 github.com/MichaelMure/go-term-text v0.3.1 h1:Kw9kZanyZWiCHOYu9v/8pWEgDQ6UVN9/ix2Vd2zzWf0=

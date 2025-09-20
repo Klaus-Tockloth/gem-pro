@@ -21,6 +21,7 @@ Releases:
   - v0.6.0 - 2025-09-17: 'code execution' support added, 'Tool use tokens' added to 'Tokens' details,
                          thinking config handling modified, option '-replace-mimetypes' added,
 						 libs updated, compiled with go v1.25.1
+  - v0.7.0 - 2025-09-20: various options added, default for 'code execution' changed, libs updated
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -39,6 +40,7 @@ ToDos:
 - Support for "URL Content" (e.g. via option '-urllist file').
 - Support for "Function Calling" (probably not possible for this general purpose application).
 - Support for "Stop Sequence".
+- Add option to calculation prompt costs.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -72,8 +74,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.6.0"
-	progDate    = "2025-09-17"
+	progVersion = "v0.7.0"
+	progDate    = "2025-09-20"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -136,6 +138,9 @@ var (
 	listCache        = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
 	includeCache     = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
 	replaceMIMETypes = flag.String("replace-mimetypes", "", "Replaces MIME type 'A' with 'B' (e.g. 'text/x-perl=text/plain').\nExpects a comma separates key-value list of MIME type pairs.")
+	thinkingBudget   = flag.Int("thinking-budget", -1, "Sets the maximum thinking budget.\nThe value '0' disables thinking mode (not possible for all models).")
+	codeExecution    = flag.Bool("code-execution", false, "Lets Gemini use code to solve complex tasks.")
+	googleSearch     = flag.Bool("google-search", false, "Grounding with Google Search.")
 )
 
 /*
@@ -159,6 +164,12 @@ func main() {
 
 	flag.Usage = printUsage
 	flag.Parse()
+
+	// track which flags were actually set by the user
+	setFlags := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) {
+		setFlags[f.Name] = true
+	})
 
 	// build replacement MIME type map
 	if *replaceMIMETypes != "" {
@@ -276,7 +287,7 @@ func main() {
 	initializeProgram()
 
 	// overwrite YAML config values with cli parameters
-	overwriteConfigValues(candidates, temperature, topp, topk, maxtokens)
+	overwriteConfigValues(setFlags)
 
 	// create markdown parser (WithUnsafe() ensures to render potentially dangerous links like "file:///Users/...")
 	markdownParser = goldmark.New(
@@ -497,22 +508,30 @@ overwriteConfigValues overwrites configuration values in `progConfig` with value
 It updates the `progConfig` struct with values from command-line flags, allowing users to override settings from
 the YAML configuration file.
 */
-func overwriteConfigValues(candidates *int, temperature *float64, topp *float64, topk *int, maxtokens *int) {
-	// overwrite YAML config values with cli parameters
-	if *candidates > 0 {
+func overwriteConfigValues(setFlags map[string]bool) {
+	if setFlags["candidates"] {
 		progConfig.GeminiCandidateCount = int32(*candidates)
 	}
-	if *temperature > -1.0 {
+	if setFlags["temperature"] {
 		progConfig.GeminiTemperature = float32(*temperature)
 	}
-	if *topp > -1.0 {
+	if setFlags["topp"] {
 		progConfig.GeminiTopP = float32(*topp)
 	}
-	if *topk > -1 {
+	if setFlags["topk"] {
 		progConfig.GeminiTopK = float32(*topk)
 	}
-	if *maxtokens > 0 {
+	if setFlags["maxtokens"] {
 		progConfig.GeminiMaxOutputTokens = int32(*maxtokens)
+	}
+	if setFlags["thinking-budget"] {
+		progConfig.GeminiMaxThinkingBudget = int32(*thinkingBudget)
+	}
+	if setFlags["code-execution"] {
+		progConfig.GeminiCodeExecution = *codeExecution
+	}
+	if setFlags["google-search"] {
+		progConfig.GeminiGroundigWithGoogleSearch = *googleSearch
 	}
 }
 

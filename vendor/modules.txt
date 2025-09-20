@@ -16,7 +16,7 @@ cloud.google.com/go/auth/internal/credsfile
 cloud.google.com/go/auth/internal/jwt
 cloud.google.com/go/auth/internal/transport
 cloud.google.com/go/auth/internal/transport/cert
-# cloud.google.com/go/compute/metadata v0.8.1
+# cloud.google.com/go/compute/metadata v0.8.4
 ## explicit; go 1.24.0
 cloud.google.com/go/compute/metadata
 # github.com/Klaus-Tockloth/go-term-markdown v0.0.0-20250129073703-91600624167c
