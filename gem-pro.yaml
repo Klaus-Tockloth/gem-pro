@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.7.0 - 2025-09-20: corresponding to program release
+# - v0.7.1 - 2025-09-21: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -94,7 +94,7 @@ GeminiGroundigWithGoogleSearch: true
 
 # max thinking budget (AI model must support this setting, 0 disables thinking)
 # Lite, Flash : 0-24576 (24576 = use as much budget as possible)
-# Pro         : 0-32768 (32768 = use as much budget as possible)
+# Pro         : 128-32768 (32768 = use as much budget as possible, can't be disabled)
 # Warning: Unlimited thinking can result in high prompt costs.
 GeminiMaxThinkingBudget: 8192
 

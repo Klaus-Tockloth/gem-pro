@@ -133,7 +133,7 @@ Dieses Tool erlaubt es dem KI-Modell, Code (in der Regel Python) zu generieren, 
 Im Kontext dieser Applikation sind folgende KI-Modell-Linien von besonderem Interesse:
 
 * **Flash**-Linie mit den Stärken hohe Geschwindigkeit und Kosteneffizienz, Vielseitigkeit
-* **Pro**-Linie mit den Stärken maximale Leistung und Genauigkeit, fortgeschrittenes Schlussfolgern
+* **Pro**-Linie mit den Stärken maximale Leistung und Genauigkeit, fortgeschrittenes Schlussfolgern, Programmierunterstützung
 
 Je nach Aufgabenstellung kann auch die Nutzung beider Modell-Linien hilfreich sein:
 
@@ -284,7 +284,7 @@ This tool allows the AI model to generate, execute, and validate code (typically
 In the context of this application, the following AI model lines are of particular interest:
 
 * **Flash** line with strengths in high speed and cost-efficiency, versatility
-* **Pro** line with strengths in maximum performance and accuracy, advanced reasoning
+* **Pro** line with strengths in maximum performance and accuracy, advanced reasoning, programming support
 
 Depending on the task, using both model lines can also be helpful:
 
