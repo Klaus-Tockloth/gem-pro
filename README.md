@@ -141,6 +141,29 @@ Je nach Aufgabenstellung kann auch die Nutzung beider Modell-Linien hilfreich se
 * Benutzer: Auswahl der besten Lösungsvariante
 * Pro-Linie: Verfeinerung der ausgewählten Lösungsvariante
 
+### Wichtige Parameter
+
+*   **Temperature**: Steuert die Kreativität. Ein niedriger Wert (nahe 0.0) macht die Ausgabe deterministischer und auf die wahrscheinlichsten Wörter fokussiert. Ein hoher Wert (über 0.7) erhöht die Zufälligkeit und fördert vielfältigere, unerwartetere Ergebnisse.
+
+*   **TopP (Nucleus Sampling)**: Filtert die Wortauswahl basierend auf kumulativer Wahrscheinlichkeit. Ein niedriger Wert (z. B. 0.1) beschränkt die Auswahl auf eine sehr kleine Gruppe der wahrscheinlichsten Wörter, was die Antwort fokussiert. Ein hoher Wert (nahe 1.0) erlaubt eine größere Auswahl an Wörtern und erhöht so die Vielfalt.
+
+#### Defaultwerte
+
+Die Standardwerte für die Gemini-Modelle sind in der Regel:
+*   **Temperature**: 1.0
+*   **TopP**: 0.95
+
+#### Empfohlene Werte für verschiedene Aufgaben
+
+Die nachfolgenden Werte sind Ausgangspunkte. Die ideale Einstellung kann je nach KI-Modell und der genauen Aufgabenstellung variieren.
+
+| Aufgabe | Temperature | TopP | Beschreibung |
+| :--- | :--- | :--- | :--- |
+| **Allgemeine Aufgaben** | ~0.7 | ~0.95 | Ein guter Mittelweg für ausgewogene und kohärente, aber nicht zu starre Antworten. |
+| **Kreative Aufgaben** | 0.7 - 1.0+ | 0.9 - 0.99 | Fördert neuartige Ideen, Brainstorming und die Erstellung einzigartiger Texte wie Gedichte oder Geschichten. |
+| **Fakten & Logik** | 0.0 - 0.4 | < 0.8 | Maximiert Genauigkeit und Faktentreue für Erklärungen oder mathematische Probleme. Das Risiko von Halluzinationen wird minimiert. |
+| **Programmierung** | 0.3 - 0.7 | 0.8 - 0.95 | Erzeugt funktionalen und korrekten Code, erlaubt dem Modell aber, elegante oder idiomatische Lösungswege zu finden. |
+
 ### Support und Programme
 
 Programmfehler bitte in 'Issues' melden, Diskussionen und Fragen in 'Discussions'. Ausführbare Programme finden Sie im 'Releases'-Bereich.
@@ -291,6 +314,29 @@ Depending on the task, using both model lines can also be helpful:
 * Flash line: Generation of multiple solution variants
 * User: Selection of the best solution variant
 * Pro line: Refinement of the selected solution variant
+
+### Important Parameters
+
+*   **Temperature**: Controls creativity. A low value (near 0.0) makes the output more deterministic and focused on the most likely words. A high value (above 0.7) increases randomness, encouraging more diverse and unexpected results.
+
+*   **TopP (Nucleus Sampling)**: Filters word choices based on cumulative probability. A low value (e.g., 0.1) limits the selection to a very small pool of the most probable words, making the response focused. A high value (near 1.0) allows for a wider range of word choices, thus increasing diversity.
+
+#### Default Values
+
+The default values for Gemini models are typically:
+*   **Temperature**: 1.0
+*   **TopP**: 0.95
+
+#### Recommended Values for Different Tasks
+
+These values are recommendations. The ideal settings depend on the AI model and the specific task.
+
+| Task | Temperature | TopP | Description |
+| :--- | :--- | :--- | :--- |
+| **General Tasks** | ~0.7 | ~0.95 | A good middle ground for balanced and coherent, yet not overly rigid, responses. |
+| **Creative Tasks** | 0.7 - 1.0+ | 0.9 - 0.99 | Encourages novel ideas, brainstorming, and the creation of unique texts like poems or stories. |
+| **Facts & Logic** | 0.0 - 0.4 | < 0.8 | Maximizes precision and factual accuracy for explanations or math problems. The risk of hallucination is minimized. |
+| **Programming** | 0.3 - 0.7 | 0.8 - 0.95 | Generates functional and correct code, but allows the model to find elegant or idiomatic solutions. |
 
 ### Support and Programs
 

@@ -41,6 +41,7 @@ ToDos:
 - Support for "Function Calling" (probably not possible for this general purpose application).
 - Support for "Stop Sequence".
 - Add option to calculation prompt costs.
+- Show parameter 'temperature' and 'topP' at start-up and in response.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
