@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.122.0
+# cloud.google.com/go v0.123.0
 ## explicit; go 1.24.0
 cloud.google.com/go/civil
 # cloud.google.com/go/auth v0.16.5
@@ -16,7 +16,7 @@ cloud.google.com/go/auth/internal/credsfile
 cloud.google.com/go/auth/internal/jwt
 cloud.google.com/go/auth/internal/transport
 cloud.google.com/go/auth/internal/transport/cert
-# cloud.google.com/go/compute/metadata v0.8.4
+# cloud.google.com/go/compute/metadata v0.9.0
 ## explicit; go 1.24.0
 cloud.google.com/go/compute/metadata
 # github.com/Klaus-Tockloth/go-term-markdown v0.0.0-20250129073703-91600624167c
@@ -164,7 +164,7 @@ github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.16
+# github.com/mattn/go-runewidth v0.0.17
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-wordwrap v1.0.1
@@ -262,10 +262,10 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genai v1.25.0
+# google.golang.org/genai v1.26.0
 ## explicit; go 1.23
 google.golang.org/genai
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.75.1

@@ -834,6 +834,38 @@ type ExecutableCode struct {
 	Language Language `json:"language,omitempty"`
 }
 
+// Raw media bytes for function response.
+// Text should not be sent as raw bytes, use the FunctionResponse.response
+// field.
+type FunctionResponseBlob struct {
+	// Required. The IANA standard MIME type of the source data.
+	MIMEType string `json:"mimeType,omitempty"`
+	// Required. Inline media bytes.
+	Data []byte `json:"data,omitempty"`
+}
+
+// URI based data for function response.
+type FunctionResponseFileData struct {
+	// Required. URI.
+	FileURI string `json:"fileUri,omitempty"`
+	// Required. The IANA standard MIME type of the source data.
+	MIMEType string `json:"mimeType,omitempty"`
+}
+
+// A datatype containing media that is part of a `FunctionResponse` message.
+// A `FunctionResponsePart` consists of data which has an associated datatype. A
+// `FunctionResponsePart` can only contain one of the accepted types in
+// `FunctionResponsePart.data`.
+// A `FunctionResponsePart` must have a fixed IANA MIME type identifying the
+// type and subtype of the media if the `inline_data` field is filled with raw
+// bytes.
+type FunctionResponsePart struct {
+	// Optional. Inline media bytes.
+	InlineData *FunctionResponseBlob `json:"inlineData,omitempty"`
+	// Optional. URI based data.
+	FileData *FunctionResponseFileData `json:"fileData,omitempty"`
+}
+
 // A function response.
 type FunctionResponse struct {
 	// Optional. Signals that function call continues, and more responses will be returned,
@@ -847,6 +879,9 @@ type FunctionResponse struct {
 	// Optional. Specifies how the response should be scheduled in the conversation. Only
 	// applicable to NON_BLOCKING function calls, is ignored otherwise. Defaults to WHEN_IDLE.
 	Scheduling FunctionResponseScheduling `json:"scheduling,omitempty"`
+	// Optional. List of parts that constitute a function response. Each part may
+	// have a different IANA MIME type.
+	Parts []*FunctionResponsePart `json:"parts,omitempty"`
 	// Optional. The ID of the function call this response is for. Populated by the client
 	// to match the corresponding function call `id`.
 	ID string `json:"id,omitempty"`
@@ -1136,19 +1171,19 @@ type Schema struct {
 	// Optional. SCHEMA FIELDS FOR TYPE ARRAY Schema of the elements of Type.ARRAY.
 	Items *Schema `json:"items,omitempty"`
 	// Optional. Maximum number of the elements for Type.ARRAY.
-	MaxItems *int64 `json:"maxItems,omitempty,string"`
+	MaxItems *int64 `json:"maxItems,omitempty"`
 	// Optional. Maximum length of the Type.STRING
-	MaxLength *int64 `json:"maxLength,omitempty,string"`
+	MaxLength *int64 `json:"maxLength,omitempty"`
 	// Optional. Maximum number of the properties for Type.OBJECT.
-	MaxProperties *int64 `json:"maxProperties,omitempty,string"`
+	MaxProperties *int64 `json:"maxProperties,omitempty"`
 	// Optional. Maximum value of the Type.INTEGER and Type.NUMBER
 	Maximum *float64 `json:"maximum,omitempty"`
 	// Optional. Minimum number of the elements for Type.ARRAY.
-	MinItems *int64 `json:"minItems,omitempty,string"`
+	MinItems *int64 `json:"minItems,omitempty"`
 	// Optional. SCHEMA FIELDS FOR TYPE STRING Minimum length of the Type.STRING
-	MinLength *int64 `json:"minLength,omitempty,string"`
+	MinLength *int64 `json:"minLength,omitempty"`
 	// Optional. Minimum number of the properties for Type.OBJECT.
-	MinProperties *int64 `json:"minProperties,omitempty,string"`
+	MinProperties *int64 `json:"minProperties,omitempty"`
 	// Optional. Minimum value of the Type.INTEGER and Type.NUMBER.
 	Minimum *float64 `json:"minimum,omitempty"`
 	// Optional. Indicates if the value may be null.
@@ -1396,6 +1431,12 @@ type URLContext struct {
 type ToolComputerUse struct {
 	// Optional. Required. The environment being operated.
 	Environment Environment `json:"environment,omitempty"`
+	// Optional. By default, predefined functions are included in the final model call.
+	// Some of them can be explicitly excluded from being automatically included.
+	// This can serve two purposes:
+	// 1. Using a more restricted / different action space.
+	// 2. Improving the definitions / instructions of predefined functions.
+	ExcludedPredefinedFunctions []string `json:"excludedPredefinedFunctions,omitempty"`
 }
 
 // The API secret.
@@ -2589,6 +2630,7 @@ func (r *referenceImageAPI) referenceImageAPI() *referenceImageAPI {
 //   - NewControlReferenceImage
 //   - NewStyleReferenceImage
 //   - NewSubjectReferenceImage
+//   - NewContentReferenceImage
 //   - ...
 type ReferenceImage interface {
 	referenceImageAPI() *referenceImageAPI
@@ -2640,6 +2682,15 @@ func NewSubjectReferenceImage(referenceImage *Image, referenceID int32, config *
 		ReferenceID:    referenceID,
 		Config:         config,
 		referenceType:  "REFERENCE_TYPE_SUBJECT",
+	}
+}
+
+// NewContentReferenceImage creates a new ContentReferenceImage.
+func NewContentReferenceImage(referenceImage *Image, referenceID int32) *ContentReferenceImage {
+	return &ContentReferenceImage{
+		ReferenceImage: referenceImage,
+		ReferenceID:    referenceID,
+		referenceType:  "REFERENCE_TYPE_CONTENT",
 	}
 }
 
@@ -4459,7 +4510,7 @@ type BatchJobDestination struct {
 type CreateBatchJobConfig struct {
 	// Optional. Used to override HTTP request options.
 	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
-	// Optional. The user-defined name of this BatchJob.
+	// The user-defined name of this BatchJob.
 	DisplayName string `json:"displayName,omitempty"`
 	// GCS or BigQuery URI prefix for the output predictions. Example:
 	// "gs://path/to/output/data" or "bq://projectId.bqDatasetId.bqTableId".
@@ -4860,6 +4911,27 @@ func (r *SubjectReferenceImage) referenceImageAPI() *referenceImageAPI {
 		ReferenceID:        r.ReferenceID,
 		ReferenceType:      "REFERENCE_TYPE_CONTROL",
 		SubjectImageConfig: r.Config,
+	}
+}
+
+// A content reference image.
+// A content reference image represents a subject to reference (ex. person,
+// product, animal) provided by the user. It can optionally be provided in
+// addition to a style reference image (ex. background, style reference).
+type ContentReferenceImage struct {
+	// Optional. The reference image for the editing operation.
+	ReferenceImage *Image `json:"referenceImage,omitempty"`
+	// Optional. The ID of the reference image.
+	ReferenceID int32 `json:"referenceId,omitempty"`
+	// Optional. The type of the reference image. Only set by the SDK.
+	referenceType string
+}
+
+func (r *ContentReferenceImage) referenceImageAPI() *referenceImageAPI {
+	return &referenceImageAPI{
+		ReferenceImage: r.ReferenceImage,
+		ReferenceID:    r.ReferenceID,
+		ReferenceType:  "REFERENCE_TYPE_CONTENT",
 	}
 }
 

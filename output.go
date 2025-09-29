@@ -296,9 +296,18 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		responseString.WriteString("\n***\n")
 	}
 
+	temperatureInfo := "Temperature: default"
+	if progConfig.GeminiTemperature > -1.0 {
+		temperatureInfo = fmt.Sprintf("Temperature: %.2f", progConfig.GeminiTemperature)
+	}
+	toppInfo := "TopP: default"
+	if progConfig.GeminiTopP > -1.0 {
+		toppInfo = fmt.Sprintf("TopP: %.2f", progConfig.GeminiTopP)
+	}
+
 	// print response metadata
 	responseString.WriteString("```plaintext\n")
-	responseString.WriteString(fmt.Sprintf("AI model   : %v\n", resp.ModelVersion))
+	responseString.WriteString(fmt.Sprintf("AI model   : %v (%s, %s)\n", resp.ModelVersion, temperatureInfo, toppInfo))
 	responseString.WriteString(fmt.Sprintf("Generated  : %v\n", finishProcessing.Format(time.RFC850)))
 
 	duration := finishProcessing.Sub(startProcessing)

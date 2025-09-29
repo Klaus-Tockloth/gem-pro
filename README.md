@@ -124,6 +124,10 @@ Um die Fähigkeiten des KI-Modells zu erweitern, können spezialisierte Werkzeug
 
 Ist dieses Tool aktiviert, kann das KI-Modell auf Google Search zugreifen, um aktuelle Informationen zu finden und Fakten zu überprüfen. Dies verbessert die Genauigkeit und Relevanz der Antworten, insbesondere bei Fragen zu aktuellen Ereignissen oder spezifischem Wissen.
 
+*Autonome Websuche:* Bei allgemeinen Fragen (z. B. zu aktuellen Ereignissen) entscheidet das Modell selbstständig, ob eine Google-Suche zur Verbesserung der Antwortqualität notwendig ist. Es recherchiert die relevanten Informationen und fasst sie zusammen.
+
+*Gezielter URL-Kontext:* Im Prompt können dem Modell eine oder mehrere spezifische URLs direkt vorgeben werden. Das Modell nutzt dann primär die Inhalte dieser Seiten als Wissensgrundlage für seine Antwort. Dies ist ideal für Aufgaben wie die Zusammenfassung eines Artikels oder die Beantwortung von Fragen zu einer bestimmten Online-Dokumentation.
+
 #### Code Execution
 
 Dieses Tool erlaubt es dem KI-Modell, Code (in der Regel Python) zu generieren, auszuführen und zu validieren, um eine Lösung für eine Anfrage zu finden. Dies ist besonders nützlich für mathematische Berechnungen, Datenanalysen oder logische Probleme, bei denen eine exakte Ausführung von Schritten erforderlich ist. Das Modell kann so Aufgaben lösen, die präzise und wiederholbare Ergebnisse erfordern.
@@ -163,6 +167,8 @@ Die nachfolgenden Werte sind Ausgangspunkte. Die ideale Einstellung kann je nach
 | **Kreative Aufgaben** | 0.7 - 1.0+ | 0.9 - 0.99 | Fördert neuartige Ideen, Brainstorming und die Erstellung einzigartiger Texte wie Gedichte oder Geschichten. |
 | **Fakten & Logik** | 0.0 - 0.4 | < 0.8 | Maximiert Genauigkeit und Faktentreue für Erklärungen oder mathematische Probleme. Das Risiko von Halluzinationen wird minimiert. |
 | **Programmierung** | 0.3 - 0.7 | 0.8 - 0.95 | Erzeugt funktionalen und korrekten Code, erlaubt dem Modell aber, elegante oder idiomatische Lösungswege zu finden. |
+
+*Hinweis:* Die (Vorgabe-) Werte für Temperature und TopP in der YAML-Konfiguration sind auf technische Prompts (Fakten, Logik, Programmierung) ausgerichtet.
 
 ### Support und Programme
 
@@ -298,6 +304,10 @@ To extend the capabilities of the AI model, specialized tools can be utilized. T
 
 When this tool is enabled, the AI model can access Google Search to find up-to-date information and verify facts. This improves the accuracy and relevance of the responses, particularly for questions about current events or specific knowledge.
 
+*Autonomous web search:* For general questions (e.g., about current events), the model independently decides whether a Google search is necessary to improve the quality of the answer. It researches the relevant information and summarizes it.
+
+*Targeted URL context:* In the prompt, one or more specific URLs can be given directly to the model. The model then primarily uses the content of these pages as a knowledge base for its answer. This is ideal for tasks such as summarizing an article or answering questions about specific online documentation.
+
 #### Code Execution
 
 This tool allows the AI model to generate, execute, and validate code (typically Python) to find a solution to a prompt. This is especially useful for mathematical calculations, data analysis, or logical problems that require a precise execution of steps. It enables the model to solve tasks that demand accurate and repeatable results.
@@ -337,6 +347,8 @@ These values are recommendations. The ideal settings depend on the AI model and 
 | **Creative Tasks** | 0.7 - 1.0+ | 0.9 - 0.99 | Encourages novel ideas, brainstorming, and the creation of unique texts like poems or stories. |
 | **Facts & Logic** | 0.0 - 0.4 | < 0.8 | Maximizes precision and factual accuracy for explanations or math problems. The risk of hallucination is minimized. |
 | **Programming** | 0.3 - 0.7 | 0.8 - 0.95 | Generates functional and correct code, but allows the model to find elegant or idiomatic solutions. |
+
+*Note:* The (default) values for Temperature and TopP in the YAML configuration are geared towards technical prompts (facts, logic, programming).
 
 ### Support and Programs
 

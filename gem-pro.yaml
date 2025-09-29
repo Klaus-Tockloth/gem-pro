@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.7.1 - 2025-09-21: corresponding to program release
+# - v0.8.0 - 2025-09-29: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -47,7 +47,7 @@ GeminiCandidateCount: 1
 # are good for prompts that require a more deterministic or less open-ended response, while higher
 # temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic,
 # meaning that the highest probability response is always selected.
-GeminiTemperature:
+GeminiTemperature: 0.2
 
 # maximum cumulative probability of tokens to consider when sampling (float)
 # The topP parameter changes how the model selects tokens for output. Tokens are selected from the
@@ -55,7 +55,7 @@ GeminiTemperature:
 # if tokens A, B, and C have a probability of 0.3, 0.2, and 0.1 and the topP value is 0.5, then the
 # model will select either A or B as the next token by using the temperature and exclude C as a
 # candidate.
-GeminiTopP:
+GeminiTopP: 0.6
 
 # maximum number of tokens to consider when sampling (int)
 # The topK parameter changes how the model selects tokens for output. A topK of 1 means the

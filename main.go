@@ -22,6 +22,7 @@ Releases:
                          thinking config handling modified, option '-replace-mimetypes' added,
 						 libs updated, compiled with go v1.25.1
   - v0.7.0 - 2025-09-20: various options added, default for 'code execution' changed, libs updated
+  - v0.8.0 - 2025-09-29: documentation improved, temperature+topp for technical prompts, libs updated
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -37,11 +38,8 @@ Remarks:
 
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support for "URL Content" (e.g. via option '-urllist file').
-- Support for "Function Calling" (probably not possible for this general purpose application).
+- Support for "Function Calling" (e.g. dynamic functions via Lua).
 - Support for "Stop Sequence".
-- Add option to calculation prompt costs.
-- Show parameter 'temperature' and 'topP' at start-up and in response.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -75,8 +73,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.7.0"
-	progDate    = "2025-09-20"
+	progVersion = "v0.8.0"
+	progDate    = "2025-09-29"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
