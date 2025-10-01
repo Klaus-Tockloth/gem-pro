@@ -22,7 +22,7 @@ Releases:
                          thinking config handling modified, option '-replace-mimetypes' added,
 						 libs updated, compiled with go v1.25.1
   - v0.7.0 - 2025-09-20: various options added, default for 'code execution' changed, libs updated
-  - v0.8.0 - 2025-09-29: documentation improved, temperature+topp for technical prompts, libs updated
+  - v0.8.0 - 2025-10-01: documentation improved, temperature+topp for technical prompts, libs updated
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -74,7 +74,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.8.0"
-	progDate    = "2025-09-29"
+	progDate    = "2025-10-01"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
