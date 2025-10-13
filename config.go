@@ -28,6 +28,7 @@ type ProgConfig struct {
 	GeminiSystemInstruction        string   `yaml:"GeminiSystemInstruction"`
 	GeminiCodeExecution            bool     `yaml:"GeminiCodeExecution"`
 	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
+	GeminiGroundigWithGoogleMaps   bool     `yaml:"GeminiGroundigWithGoogleMaps"`
 	GeminiMaxThinkingBudget        int32    `yaml:"GeminiMaxThinkingBudget"`
 	GeminiIncludeThoughts          bool     `yaml:"GeminiIncludeThoughts"`
 	GeminiCacheName                string   `yaml:"GeminiCacheName"`
@@ -414,6 +415,9 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 	if progConfig.GeminiGroundigWithGoogleSearch {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
 	}
+	if progConfig.GeminiGroundigWithGoogleMaps {
+		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
+	}
 
 	if cacheName != "" {
 		generateContentConfig.CachedContent = cacheName
@@ -459,6 +463,9 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 		for _, tool := range geminiModelConfig.Tools {
 			if tool.GoogleSearch != nil {
 				fmt.Printf("  Tool              : GoogleSearch\n")
+			}
+			if tool.GoogleMaps != nil {
+				fmt.Printf("  Tool              : GoogleMaps\n")
 			}
 			if tool.CodeExecution != nil {
 				fmt.Printf("  Tool              : CodeExecution\n")

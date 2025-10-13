@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.30.0](https://github.com/googleapis/go-genai/compare/v1.29.0...v1.30.0) (2025-10-10)
+
+
+### Features
+
+* Enable Google Maps tool for Genai. ([9aba5c7](https://github.com/googleapis/go-genai/commit/9aba5c7ee99884d0ae5a8b3d94f1abc128523a37))
+* Support enableWidget feature in GoogleMaps ([cd1e6b7](https://github.com/googleapis/go-genai/commit/cd1e6b7b1b3d79b28a580f787abc5f296522f313))
+* Support Gemini batch inline request's metadata and add test coverage to safety setting ([f12f353](https://github.com/googleapis/go-genai/commit/f12f3530050f06d34fa280b8827f9c7514f3c98f))
+
+## [1.29.0](https://github.com/googleapis/go-genai/compare/v1.28.0...v1.29.0) (2025-10-08)
+
+
+### Features
+
+* Add labels field to Imagen configs ([d01fe5e](https://github.com/googleapis/go-genai/commit/d01fe5e157f9c27a61464ed99c816b73d64d6dbb))
+* Add utility methods for creating `FunctionResponsePart` and creating FunctionResponse `Part` with `FunctionResponseParts` ([10de2ab](https://github.com/googleapis/go-genai/commit/10de2ab112ae5d3c67f0591a5c58412f40206372))
+* Enable Ingredients to Video and Advanced Controls for Veo on Gemini Developer API (Early Access Program) ([3165554](https://github.com/googleapis/go-genai/commit/31655546a8254f2c0571da7a9d15d00b6111ad6a))
+
+## [1.28.0](https://github.com/googleapis/go-genai/compare/v1.27.0...v1.28.0) (2025-10-02)
+
+
+### Features
+
+* Add `NO_IMAGE` enum value to `FinishReason` ([4f65f45](https://github.com/googleapis/go-genai/commit/4f65f457b41b112312dc3fa771ee61ef4692b402))
+* Add thinking_config for live ([54152b2](https://github.com/googleapis/go-genai/commit/54152b2e6509b1a6fea20df829e366e388bfe6fc))
+
+## [1.27.0](https://github.com/googleapis/go-genai/compare/v1.26.0...v1.27.0) (2025-10-01)
+
+
+### Features
+
+* Add `ImageConfig` to `GenerateContentConfig` ([55399fd](https://github.com/googleapis/go-genai/commit/55399fdab38bdf88857ed1a4bc50822780f42520))
+* rename ComputerUse tool (early access) ([d976966](https://github.com/googleapis/go-genai/commit/d9769665237fb266eb0063af26124e7d76557ca4))
+
+
+### Bug Fixes
+
+* fix system_instruction mapping issue in batches module ([c862a6d](https://github.com/googleapis/go-genai/commit/c862a6de5307a363478bee210d73c6f1e3199d8b))
+
 ## [1.26.0](https://github.com/googleapis/go-genai/compare/v1.25.0...v1.26.0) (2025-09-25)
 
 

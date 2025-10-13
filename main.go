@@ -23,6 +23,7 @@ Releases:
 						 libs updated, compiled with go v1.25.1
   - v0.7.0 - 2025-09-20: various options added, default for 'code execution' changed, libs updated
   - v0.8.0 - 2025-10-01: documentation improved, temperature+topp for technical prompts, libs updated
+  - v0.9.0 - 2025-10-11: yaml config enriched (latest models, Google Maps), libs updated, compiled with go v1.25.2
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -38,7 +39,7 @@ Remarks:
 
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support for "Function Calling" (e.g. dynamic functions via Lua).
+- Support for "Function Calling" (e.g. 'dynamic' functions via 'yaegi').
 - Support for "Stop Sequence".
 
 Links:
@@ -73,8 +74,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.8.0"
-	progDate    = "2025-10-01"
+	progVersion = "v0.9.0"
+	progDate    = "2025-10-11"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
