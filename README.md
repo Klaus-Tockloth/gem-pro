@@ -120,13 +120,21 @@ Eine hervorragende Möglichkeit des (impliziten) Cachings bietet der Chat-Modus.
 
 Um die Fähigkeiten des KI-Modells zu erweitern, können spezialisierte Werkzeuge (Tools) genutzt werden. Diese ermöglichen es dem Modell, auf externe Informationen zuzugreifen oder komplexe Operationen auszuführen, die über die reine Textgenerierung hinausgehen.
 
-#### Google Search
+#### Grounding mit Google Search
 
 Ist dieses Tool aktiviert, kann das KI-Modell auf Google Search zugreifen, um aktuelle Informationen zu finden und Fakten zu überprüfen. Dies verbessert die Genauigkeit und Relevanz der Antworten, insbesondere bei Fragen zu aktuellen Ereignissen oder spezifischem Wissen.
 
 *Autonome Websuche:* Bei allgemeinen Fragen (z. B. zu aktuellen Ereignissen) entscheidet das Modell selbstständig, ob eine Google-Suche zur Verbesserung der Antwortqualität notwendig ist. Es recherchiert die relevanten Informationen und fasst sie zusammen.
 
 *Gezielter URL-Kontext:* Im Prompt können dem Modell eine oder mehrere spezifische URLs direkt vorgeben werden. Das Modell nutzt dann primär die Inhalte dieser Seiten als Wissensgrundlage für seine Antwort. Dies ist ideal für Aufgaben wie die Zusammenfassung eines Artikels oder die Beantwortung von Fragen zu einer bestimmten Online-Dokumentation.
+
+#### Grounding mit Google Maps
+
+Ist dieses Tool aktiviert, kann das KI-Modell auf die umfangreichen und aktuellen Geodaten von Google Maps zugreifen. Dies ermöglicht präzisere, relevantere und faktenbasierte Antworten auf standortbezogene Anfragen. Das Modell kann so Informationen zu Orten, Routen oder Umgebungen direkt in seine Antworten integrieren und diese mit kontextuellen Details anreichern.
+
+*Standortbezogene Fakten:* Bei Fragen zu spezifischen Orten, wie "Welche vegetarischen Restaurants gibt es in der Nähe des Brandenburger Tors mit guten Bewertungen?", nutzt das Modell Google Maps, um aktuelle Informationen wie Adressen, Öffnungszeiten und Nutzerbewertungen zu liefern. Dadurch werden die Antworten sachlicher und aktueller.
+
+*Kontextuelles Verständnis:* Das Tool ermöglicht es dem Modell, räumliche Zusammenhänge zu verstehen. Auf eine Anfrage wie "Schlage eine Route für einen Spaziergang in Berlin vor, die an historischen Sehenswürdigkeiten vorbeiführt" kann das Modell eine logische und thematisch passende Wegbeschreibung erstellen, die auf den realen Gegebenheiten von Google Maps basiert.
 
 #### Code Execution
 
@@ -300,13 +308,21 @@ Chat mode offers an excellent way of (implicit) caching. Here, the files are onl
 
 To extend the capabilities of the AI model, specialized tools can be utilized. These enable the model to access external information or perform complex operations that go beyond mere text generation.
 
-#### Google Search
+#### Grounding with Google Search
 
 When this tool is enabled, the AI model can access Google Search to find up-to-date information and verify facts. This improves the accuracy and relevance of the responses, particularly for questions about current events or specific knowledge.
 
 *Autonomous web search:* For general questions (e.g., about current events), the model independently decides whether a Google search is necessary to improve the quality of the answer. It researches the relevant information and summarizes it.
 
 *Targeted URL context:* In the prompt, one or more specific URLs can be given directly to the model. The model then primarily uses the content of these pages as a knowledge base for its answer. This is ideal for tasks such as summarizing an article or answering questions about specific online documentation.
+
+**Grounding with Google Maps**
+
+When this tool is activated, the AI model can access the extensive and up-to-date geodata from Google Maps. This enables more precise, relevant, and fact-based answers to location-based inquiries. The model can thus directly integrate information about places, routes, or surroundings into its responses and enrich them with contextual details.
+
+*Location-based Facts:* For questions about specific places, such as "What are some well-rated vegetarian restaurants near the Brandenburg Gate?", the model uses Google Maps to provide current information like addresses, opening hours, and user ratings. This makes the answers more factual and current.
+
+*Contextual Understanding:* The tool allows the model to understand spatial relationships. In response to a query like "Suggest a walking route in Berlin that passes by historical landmarks," the model can create a logical and thematically appropriate itinerary based on the real-world data from Google Maps.
 
 #### Code Execution
 
