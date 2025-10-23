@@ -24,6 +24,7 @@ Releases:
   - v0.7.0 - 2025-09-20: various options added, default for 'code execution' changed, libs updated
   - v0.8.0 - 2025-10-01: documentation improved, temperature+topp for technical prompts, libs updated
   - v0.9.0 - 2025-10-11: yaml config enriched (latest models, Google Maps), libs updated, compiled with go v1.25.2
+  - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -74,8 +75,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.9.0"
-	progDate    = "2025-10-11"
+	progVersion = "v0.9.1"
+	progDate    = "2025-10-21"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

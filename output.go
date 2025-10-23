@@ -281,7 +281,14 @@ func processResponse(resp *genai.GenerateContentResponse) {
 				responseString.WriteString("**Online Search Sources Used:**\n\n")
 				// numbered list because response can contain references (e.g. [2] or [1,3,15])
 				for k, groundingChunk := range candidate.GroundingMetadata.GroundingChunks {
-					responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.Web.Title, groundingChunk.Web.URI))
+					switch {
+					case groundingChunk.Web != nil:
+						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.Web.Title, groundingChunk.Web.URI))
+					case groundingChunk.Maps != nil:
+						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.Maps.Title, groundingChunk.Maps.URI))
+					case groundingChunk.RetrievedContext != nil:
+						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.RetrievedContext.Title, groundingChunk.RetrievedContext.URI))
+					}
 				}
 			}
 			// grounding: show list of recommended web search queries (google search suggestions)

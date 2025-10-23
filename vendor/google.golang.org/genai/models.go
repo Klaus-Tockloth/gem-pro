@@ -2260,7 +2260,7 @@ func generatedImageMaskFromVertex(fromObject map[string]any, parentObject map[st
 func generatedVideoFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
-	fromVideo := getValueByPath(fromObject, []string{"_self"})
+	fromVideo := getValueByPath(fromObject, []string{"video"})
 	if fromVideo != nil {
 		fromVideo, err = videoFromMldev(fromVideo.(map[string]any), toObject)
 		if err != nil {
@@ -3678,12 +3678,12 @@ func upscaleImageResponseFromVertex(fromObject map[string]any, parentObject map[
 func videoFromMldev(fromObject map[string]any, parentObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
-	fromUri := getValueByPath(fromObject, []string{"video", "uri"})
+	fromUri := getValueByPath(fromObject, []string{"uri"})
 	if fromUri != nil {
 		setValueByPath(toObject, []string{"uri"}, fromUri)
 	}
 
-	fromVideoBytes := getValueByPath(fromObject, []string{"video", "encodedVideo"})
+	fromVideoBytes := getValueByPath(fromObject, []string{"encodedVideo"})
 	if fromVideoBytes != nil {
 		fromVideoBytes, err = tBytes(fromVideoBytes)
 		if err != nil {
@@ -3795,7 +3795,7 @@ func videoToMldev(fromObject map[string]any, parentObject map[string]any) (toObj
 
 	fromUri := getValueByPath(fromObject, []string{"uri"})
 	if fromUri != nil {
-		setValueByPath(toObject, []string{"video", "uri"}, fromUri)
+		setValueByPath(toObject, []string{"uri"}, fromUri)
 	}
 
 	fromVideoBytes := getValueByPath(fromObject, []string{"videoBytes"})
@@ -3805,7 +3805,7 @@ func videoToMldev(fromObject map[string]any, parentObject map[string]any) (toObj
 			return nil, err
 		}
 
-		setValueByPath(toObject, []string{"video", "encodedVideo"}, fromVideoBytes)
+		setValueByPath(toObject, []string{"encodedVideo"}, fromVideoBytes)
 	}
 
 	fromMimeType := getValueByPath(fromObject, []string{"mimeType"})
@@ -5117,6 +5117,12 @@ func (m Models) GenerateVideos(ctx context.Context, model string, prompt string,
 func (m Models) GenerateVideosFromSource(ctx context.Context, model string, source *GenerateVideosSource, config *GenerateVideosConfig) (*GenerateVideosOperation, error) {
 	if source == nil {
 		return nil, fmt.Errorf("source is required")
+	}
+	// Gemini API does not support video bytes.
+	if m.apiClient.clientConfig.Backend == BackendGeminiAPI {
+		if source.Video != nil && source.Video.URI != "" && source.Video.VideoBytes != nil {
+			source.Video = &Video{URI: source.Video.URI, MIMEType: source.Video.MIMEType}
+		}
 	}
 	// Rely on backend validation for combinations of prompt, image, and video.
 	return m.generateVideos(ctx, model, nil, nil, nil, source, config)
