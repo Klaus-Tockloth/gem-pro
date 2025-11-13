@@ -245,6 +245,11 @@ func batchJobFromVertex(fromObject map[string]any, parentObject map[string]any) 
 		setValueByPath(toObject, []string{"dest"}, fromDest)
 	}
 
+	fromCompletionStats := getValueByPath(fromObject, []string{"completionStats"})
+	if fromCompletionStats != nil {
+		setValueByPath(toObject, []string{"completionStats"}, fromCompletionStats)
+	}
+
 	return toObject, nil
 }
 

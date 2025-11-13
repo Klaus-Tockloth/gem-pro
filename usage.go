@@ -119,6 +119,13 @@ func showAvailableGeminiModels(terminalWidth int) {
 		fmt.Printf("InputTokenLimit  : %v\n", modelInfo.InputTokenLimit)
 		fmt.Printf("OutputTokenLimit : %v\n", modelInfo.OutputTokenLimit)
 		fmt.Printf("SupportedActions : %v\n", strings.Join(modelInfo.SupportedActions, ", "))
+		// DefaultCheckpointID
+		// Checkpoints
+		fmt.Printf("Temperature      : %v\n", modelInfo.Temperature)
+		fmt.Printf("MaxTemperature   : %v\n", modelInfo.MaxTemperature)
+		fmt.Printf("TopP             : %v\n", modelInfo.TopP)
+		fmt.Printf("TopK             : %v\n", modelInfo.TopK)
+		fmt.Printf("Thinking         : %t\n", modelInfo.Thinking)
 	}
 	fmt.Printf("\n")
 }

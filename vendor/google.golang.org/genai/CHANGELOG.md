@@ -1,5 +1,61 @@
 # Changelog
 
+## [1.35.0](https://github.com/googleapis/go-genai/compare/v1.34.0...v1.35.0) (2025-11-12)
+
+
+### Features
+
+* Add `ToGenerationConfig` method to `GenerateContentConfig`. fixes [#506](https://github.com/googleapis/go-genai/issues/506) ([bd53df4](https://github.com/googleapis/go-genai/commit/bd53df47bb10e8d52dbf5cc200b9c33222947eb5))
+
+
+### Bug Fixes
+
+* Add missing fields to the model types ([9e1b329](https://github.com/googleapis/go-genai/commit/9e1b3290976f0bf0e640c49a50a8f864c93e7da4))
+* Fix base_steps parameter for recontext_image ([4f90d03](https://github.com/googleapis/go-genai/commit/4f90d03d5790fae86f3ea18601f7ce98aba99568))
+* Fix models.list() filter parameter ([f5859fd](https://github.com/googleapis/go-genai/commit/f5859fd6b36a6b5c9a6deb28434591ee58b60230))
+
+## [1.34.0](https://github.com/googleapis/go-genai/compare/v1.33.0...v1.34.0) (2025-11-05)
+
+
+### Features
+
+* Add `UseDefaultCredentials` method to `ClientConfig`. ([d15baab](https://github.com/googleapis/go-genai/commit/d15baab4f79e01d396fa4e8f707cdcd19f6ce404))
+* add complete stats to BatchJob ([0df87d7](https://github.com/googleapis/go-genai/commit/0df87d71edaa743f42665e403dd834af81fa6d33))
+* Add FileSearch tool and associated FileSearchStore management APIs ([8ce95c8](https://github.com/googleapis/go-genai/commit/8ce95c8eb5fc5b49a74b604729cc967596184850))
+* Add FileSearch tool and associated FileSearchStore management APIs ([3e0a744](https://github.com/googleapis/go-genai/commit/3e0a74410171fc42b6d94e9ca18ca2c8a2b8d6c4))
+* Add image_size to ImageConfig (Early Access Program) ([027f29c](https://github.com/googleapis/go-genai/commit/027f29ce42fc22bf4861a10a5b5f35ad6ebb77e4))
+* Added phish filtering feature. ([eb849d1](https://github.com/googleapis/go-genai/commit/eb849d1e13be374f6751fe7374ab0a58a547781c))
+
+
+### Bug Fixes
+
+* prevent nil pointer dereference panic in newAPIError function ([251f7bf](https://github.com/googleapis/go-genai/commit/251f7bf00c59b4cbbf74ad35232dce998341df75))
+* prevent nil pointer dereference panic in newAPIError function ([#468](https://github.com/googleapis/go-genai/issues/468)) ([ba15429](https://github.com/googleapis/go-genai/commit/ba15429569bdb82ecb78618afa8be2f05ed6c4e2))
+
+## [1.33.0](https://github.com/googleapis/go-genai/compare/v1.32.0...v1.33.0) (2025-10-29)
+
+
+### Features
+
+* Add safety_filter_level and person_generation for Imagen upscaling ([3d7b57a](https://github.com/googleapis/go-genai/commit/3d7b57a389322c52e2bd8901a6fae0dbdd2c3720))
+* Add support for preference optimization tuning in the SDK. ([a6db7fe](https://github.com/googleapis/go-genai/commit/a6db7fe8233501c8457ec7fb8d6b3a132bfb7944))
+* Pass file name to the backend when uploading with a file path ([6b5e4f4](https://github.com/googleapis/go-genai/commit/6b5e4f4939a8b13da27fab65731a3423191e2790))
+* support default global location when not using api key with vertexai backend ([44f01d6](https://github.com/googleapis/go-genai/commit/44f01d636bff7310bdcfcc5200118fe6ea4a5e2b))
+
+## [1.32.0](https://github.com/googleapis/go-genai/compare/v1.31.0...v1.32.0) (2025-10-21)
+
+
+### Features
+
+* Add enable_enhanced_civic_answers in GenerationConfig ([c876512](https://github.com/googleapis/go-genai/commit/c87651298d18a77e27f8daba2db0e19074408781))
+* support jailbreak in HarmCategory and BlockedReason ([65e1efc](https://github.com/googleapis/go-genai/commit/65e1efc38ca1e5f958be90eac83668b357187187))
+
+
+### Bug Fixes
+
+* change back SingleEmbedContentResponse.TokenCount to int64 due to mistake in [#557](https://github.com/googleapis/go-genai/issues/557) ([e05f15d](https://github.com/googleapis/go-genai/commit/e05f15d3df064f9ec0e79ab3b6b08fea540e7803))
+* do not append project and client for Vertex AI when using API key ([c27f13a](https://github.com/googleapis/go-genai/commit/c27f13a44e51f770bc363b6c8922f0a1cb29ae42)), closes [#564](https://github.com/googleapis/go-genai/issues/564)
+
 ## [1.31.0](https://github.com/googleapis/go-genai/compare/v1.30.0...v1.31.0) (2025-10-15)
 
 
