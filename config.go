@@ -100,7 +100,8 @@ type ProgConfig struct {
 	HistoryMaxFilenameLength         int    `yaml:"HistoryMaxFilenameLength"`
 
 	// General configuration
-	GeneralInternetProxy string `yaml:"GeneralInternetProxy"`
+	GeneralInternetProxy string   `yaml:"GeneralInternetProxy"`
+	MIMETypeReplacements []string `yaml:"MIMETypeReplacements"`
 }
 
 // progConfig contains program configuration
@@ -245,6 +246,14 @@ func loadConfiguration(configFile string) error {
 		}
 	}
 
+	if len(progConfig.MIMETypeReplacements) > 0 {
+		mimeMap, err := parseMIMETypeReplacements(progConfig.MIMETypeReplacements)
+		if err != nil {
+			return fmt.Errorf("error [%s] parsing MIME type replacements", err)
+		}
+		ReplacementMIMETypeMap = mimeMap
+	}
+
 	return nil
 }
 
@@ -299,6 +308,13 @@ func showConfiguration() {
 	}
 	if progConfig.HTMLOutput {
 		fmt.Printf("  HTML     : execute application\n")
+	}
+
+	if len(progConfig.MIMETypeReplacements) > 0 {
+		fmt.Printf("\nMIME Type Replacements:\n")
+		for _, replacement := range progConfig.MIMETypeReplacements {
+			fmt.Printf("  %s\n", replacement)
+		}
 	}
 }
 

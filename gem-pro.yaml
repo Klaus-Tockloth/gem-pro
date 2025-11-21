@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.10 - 2025-11-13: corresponding to program release
+# - v0.10 - 2025-11-17: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -270,3 +270,9 @@ HistoryMaxFilenameLength: 200
 # e.g. HTTPS_PROXY=http://USERNAME:PASSWORD@proxy-server.mycorp.com:3128
 # do not set anything, if you have a direct internet connection
 GeneralInternetProxy: 
+
+# list of MIME type replacements (Gemini currently only supports pdf and text)
+MIMETypeReplacements:
+- text/x-shellscript = text/plain
+- application/json = text/plain
+- image/svg+xml = text/plain

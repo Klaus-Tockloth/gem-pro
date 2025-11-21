@@ -451,34 +451,33 @@ func isListItem(trimmedLine string) bool {
 }
 
 /*
-parseMIMETypeList parses a comma-separated string of MIME type pairs
-(e.g. "key1=value1,key2=value2") and returns them as a map[string]string.
-It returns an error if any pair is malformed.
+parseMIMETypeReplacements analysiert eine Liste von Zeichenketten mit MIME-Typ-Paaren
+(z. B. "key1 = value1", "key2 = value2") und gibt sie als map[string]string zurück.
+Es wird ein Fehler zurückgegeben, wenn ein Paar fehlerhaft ist.
 */
-func parseMIMETypeList(input string) (map[string]string, error) {
+func parseMIMETypeReplacements(replacements []string) (map[string]string, error) {
 	mimeMap := make(map[string]string)
-	pairs := strings.Split(input, ",")
 
-	for _, pair := range pairs {
+	for _, pair := range replacements {
 		trimmedPair := strings.TrimSpace(pair)
 
-		// Ignore empty parts resulting from trailing or double commas.
+		// Ignoriere leere Einträge, die durch zusätzliche Zeilenumbrüche entstehen könnten.
 		if trimmedPair == "" {
 			continue
 		}
 
-		// Split the pair at the first '=' into key and value.
-		// Using SplitN with 2 ensures that we only split at the first '='.
+		// Teile das Paar am ersten '=' in Schlüssel und Wert.
+		// Die Verwendung von SplitN mit 2 stellt sicher, dass wir nur am ersten '=' trennen.
 		parts := strings.SplitN(trimmedPair, "=", 2)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid pair format: %q", trimmedPair)
+			return nil, fmt.Errorf("ungültiges MIME-Typ-Paarformat: %q. Erwartet wird 'key = value'", trimmedPair)
 		}
 
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
 
 		if key == "" {
-			return nil, fmt.Errorf("key cannot be empty in pair: %q", trimmedPair)
+			return nil, fmt.Errorf("der Schlüssel des MIME-Typs darf im Paar nicht leer sein: %q", trimmedPair)
 		}
 		mimeMap[key] = value
 	}
