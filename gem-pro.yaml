@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.10 - 2025-11-17: corresponding to program release
+# - v0.11 - 2025-11-23: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -47,7 +47,8 @@ GeminiCandidateCount: 1
 # are good for prompts that require a more deterministic or less open-ended response, while higher
 # temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic,
 # meaning that the highest probability response is always selected.
-GeminiTemperature: 0.4
+# Info for Gemini 3: Google recommends to keep the default temperature. 
+GeminiTemperature:
 
 # maximum cumulative probability of tokens to consider when sampling (float)
 # The topP parameter changes how the model selects tokens for output. Tokens are selected from the
@@ -55,7 +56,7 @@ GeminiTemperature: 0.4
 # if tokens A, B, and C have a probability of 0.3, 0.2, and 0.1 and the topP value is 0.5, then the
 # model will select either A or B as the next token by using the temperature and exclude C as a
 # candidate.
-GeminiTopP: 0.8
+GeminiTopP:
 
 # maximum number of tokens to consider when sampling (int)
 # The topK parameter changes how the model selects tokens for output. A topK of 1 means the
@@ -93,13 +94,17 @@ GeminiCodeExecution: false
 GeminiGroundigWithGoogleSearch: true
 
 # ground responses with Google Maps (not supported by all AI models, affects other settings)
-GeminiGroundigWithGoogleMaps: true
+GeminiGroundigWithGoogleMaps: false
 
-# max thinking budget (AI model must support this setting, 0 disables thinking)
-# Lite, Flash : 0-24576 (24576 = use as much budget as possible)
-# Pro         : 128-32768 (32768 = use as much budget as possible, can't be disabled)
+# max thinking budget (AI model must support this setting, -1 = dynamic thinking, 0 = no thinking)
+# Lite, Flash : -1, 0-24576 (24576 = use as much budget as possible)
+# Pro         : -1, 128-32768 (32768 = use as much budget as possible)
 # Warning: Unlimited thinking can result in high prompt costs.
-GeminiMaxThinkingBudget: 16384
+# Info: Deprecated for Gemini 3. Use thinking level instead.
+GeminiMaxThinkingBudget:
+
+# level of thoughts tokens that the model should generate (e.g. low or high)
+GeminiThinkingLevel: high
 
 # include thoughts in the response (true, false) (AI model must support this setting)
 GeminiIncludeThoughts: true
@@ -112,6 +117,10 @@ GeminiCacheName: gem-pro-cache
 # time to live (ttl) for cached items in hours
 # Keep in mind that caching objects has costs.
 GeminiCacheTimeToLive: 1
+
+# media resolution (low, medium, high) affects images, videos and pdfs
+# recommended settings: image=high, video=low/medium, pdf=medium
+GeminiMediaResolution: medium
 
 # Markdown rendering section
 # --------------------------

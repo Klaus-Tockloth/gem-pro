@@ -361,9 +361,6 @@ func (m FileSearchStores) Create(ctx context.Context, config *CreateFileSearchSt
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	err = mapToStruct(responseMap, response)
 	if err != nil {
 		return nil, err
@@ -439,9 +436,6 @@ func (m FileSearchStores) Get(ctx context.Context, name string, config *GetFileS
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	err = mapToStruct(responseMap, response)
 	if err != nil {
 		return nil, err
@@ -511,14 +505,11 @@ func (m FileSearchStores) Delete(ctx context.Context, name string, config *Delet
 		path += "?" + query
 		delete(body, "_query")
 	}
-
-	if _, ok := body["config"]; ok {
-		delete(body, "config")
-	}
 	_, err = sendRequest(ctx, m.apiClient, path, http.MethodDelete, body, httpOptions)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

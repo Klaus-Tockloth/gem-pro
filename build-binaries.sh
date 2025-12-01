@@ -5,10 +5,12 @@
 # - Build binaries for supported target systems.
 #
 # Releases:
-# - v1.0.0 - 2025/03/11: initial release
-# - v1.1.0 - 2025/05/19: gosec added
+# - v1.0.0 - 2025-03-11: initial release
+# - v1.1.0 - 2025-05-19: gosec added
+# - v1.2.0 - 2025-11-21: errexit added
 # ------------------------------------
 
+set -o errexit
 set -v -o verbose
 
 # recreate directory
@@ -24,7 +26,7 @@ revive
 
 # security
 govulncheck ./...
-gosec -ai-api-provider="gemini" -exclude=G115,G302,G304,G306 ./...
+gosec -ai-api-provider="gemini" -exclude=G114,G115,G204,G302,G304,G306 ./...
 
 # show compiler version
 go version

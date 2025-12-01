@@ -25,7 +25,6 @@ func printUsage() {
 	fmt.Printf("  %s -candidates 2\n", progName)
 	fmt.Printf("  %s -temperature 1.8\n", progName)
 	fmt.Printf("  %s *.go README.md\n", progName)
-	fmt.Printf("  %s -includefiles *.go README.md\n", progName)
 	fmt.Printf("  %s -filelist ganymed-project-files.txt\n", progName)
 
 	fmt.Printf("\nOptions:\n")

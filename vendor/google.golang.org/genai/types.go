@@ -170,6 +170,18 @@ const (
 	PhishBlockThresholdBlockOnlyExtremelyHigh PhishBlockThreshold = "BLOCK_ONLY_EXTREMELY_HIGH"
 )
 
+// The level of thoughts tokens that the model should generate.
+type ThinkingLevel string
+
+const (
+	// Default value.
+	ThinkingLevelUnspecified ThinkingLevel = "THINKING_LEVEL_UNSPECIFIED"
+	// Low thinking level.
+	ThinkingLevelLow ThinkingLevel = "LOW"
+	// High thinking level.
+	ThinkingLevelHigh ThinkingLevel = "HIGH"
+)
+
 // Harm category.
 type HarmCategory string
 
@@ -464,6 +476,20 @@ const (
 	TuningTaskT2v TuningTask = "TUNING_TASK_T2V"
 	// Tuning task for reference to video.
 	TuningTaskR2v TuningTask = "TUNING_TASK_R2V"
+)
+
+// The tokenization quality used for given media.
+type PartMediaResolutionLevel string
+
+const (
+	// Media resolution has not been set.
+	PartMediaResolutionLevelMediaResolutionUnspecified PartMediaResolutionLevel = "MEDIA_RESOLUTION_UNSPECIFIED"
+	// Media resolution set to low.
+	PartMediaResolutionLevelMediaResolutionLow PartMediaResolutionLevel = "MEDIA_RESOLUTION_LOW"
+	// Media resolution set to medium.
+	PartMediaResolutionLevelMediaResolutionMedium PartMediaResolutionLevel = "MEDIA_RESOLUTION_MEDIUM"
+	// Media resolution set to high.
+	PartMediaResolutionLevelMediaResolutionHigh PartMediaResolutionLevel = "MEDIA_RESOLUTION_HIGH"
 )
 
 // Options for feature selection preference.
@@ -803,17 +829,12 @@ const (
 	TurnCoverageTurnIncludesAllInput TurnCoverage = "TURN_INCLUDES_ALL_INPUT"
 )
 
-// A function call.
-type FunctionCall struct {
-	// Optional. The unique ID of the function call. If populated, the client to execute
-	// the
-	// `function_call` and return the response with the matching `id`.
-	ID string `json:"id,omitempty"`
-	// Optional. The function parameters and values in JSON object format. See [FunctionDeclaration.parameters]
-	// for parameter details.
-	Args map[string]any `json:"args,omitempty"`
-	// Optional. Required. The name of the function to call. Matches [FunctionDeclaration.Name].
-	Name string `json:"name,omitempty"`
+// Media resolution for the input media.
+type PartMediaResolution struct {
+	// Optional. The tokenization quality used for given media.
+	Level PartMediaResolutionLevel `json:"level,omitempty"`
+	// Optional. Specifies the required sequence length for media tokenization.
+	NumTokens *int32 `json:"numTokens,omitempty"`
 }
 
 // Result of executing the [ExecutableCode]. Only generated when using the [CodeExecution]
@@ -851,6 +872,46 @@ type FileData struct {
 	MIMEType string `json:"mimeType,omitempty"`
 }
 
+// Partial argument value of the function call. This data type is not supported in Gemini
+// API.
+type PartialArg struct {
+	// Optional. Represents a NULL value.
+	NULLValue string `json:"nullValue,omitempty"`
+	// Optional. Represents a double value.
+	NumberValue *float64 `json:"numberValue,omitempty"`
+	// Optional. Represents a string value.
+	StringValue string `json:"stringValue,omitempty"`
+	// Optional. Represents a boolean value.
+	BoolValue *bool `json:"boolValue,omitempty"`
+	// Required. A JSON Path (RFC 9535) to the argument being streamed. https://datatracker.ietf.org/doc/html/rfc9535.
+	// e.g. "$.foo.bar[0].data".
+	JsonPath string `json:"jsonPath,omitempty"`
+	// Optional. Whether this is not the last part of the same json_path. If true, another
+	// PartialArg message for the current json_path is expected to follow.
+	WillContinue *bool `json:"willContinue,omitempty"`
+}
+
+// A function call.
+type FunctionCall struct {
+	// Optional. The unique ID of the function call. If populated, the client to execute
+	// the
+	// `function_call` and return the response with the matching `id`.
+	ID string `json:"id,omitempty"`
+	// Optional. The function parameters and values in JSON object format. See [FunctionDeclaration.parameters]
+	// for parameter details.
+	Args map[string]any `json:"args,omitempty"`
+	// Optional. Required. The name of the function to call. Matches [FunctionDeclaration.Name].
+	Name string `json:"name,omitempty"`
+	// Optional. The partial argument value of the function call. If provided, represents
+	// the arguments/fields that are streamed incrementally. This field is not supported
+	// in Gemini API.
+	PartialArgs []*PartialArg `json:"partialArgs,omitempty"`
+	// Optional. Whether this is the last part of the FunctionCall. If true, another partial
+	// message for the current FunctionCall is expected to follow. This field is not supported
+	// in Gemini API.
+	WillContinue *bool `json:"willContinue,omitempty"`
+}
+
 // Raw media bytes for function response.
 // Text should not be sent as raw bytes, use the FunctionResponse.response
 // field.
@@ -859,6 +920,9 @@ type FunctionResponseBlob struct {
 	MIMEType string `json:"mimeType,omitempty"`
 	// Required. Inline media bytes.
 	Data []byte `json:"data,omitempty"`
+	// Optional. Display name of the blob.
+	// Used to provide a label or filename to distinguish blobs.
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 // URI based data for function response.
@@ -867,6 +931,9 @@ type FunctionResponseFileData struct {
 	FileURI string `json:"fileUri,omitempty"`
 	// Required. The IANA standard MIME type of the source data.
 	MIMEType string `json:"mimeType,omitempty"`
+	// Optional. Display name of the file.
+	// Used to provide a label or filename to distinguish files.
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 // A datatype containing media that is part of a `FunctionResponse` message.
@@ -1017,15 +1084,17 @@ func (c *VideoMetadata) MarshalJSON() ([]byte, error) {
 // of content being conveyed. Using multiple fields within the same `Part`
 // instance is considered invalid.
 type Part struct {
-	// Optional. A predicted [FunctionCall] returned from the model that contains a string
-	// representing the [FunctionDeclaration.Name] with the parameters and their values.
-	FunctionCall *FunctionCall `json:"functionCall,omitempty"`
+	// Optional. Media resolution for the input media.
+	MediaResolution *PartMediaResolution `json:"mediaResolution,omitempty"`
 	// Optional. Result of executing the [ExecutableCode].
 	CodeExecutionResult *CodeExecutionResult `json:"codeExecutionResult,omitempty"`
 	// Optional. Code generated by the model that is meant to be executed.
 	ExecutableCode *ExecutableCode `json:"executableCode,omitempty"`
 	// Optional. URI based data.
 	FileData *FileData `json:"fileData,omitempty"`
+	// Optional. A predicted [FunctionCall] returned from the model that contains a string
+	// representing the [FunctionDeclaration.Name] with the parameters and their values.
+	FunctionCall *FunctionCall `json:"functionCall,omitempty"`
 	// Optional. The result output of a [FunctionCall] that contains a string representing
 	// the [FunctionDeclaration.Name] and a structured JSON object containing any output
 	// from the function call. It is used as context to the model.
@@ -1826,6 +1895,10 @@ type FunctionCallingConfig struct {
 	// match [FunctionDeclaration.Name]. With mode set to ANY, model will predict a function
 	// call from the set of function names provided.
 	AllowedFunctionNames []string `json:"allowedFunctionNames,omitempty"`
+	// Optional. When set to true, arguments of a single function call will be streamed
+	// out in multiple parts/contents/responses. Partial parameter results will be returned
+	// in the [FunctionCall.partial_args] field. This field is not supported in Gemini API.
+	StreamFunctionCallArguments *bool `json:"streamFunctionCallArguments,omitempty"`
 }
 
 // An object that represents a latitude/longitude pair.
@@ -1864,6 +1937,8 @@ type ThinkingConfig struct {
 	IncludeThoughts bool `json:"includeThoughts,omitempty"`
 	// Optional. Indicates the thinking budget in tokens.
 	ThinkingBudget *int32 `json:"thinkingBudget,omitempty"`
+	// Optional. The level of thoughts tokens that the model should generate.
+	ThinkingLevel ThinkingLevel `json:"thinkingLevel,omitempty"`
 }
 
 // The image generation configuration to be used in GenerateContentConfig.
@@ -1875,6 +1950,12 @@ type ImageConfig struct {
 	// values are `1K`, `2K`, `4K`. If not specified, the model will use default
 	// value `1K`.
 	ImageSize string `json:"imageSize,omitempty"`
+	// Optional. MIME type of the generated image. This field is not
+	// supported in Gemini API.
+	OutputMIMEType string `json:"outputMimeType,omitempty"`
+	// Optional. Compression quality of the generated image (for
+	// ``image/jpeg`` only). This field is not supported in Gemini API.
+	OutputCompressionQuality *int32 `json:"outputCompressionQuality,omitempty"`
 }
 
 // When automated routing is specified, the routing will be determined by the pretrained

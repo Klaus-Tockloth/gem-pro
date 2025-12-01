@@ -350,9 +350,6 @@ func (m Files) Get(ctx context.Context, name string, config *GetFileConfig) (*Fi
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	err = mapToStruct(responseMap, response)
 	if err != nil {
 		return nil, err

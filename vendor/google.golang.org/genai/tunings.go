@@ -961,14 +961,11 @@ func (m Tunings) Cancel(ctx context.Context, name string, config *CancelTuningJo
 		path += "?" + query
 		delete(body, "_query")
 	}
-
-	if _, ok := body["config"]; ok {
-		delete(body, "config")
-	}
 	_, err = sendRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

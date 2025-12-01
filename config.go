@@ -29,10 +29,12 @@ type ProgConfig struct {
 	GeminiCodeExecution            bool     `yaml:"GeminiCodeExecution"`
 	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
 	GeminiGroundigWithGoogleMaps   bool     `yaml:"GeminiGroundigWithGoogleMaps"`
-	GeminiMaxThinkingBudget        int32    `yaml:"GeminiMaxThinkingBudget"`
+	GeminiMaxThinkingBudget        *int32   `yaml:"GeminiMaxThinkingBudget"`
+	GeminiThinkingLevel            string   `yaml:"GeminiThinkingLevel"`
 	GeminiIncludeThoughts          bool     `yaml:"GeminiIncludeThoughts"`
 	GeminiCacheName                string   `yaml:"GeminiCacheName"`
 	GeminiCacheTimeToLive          int      `yaml:"GeminiCacheTimeToLive"`
+	GeminiMediaResolution          string   `yaml:"GeminiMediaResolution"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -132,9 +134,6 @@ func loadConfiguration(configFile string) error {
 	}
 	if progConfig.GeminiCandidateCount <= 0 {
 		return fmt.Errorf("empty GeminiCandidateCount not allowed")
-	}
-	if progConfig.GeminiMaxThinkingBudget < 0 || progConfig.GeminiMaxThinkingBudget > 24576 {
-		return fmt.Errorf("GeminiMaxThinkingBudget must be between 0 and 24576")
 	}
 
 	// markdown
@@ -246,12 +245,37 @@ func loadConfiguration(configFile string) error {
 		}
 	}
 
+	// MIME type replacement
 	if len(progConfig.MIMETypeReplacements) > 0 {
 		mimeMap, err := parseMIMETypeReplacements(progConfig.MIMETypeReplacements)
 		if err != nil {
 			return fmt.Errorf("error [%s] parsing MIME type replacements", err)
 		}
 		ReplacementMIMETypeMap = mimeMap
+	}
+
+	// thinking
+	if progConfig.GeminiMaxThinkingBudget != nil && progConfig.GeminiThinkingLevel != "" {
+		return fmt.Errorf("do not set both thinking budget and thinking level")
+	}
+	if progConfig.GeminiThinkingLevel != "" {
+		switch strings.ToLower(progConfig.GeminiThinkingLevel) {
+		case "low":
+		case "high":
+		default:
+			return fmt.Errorf("unsupported thinking level [%s]", progConfig.GeminiThinkingLevel)
+		}
+	}
+
+	// media resolution
+	if progConfig.GeminiMediaResolution != "" {
+		switch strings.ToLower(progConfig.GeminiMediaResolution) {
+		case "low":
+		case "medium":
+		case "high":
+		default:
+			return fmt.Errorf("unsupported media resolution [%s]", progConfig.GeminiMediaResolution)
+		}
 	}
 
 	return nil
@@ -367,33 +391,36 @@ with the Gemini AI model.
 */
 func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 	generateContentConfig := &genai.GenerateContentConfig{
-		// HTTPOptions:
-		// SystemInstruction:
-		// Temperature:
-		// TopP:
-		// TopK:
-		// CandidateCount:
-		// MaxOutputTokens:
-		// StopSequences:
-		// ResponseLogprobs:
-		// Logprobs:
-		// PresencePenalty:
-		// FrequencyPenalty:
-		// Seed:
+		// HTTPOptions *HTTPOptions
+		// SystemInstruction *Content
+		// Temperature *float32
+		// TopP *float32
+		// TopK *float32
+		// CandidateCount int32
+		// MaxOutputTokens int32
+		// StopSequences []string
+		// ResponseLogprobs bool
+		// Logprobs *int32
+		// PresencePenalty
+		// FrequencyPenalty
+		// Seed *int32
+		// ResponseMIMEType string
 		ResponseMIMEType: "text/plain", // always expected: plain text with markdown tags
-		// ResponseSchema:
-		// RoutingConfig:
-		// ModelSelectionConfig:
-		// SafetySettings:
-		// Tools:
-		// ToolConfig:
-		// Labels:
-		// CachedContent:
-		// ResponseModalities:
-		// MediaResolution: genai.MediaResolutionHigh, // not enabled for api version v1beta
-		// SpeechConfig:
-		// AudioTimestamp:
-		// ThinkingConfig:
+		// ResponseSchema *Schema
+		// ResponseJsonSchema any
+		// RoutingConfig *GenerationConfigRoutingConfig
+		// ModelSelectionConfig *ModelSelectionConfig
+		// SafetySettings []*SafetySetting
+		// Tools []*Tool
+		// ToolConfig *ToolConfig
+		// Labels map[string]string
+		// CachedContent string
+		// ResponseModalities []string
+		// MediaResolution MediaResolution
+		// SpeechConfig *SpeechConfig
+		// AudioTimestamp bool
+		// ThinkingConfig *ThinkingConfig
+		// ImageConfig *ImageConfig
 	}
 	// configure AI model parameters
 	if progConfig.GeminiCandidateCount > -1 {
@@ -439,11 +466,32 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 		generateContentConfig.CachedContent = cacheName
 	}
 
-	if progConfig.GeminiMaxThinkingBudget > 0 {
-		generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
-			IncludeThoughts: progConfig.GeminiIncludeThoughts,
-			ThinkingBudget:  &progConfig.GeminiMaxThinkingBudget,
-		}
+	var thinkingBudget *int32
+	thinkingBudget = progConfig.GeminiMaxThinkingBudget
+
+	var thinkingLevel genai.ThinkingLevel
+	switch strings.ToLower(progConfig.GeminiThinkingLevel) {
+	case "low":
+		thinkingLevel = genai.ThinkingLevelLow
+		thinkingBudget = nil
+	case "high":
+		thinkingLevel = genai.ThinkingLevelHigh
+		thinkingBudget = nil
+	}
+
+	generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
+		IncludeThoughts: progConfig.GeminiIncludeThoughts,
+		ThinkingBudget:  thinkingBudget,
+		ThinkingLevel:   thinkingLevel,
+	}
+
+	switch strings.ToLower(progConfig.GeminiMediaResolution) {
+	case "low":
+		generateContentConfig.MediaResolution = genai.MediaResolutionLow
+	case "medium":
+		generateContentConfig.MediaResolution = genai.MediaResolutionMedium
+	case "high":
+		generateContentConfig.MediaResolution = genai.MediaResolutionHigh
 	}
 
 	return generateContentConfig
@@ -494,5 +542,13 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if geminiModelConfig.CachedContent != "" {
 		fmt.Printf("  CachedContent     : %v\n", geminiModelConfig.CachedContent)
 	}
-	fmt.Printf("  ThinkingBudget    : %d\n", progConfig.GeminiMaxThinkingBudget)
+	if progConfig.GeminiMaxThinkingBudget != nil {
+		fmt.Printf("  ThinkingBudget    : %d\n", *progConfig.GeminiMaxThinkingBudget)
+	}
+	if progConfig.GeminiThinkingLevel != "" {
+		fmt.Printf("  ThinkingLevel     : %s\n", progConfig.GeminiThinkingLevel)
+	}
+	if progConfig.GeminiMediaResolution != "" {
+		fmt.Printf("  MediaResolution   : %s\n", progConfig.GeminiMediaResolution)
+	}
 }
