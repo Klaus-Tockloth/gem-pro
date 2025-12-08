@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.11 - 2025-11-23: corresponding to program release
+# - v0.11 - 2025-12-08: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -148,17 +148,17 @@ AnsiRendering: true
 AnsiPromptResponseFile: prompt-response.ansi
 
 # output of current prompt/response pair
-AnsiOutput: false
+AnsiOutput: true
+
+# theme (glamour style) for ansi output
+# predefined: ascii, dark, dracula, light, notty, pink, tokyo-night
+# custom: create your own glamour style and reference the file path
+#         see https://github.com/charmbracelet/glamour/tree/master/styles
+AnsiOutputTheme: dark
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
 AnsiHistory: false
 AnsiHistoryDirectory: ./history-ansi
-
-# Ansi color codes to replace or remove (modifies Ansi output)
-# reference: https://en.wikipedia.org/wiki/ANSI_escape_code
-AnsiReplaceColors:
-# - "\x1b[44;3m": "\x1b[48;5;186m"
-# - "\x1b[3;44m": "\x1b[48;5;186m"
 
 # HTML rendering section
 # ----------------------

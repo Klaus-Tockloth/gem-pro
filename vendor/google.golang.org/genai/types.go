@@ -2060,6 +2060,8 @@ type GenerateContentConfig struct {
 	// object](https://spec.openapis.org/oas/v3.0.3#schema).
 	// If set, a compatible response_mime_type must also be set.
 	// Compatible mimetypes: `application/json`: Schema for JSON response.
+	// If `response_schema` doesn't process your schema correctly, try using
+	// `response_json_schema` instead.
 	ResponseSchema *Schema `json:"responseSchema,omitempty"`
 	// Optional. Output schema of the generated response.
 	// This is an alternative to `response_schema` that accepts [JSON
@@ -4325,6 +4327,12 @@ type ListTuningJobsResponse struct {
 type CancelTuningJobConfig struct {
 	// Optional. Used to override HTTP request options.
 	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+}
+
+// Empty response for tunings.cancel method.
+type CancelTuningJobResponse struct {
+	// Optional. Used to retain the full HTTP response.
+	SDKHTTPResponse *HTTPResponse `json:"sdkHttpResponse,omitempty"`
 }
 
 // A single example for tuning. This data type is not supported in Vertex AI.

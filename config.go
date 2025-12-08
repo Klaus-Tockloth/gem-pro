@@ -48,12 +48,12 @@ type ProgConfig struct {
 	MarkdownHistoryDirectory         string `yaml:"MarkdownHistoryDirectory"`
 
 	// ANSI configuration
-	AnsiRendering          bool                `yaml:"AnsiRendering"`
-	AnsiPromptResponseFile string              `yaml:"AnsiPromptResponseFile"`
-	AnsiOutput             bool                `yaml:"AnsiOutput"`
-	AnsiHistory            bool                `yaml:"AnsiHistory"`
-	AnsiHistoryDirectory   string              `yaml:"AnsiHistoryDirectory"`
-	AnsiReplaceColors      []map[string]string `yaml:"AnsiReplaceColors"`
+	AnsiRendering          bool   `yaml:"AnsiRendering"`
+	AnsiPromptResponseFile string `yaml:"AnsiPromptResponseFile"`
+	AnsiOutput             bool   `yaml:"AnsiOutput"`
+	AnsiHistory            bool   `yaml:"AnsiHistory"`
+	AnsiHistoryDirectory   string `yaml:"AnsiHistoryDirectory"`
+	AnsiOutputTheme        string `yaml:"AnsiOutputTheme"`
 
 	// HTML configuration
 	HTMLRendering                bool   `yaml:"HTMLRendering"`
