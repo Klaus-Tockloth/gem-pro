@@ -27,7 +27,7 @@ Releases:
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
                           list of MIMI type replacements added to config
-  - v0.11.0 - 2025-12-08: support for think level, libs updated, default configuration optimized for Gemini 3
+  - v0.11.0 - 2025-12-09: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
 						  markdown to ansi renderer replaced (glamour)
 
@@ -80,7 +80,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.11.0"
-	progDate    = "2025-12-08"
+	progDate    = "2025-12-09"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

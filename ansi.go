@@ -16,6 +16,11 @@ func renderMarkdown2Ansi(md string) string {
 	terminalWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		terminalWidth = 80 // fallback width
+	} else {
+		terminalWidth -= 4 // avoid unwanted line breaks for edge cases
+	}
+	if terminalWidth < 80 {
+		terminalWidth = 80 // fallback width
 	}
 
 	// convert markdown data to terminal data
