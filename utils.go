@@ -67,7 +67,7 @@ func copyFile(sourceFile, destinationFile string) {
 		return
 	}
 
-	err = os.WriteFile(destinationFile, input, 0644)
+	err = os.WriteFile(destinationFile, input, 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()\n", err)
 		return
@@ -315,7 +315,7 @@ string to a file, useful for debugging and logging purposes.
 */
 func dumpDataToFile(flag int, objectname string, object interface{}) {
 	data := fmt.Sprintf("---------- %s ----------\n%s\n", objectname, spew.Sdump(object))
-	file, err := os.OpenFile("gemini.raw", flag, 0644)
+	file, err := os.OpenFile("gemini.raw", flag, 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.OpenFile()\n", err)
 		return
@@ -359,7 +359,7 @@ func writeDataToFile(data []byte, mimeType string, timestamp time.Time) (string,
 	pathname := filepath.Join(wd, directory, filename)
 
 	// write file
-	err = os.WriteFile(pathname, data, 0644)
+	err = os.WriteFile(pathname, data, 0600)
 	if err != nil {
 		return "", "", fmt.Errorf("error [%v] at os.WriteFile()", err)
 	}

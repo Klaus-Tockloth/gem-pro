@@ -8,6 +8,7 @@
 # - v1.0.0 - 2025-03-11: initial release
 # - v1.1.0 - 2025-05-19: gosec added
 # - v1.2.0 - 2025-11-21: errexit added
+# - v1.3.0 - 2025-12-10: revised
 # ------------------------------------
 
 set -o errexit
@@ -26,7 +27,7 @@ revive
 
 # security
 govulncheck ./...
-gosec -ai-api-provider="gemini" -exclude=G114,G115,G204,G302,G304,G306 ./...
+gosec -exclude=G114,G115,G204,G302,G304 ./...
 
 # show compiler version
 go version

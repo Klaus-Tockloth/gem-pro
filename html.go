@@ -63,7 +63,7 @@ func buildHTMLPage(prompt, source, destination string) error {
 	htmlPage := htmlHeader + string(htmlBody) + htmlFooter
 
 	// write html to file
-	err = os.WriteFile(destination, []byte(htmlPage), 0666)
+	err = os.WriteFile(destination, []byte(htmlPage), 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()", err)
 		return err

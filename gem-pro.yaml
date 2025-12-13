@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.11 - 2025-12-08: corresponding to program release
+# - v0.11 - 2025-12-12: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -100,7 +100,7 @@ GeminiGroundigWithGoogleMaps: false
 # Lite, Flash : -1, 0-24576 (24576 = use as much budget as possible)
 # Pro         : -1, 128-32768 (32768 = use as much budget as possible)
 # Warning: Unlimited thinking can result in high prompt costs.
-# Info: Deprecated for Gemini 3. Use thinking level instead.
+# Info: Deprecated for 'Gemini 3'. Use thinking level instead.
 GeminiMaxThinkingBudget:
 
 # level of thoughts tokens that the model should generate (e.g. low or high)
@@ -150,11 +150,16 @@ AnsiPromptResponseFile: prompt-response.ansi
 # output of current prompt/response pair
 AnsiOutput: true
 
+# output line length
+# note: make your terminal wider to avoid unwanted line breaks
+AnsiOutputLineLength: 132
+
 # theme (glamour style) for ansi output
-# predefined: ascii, dark, dracula, light, notty, pink, tokyo-night
+# glamour predefined: dark, dracula, light, notty, pink, tokyo-night
+# custom predefined: ./assets/glamour-dark-gem-pro.json, ./assets/glamour-light-gem-pro.json
 # custom: create your own glamour style and reference the file path
 #         see https://github.com/charmbracelet/glamour/tree/master/styles
-AnsiOutputTheme: dark
+AnsiOutputTheme: ./assets/glamour-dark-gem-pro.json
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
 AnsiHistory: false

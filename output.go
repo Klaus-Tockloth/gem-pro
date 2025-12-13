@@ -101,7 +101,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	}
 
 	// write prompt to current markdown request/response file
-	err := os.WriteFile(progConfig.MarkdownPromptResponseFile, []byte(promptString.String()), 0666)
+	err := os.WriteFile(progConfig.MarkdownPromptResponseFile, []byte(promptString.String()), 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()\n", err)
 		return
@@ -114,7 +114,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	}
 
 	// write prompt to current ansi request/response file
-	err = os.WriteFile(progConfig.AnsiPromptResponseFile, []byte(ansiData), 0666)
+	err = os.WriteFile(progConfig.AnsiPromptResponseFile, []byte(ansiData), 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()\n", err)
 		return
@@ -127,7 +127,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	}
 
 	// write prompt to current html request/response file
-	err = os.WriteFile(progConfig.HTMLPromptResponseFile, []byte(htmlData), 0666)
+	err = os.WriteFile(progConfig.HTMLPromptResponseFile, []byte(htmlData), 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()\n", err)
 		return

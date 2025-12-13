@@ -1,9 +1,11 @@
 package main
 
 import (
-	_ "embed"
+	"embed"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 //go:embed gem-pro.yaml
@@ -16,7 +18,7 @@ used if no config file exists.
 */
 func writeConfig() {
 	filename := "gem-pro.yaml"
-	err := os.WriteFile(filename, gemProYaml, 0666)
+	err := os.WriteFile(filename, gemProYaml, 0600)
 	if err != nil {
 		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
@@ -32,51 +34,48 @@ current directory, providing a default HTML input page.
 */
 func writePromptInput() {
 	filename := "prompt-input.html"
-	err := os.WriteFile(filename, geminiPromptInputHTML, 0666)
+	err := os.WriteFile(filename, geminiPromptInputHTML, 0600)
 	if err != nil {
 		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
 }
 
-//go:embed assets/gemini-prompt.css
-var assetsGeminiPromptCSS []byte
-
-//go:embed assets/gemini-prompt-303030.svg
-var assetsGeminiPrompt303030Svg []byte
-
-//go:embed assets/gemini-prompt-ebebeb.svg
-var assetsGeminiPromptEbebebSvg []byte
-
-//go:embed assets/copy-to-clipboard.js
-var assetsCopyToClipboardJs []byte
+//go:embed assets
+var assetsFS embed.FS
 
 /*
-writeAssets writes HTML assets (CSS, SVG, JS files) required for HTML rendering to a specified base path.
-It embeds necessary HTML assets like CSS, SVG images, and JavaScript files and writes them to the assets
-subdirectory within the given base path.
+writeAssets writes all embedded files from the 'assets/' directory
+to the provided base path. It iterates over the embedded filesystem
+and creates directories and files accordingly.
 */
 func writeAssets(basepath string) {
-	filename := basepath + "/assets/gemini-prompt.css"
-	err := os.WriteFile(filename, assetsGeminiPromptCSS, 0666)
-	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
-	}
+	err := fs.WalkDir(assetsFS, "assets", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-	filename = basepath + "/assets/gemini-prompt-303030.svg"
-	err = os.WriteFile(filename, assetsGeminiPrompt303030Svg, 0666)
-	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
-	}
+		targetPath := filepath.Join(basepath, path)
 
-	filename = basepath + "/assets/gemini-prompt-ebebeb.svg"
-	err = os.WriteFile(filename, assetsGeminiPromptEbebebSvg, 0666)
-	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
-	}
+		if d.IsDir() {
+			err := os.MkdirAll(targetPath, 0700)
+			if err != nil {
+				return err
+			}
+		} else {
+			content, err := assetsFS.ReadFile(path)
+			if err != nil {
+				return err
+			}
 
-	filename = basepath + "/assets/copy-to-clipboard.js"
-	err = os.WriteFile(filename, assetsCopyToClipboardJs, 0666)
+			err = os.WriteFile(targetPath, content, 0600)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		log.Fatalf("embed: error [%v] at writeAssets() exploring assetsFS", err)
 	}
 }

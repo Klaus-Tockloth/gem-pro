@@ -51,6 +51,7 @@ type ProgConfig struct {
 	AnsiRendering          bool   `yaml:"AnsiRendering"`
 	AnsiPromptResponseFile string `yaml:"AnsiPromptResponseFile"`
 	AnsiOutput             bool   `yaml:"AnsiOutput"`
+	AnsiOutputLineLength   int    `yaml:"AnsiOutputLineLength"`
 	AnsiHistory            bool   `yaml:"AnsiHistory"`
 	AnsiHistoryDirectory   string `yaml:"AnsiHistoryDirectory"`
 	AnsiOutputTheme        string `yaml:"AnsiOutputTheme"`
