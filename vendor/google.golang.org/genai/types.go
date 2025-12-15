@@ -283,6 +283,10 @@ const (
 	FinishReasonImageProhibitedContent FinishReason = "IMAGE_PROHIBITED_CONTENT"
 	// The model was expected to generate an image, but none was generated.
 	FinishReasonNoImage FinishReason = "NO_IMAGE"
+	// Image generation stopped because the generated image may be a recitation from a source.
+	FinishReasonImageRecitation FinishReason = "IMAGE_RECITATION"
+	// Image generation stopped for a reason not otherwise specified.
+	FinishReasonImageOther FinishReason = "IMAGE_OTHER"
 )
 
 // Harm probability levels in the content.
@@ -775,6 +779,18 @@ const (
 	MediaModalityAudio MediaModality = "AUDIO"
 	// Document, e.g. PDF.
 	MediaModalityDocument MediaModality = "DOCUMENT"
+)
+
+// The type of the VAD signal.
+type VADSignalType string
+
+const (
+	// The default is VAD_SIGNAL_TYPE_UNSPECIFIED.
+	VADSignalTypeUnspecified VADSignalType = "VAD_SIGNAL_TYPE_UNSPECIFIED"
+	// Start of sentence signal.
+	VADSignalTypeSos VADSignalType = "VAD_SIGNAL_TYPE_SOS"
+	// End of sentence signal.
+	VADSignalTypeEos VADSignalType = "VAD_SIGNAL_TYPE_EOS"
 )
 
 // Start of speech sensitivity.
@@ -2157,6 +2173,9 @@ type GenerateContentConfig struct {
 	ThinkingConfig *ThinkingConfig `json:"thinkingConfig,omitempty"`
 	// Optional. The image generation configuration.
 	ImageConfig *ImageConfig `json:"imageConfig,omitempty"`
+	// Optional. Enables enhanced civic answers. It may not be available for all
+	// models. This field is not supported in Vertex AI.
+	EnableEnhancedCivicAnswers *bool `json:"enableEnhancedCivicAnswers,omitempty"`
 }
 
 func (c GenerateContentConfig) ToGenerationConfig(backend Backend) (*GenerationConfig, error) {
@@ -5997,6 +6016,11 @@ type LiveServerSessionResumptionUpdate struct {
 	LastConsumedClientMessageIndex int64 `json:"lastConsumedClientMessageIndex,omitempty,string"`
 }
 
+type VoiceActivityDetectionSignal struct {
+	// Optional. The type of the VAD signal.
+	VADSignalType VADSignalType `json:"vadSignalType,omitempty"`
+}
+
 // Response message for API call.
 type LiveServerMessage struct {
 	// Optional. Sent in response to a `LiveClientSetup` message from the client.
@@ -6015,6 +6039,8 @@ type LiveServerMessage struct {
 	GoAway *LiveServerGoAway `json:"goAway,omitempty"`
 	// Optional. Update of the session resumption state.
 	SessionResumptionUpdate *LiveServerSessionResumptionUpdate `json:"sessionResumptionUpdate,omitempty"`
+	// Optional. Voice activity detection signal.
+	VoiceActivityDetectionSignal *VoiceActivityDetectionSignal `json:"voiceActivityDetectionSignal,omitempty"`
 }
 
 // Configures automatic detection of activity.
@@ -6131,6 +6157,10 @@ type LiveClientSetup struct {
 	// proactively to
 	// the input and to ignore irrelevant input.
 	Proactivity *ProactivityConfig `json:"proactivity,omitempty"`
+	// Optional. Configures the explicit VAD signal. If enabled, the client will send
+	// vad_signal to indicate the start and end of speech. This allows the server
+	// to process the audio more efficiently.
+	ExplicitVADSignal bool `json:"explicitVadSignal,omitempty"`
 }
 
 // Incremental update of the current conversation delivered from the client.
@@ -6295,6 +6325,10 @@ type LiveConnectConfig struct {
 	// proactively to
 	// the input and to ignore irrelevant input.
 	Proactivity *ProactivityConfig `json:"proactivity,omitempty"`
+	// Optional. Configures the explicit VAD signal. If enabled, the client will send
+	// vad_signal to indicate the start and end of speech. This allows the server
+	// to process the audio more efficiently.
+	ExplicitVADSignal *bool `json:"explicitVadSignal,omitempty"`
 }
 
 // Parameters for sending client content to the live API.

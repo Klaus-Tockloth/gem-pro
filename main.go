@@ -27,9 +27,9 @@ Releases:
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
                           list of MIMI type replacements added to config
-  - v0.11.0 - 2025-12-12: support for think level, libs updated, default configuration optimized for Gemini 3
+  - v0.11.0 - 2025-12-15: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
-						  markdown to ansi renderer replaced (glamour)
+						  markdown to ansi renderer replaced (glamour), option '-filelist' can be used multiple times
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -79,7 +79,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.11.0"
-	progDate    = "2025-12-12"
+	progDate    = "2025-12-15"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -118,17 +118,35 @@ var cacheToHandle CacheToHandle
 // ReplacementMIMETypeMap holds two MIME types for replacing 'key' with 'value'
 var ReplacementMIMETypeMap map[string]string
 
+// stringArray implements the flag.Value interface.
+type stringArray []string
+
+/*
+String is for the output of the default value in the help text.
+*/
+func (s *stringArray) String() string {
+	return fmt.Sprint(*s)
+}
+
+/*
+Set is called each time the flag is found.
+*/
+func (s *stringArray) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
 // command line parameters
 var (
-	liteModel     = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
-	flashModel    = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
-	proModel      = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
-	defaultModel  = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	candidates    = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
-	temperature   = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
-	topp          = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
-	filelist      = flag.String("filelist", "", "Specifies a file containing a list of files to upload (one filename per line).\nThese files will be included with the prompt(s).")
-	config        = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
+	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
+	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
+	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
+	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
+	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
+	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
+	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	// special handling for option 'filelist'
 	listModels    = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
 	chatmode      = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
 	uploadFiles   = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
@@ -143,6 +161,7 @@ var (
 	googleSearch  = flag.Bool("google-search", false, "Grounding with Google Search.")
 	googleMaps    = flag.Bool("google-maps", false, "Grounding with Google Maps.")
 )
+var fileLists stringArray
 
 /*
 main starts this program. It is the entry point of the application, responsible for parsing command-line
@@ -159,6 +178,9 @@ func main() {
 
 	// logical terminal width
 	terminalWidth := progConfig.AnsiOutputLineLength
+
+	// register the variable for the flag
+	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\nThese files (one filename per line) will be included with the prompt(s).")
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -212,7 +234,7 @@ func main() {
 	}
 
 	// build list of files given via command line
-	filesToHandle = buildGivenFiles(flag.Args(), *filelist)
+	filesToHandle = buildGivenFiles(flag.Args(), fileLists)
 
 	// shows files given via command line
 	fmt.Printf("\nFiles given via command line:\n")
@@ -673,15 +695,17 @@ buildGivenFiles builds a list of files provided via command-line (list, args). I
 command-line arguments and a file list, checks their state, and prepares a list of FileToHandle structures
 for further processing.
 */
-func buildGivenFiles(args []string, filelist string) []FileToHandle {
+func buildGivenFiles(args []string, filelists []string) []FileToHandle {
 	var filesFromList []string
-	var err error
 
-	if filelist != "" {
-		filesFromList, err = slurpFile(filelist)
+	// iterate over all specified list files
+	for _, listFile := range filelists {
+		lines, err := slurpFile(listFile)
 		if err != nil {
-			fmt.Printf("error [%v] reading list of files to upload to AI\n", err)
+			fmt.Printf("error [%v] reading list of files from [%s]\n", err, listFile)
+			continue
 		}
+		filesFromList = append(filesFromList, lines...)
 	}
 
 	files := filesFromList
