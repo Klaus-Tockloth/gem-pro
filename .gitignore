@@ -3,6 +3,7 @@
 
 # ignore evaluation code
 *.eval
+gem-pro.files
 
 # ignore directories
 binaries/

@@ -12,15 +12,15 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/yuin/goldmark v1.7.13
 	golang.org/x/term v0.38.0
-	google.golang.org/genai v1.39.0
+	google.golang.org/genai v1.40.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.17.0 // indirect
+	cloud.google.com/go/auth v0.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.21.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834 // indirect
 	github.com/charmbracelet/x/ansi v0.11.3 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20251212161403-a3028fabe6bc // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251215102626-e0db08df7383 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.6.2 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect

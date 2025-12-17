@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.11 - 2025-12-12: corresponding to program release
+# - v0.11 - 2025-12-17: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -103,7 +103,7 @@ GeminiGroundigWithGoogleMaps: false
 # Info: Deprecated for 'Gemini 3'. Use thinking level instead.
 GeminiMaxThinkingBudget:
 
-# level of thoughts tokens that the model should generate (e.g. low or high)
+# level of thoughts tokens that the model should generate (e.g. minimal, low, medium or high)
 GeminiThinkingLevel: high
 
 # include thoughts in the response (true, false) (AI model must support this setting)
@@ -289,4 +289,5 @@ GeneralInternetProxy:
 MIMETypeReplacements:
 - text/x-shellscript = text/plain
 - application/json = text/plain
+- application/x-ndjson = text/plain
 - image/svg+xml = text/plain

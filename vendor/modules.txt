@@ -1,7 +1,7 @@
 # cloud.google.com/go v0.123.0
 ## explicit; go 1.24.0
 cloud.google.com/go/civil
-# cloud.google.com/go/auth v0.17.0
+# cloud.google.com/go/auth v0.18.0
 ## explicit; go 1.24.0
 cloud.google.com/go/auth
 cloud.google.com/go/auth/credentials
@@ -22,7 +22,7 @@ cloud.google.com/go/auth/internal/trustboundary
 # cloud.google.com/go/compute/metadata v0.9.0
 ## explicit; go 1.24.0
 cloud.google.com/go/compute/metadata
-# github.com/alecthomas/chroma/v2 v2.20.0
+# github.com/alecthomas/chroma/v2 v2.21.0
 ## explicit; go 1.22
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters
@@ -64,7 +64,7 @@ github.com/charmbracelet/x/ansi/parser
 # github.com/charmbracelet/x/cellbuf v0.0.14
 ## explicit; go 1.24.2
 github.com/charmbracelet/x/cellbuf
-# github.com/charmbracelet/x/exp/slice v0.0.0-20251212161403-a3028fabe6bc
+# github.com/charmbracelet/x/exp/slice v0.0.0-20251215102626-e0db08df7383
 ## explicit; go 1.24.0
 github.com/charmbracelet/x/exp/slice
 # github.com/charmbracelet/x/term v0.2.2
@@ -278,7 +278,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genai v1.39.0
+# google.golang.org/genai v1.40.0
 ## explicit; go 1.24
 google.golang.org/genai
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2
