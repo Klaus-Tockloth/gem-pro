@@ -472,8 +472,14 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 
 	var thinkingLevel genai.ThinkingLevel
 	switch strings.ToLower(progConfig.GeminiThinkingLevel) {
+	case "minimal":
+		thinkingLevel = genai.ThinkingLevelMinimal
+		thinkingBudget = nil
 	case "low":
 		thinkingLevel = genai.ThinkingLevelLow
+		thinkingBudget = nil
+	case "medium":
+		thinkingLevel = genai.ThinkingLevelMedium
 		thinkingBudget = nil
 	case "high":
 		thinkingLevel = genai.ThinkingLevelHigh

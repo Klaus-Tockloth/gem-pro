@@ -1,262 +1,280 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<title>Prompts</title>
-<style>
-:root {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-  --button-bg: #eeeeee;
-  --button-border: #cccccc;
-  --textarea-bg: #f8f8f8;
-  --textarea-border: #cccccc;
-}
+  <head>
+    <title>Prompts</title>
+    <style>
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --button-bg: #eeeeee;
+        --button-border: #cccccc;
+        --textarea-bg: #f8f8f8;
+        --textarea-border: #cccccc;
+      }
 
-/* Light Mode (Default) */
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
+      /* -- Light Mode (Default) -- */
 
-button {
-  width: 4em;
-  height: 1.5em;
-  background-color: var(--button-bg);
-  color: var(--text-color);
-  border: 1px solid var(--button-border);
-  border-radius: 3px;
-}
+      body {
+        color-scheme: light;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+      }
 
-button:hover {
-  background-color: lightgreen;
-}
+      button {
+        width: 4em;
+        height: 1.5em;
+        background-color: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--button-border);
+        border-radius: 3px;
+      }
 
-textarea {
-  width: 100%;
-  font-size: 1em;
-  font-family: monospace;
-  background-color: var(--textarea-bg);
-  color: var(--text-color);
-  border: 1px solid var(--textarea-border);
-  border-radius: 3px;
-  resize: vertical;
-}
+      button:hover {
+        background-color: lightgreen;
+      }
 
-.textareaContainer {
-  margin-top: 1em;
-  display: flex; /* use flexbox for layout */
-  align-items: flex-start; /* align items to the top */
-}
+      textarea {
+        width: 100%;
+        font-size: 1em;
+        font-family: monospace;
+        background-color: var(--textarea-bg);
+        color: var(--text-color);
+        border: 1px solid var(--textarea-border);
+        border-radius: 3px;
+        resize: vertical;
+      }
 
-.textareaContainer textarea {
-  flex-grow: 1; /* textarea takes up available space */
-  margin-right: 0.7em; /* add some spacing between textarea and buttons */
-  margin-bottom: 0; /* remove default margin */
-}
+      .textareaContainer {
+        margin-top: 1em;
+        display: flex;
+        align-items: flex-start;
+      }
 
-.buttonContainer {
-  display: flex;
-  flex-direction: column; /* stack buttons vertically */
-  justify-content: flex-start; /* align buttons to the top */
-}
+      .textareaContainer textarea {
+        flex-grow: 1;
+        margin-right: 0.7em;
+        margin-bottom: 0;
+      }
 
-.buttonContainer button {
-  margin-bottom: 1em; /* add space between buttons */
-}
+      .buttonContainer {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
 
-.buttonContainer button:last-child {
-  margin-bottom: 0; /* remove margin from the last button */
-}
+      .buttonContainer button {
+        margin-bottom: 1em;
+      }
 
-#notification {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 10px 20px;
-    border-radius: 3px;
-    z-index: 1000;
-    display: none; /* initially hidden */
-    color: black;
-    font-family: monospace;
-}
+      .buttonContainer button:last-child {
+        margin-bottom: 0;
+      }
 
-#notification.show {
-    display: block; /* make it visible */
-    background-color: lightgreen;
-}
+      #notification {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        border-radius: 3px;
+        z-index: 1000;
+        display: none;
+        color: black;
+        font-family: monospace;
+      }
 
-#notification.error {
-  display: block; /* make it visible */
-  background-color: salmon;
-}
+      #notification.show {
+        display: block;
+        background-color: lightgreen;
+      }
 
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #121212;
-    --text-color: #ffffff;
-    --button-bg: #333333;
-    --button-border: #555555;
-    --textarea-bg: #222222;
-    --textarea-border: #555555;
-  }
+      #notification.error {
+        display: block;
+        background-color: salmon;
+      }
 
-  button:hover {
-    background-color: darkgreen;
-  }
-}
-</style>
+      /* Dark Mode */
+      @media (prefers-color-scheme: dark) {
+        body {
+          color-scheme: dark;
+        }
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text fill='black' y='.9em' font-size='90'>⏎</text></svg>" media="(prefers-color-scheme: light)">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text fill='white' y='.9em' font-size='90'>⏎</text></svg>" media="(prefers-color-scheme: dark)">
-</head>
-<body>
+        :root {
+          --bg-color: #121212;
+          --text-color: #ffffff;
+          --button-bg: #333333;
+          --button-border: #555555;
+          --textarea-bg: #222222;
+          --textarea-border: #555555;
+        }
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+        button:hover {
+          background-color: darkgreen;
+        }
+      }
+    </style>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text fill='black' y='.9em' font-size='90'>⏎</text></svg>"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text fill='white' y='.9em' font-size='90'>⏎</text></svg>"
+      media="(prefers-color-scheme: dark)"
+    />
+  </head>
+  <body>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<!-- basic prompt (customise prompt to your needs) -->
-<div class="textareaContainer">
-  <textarea rows="15" name="prompt"></textarea>
-  <div class="buttonContainer">
-    <button class="send-to-localhost-button">Send</button>
-    <button class="duplicate-button">Copy</button>
-  </div>
-</div>
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.body.addEventListener('click', function(event) {
-        if (event.target.classList.contains('send-to-localhost-button')) {
-            const textarea = event.target.closest('.textareaContainer').querySelector('textarea'); // traverse to .textareaContainer
+    <!-- basic prompt (customise prompt to your needs) -->
+    <div class="textareaContainer">
+      <textarea rows="15" name="prompt"></textarea>
+      <div class="buttonContainer">
+        <button class="send-to-localhost-button">Send</button>
+        <button class="duplicate-button">Copy</button>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.addEventListener("click", function (event) {
+          if (event.target.classList.contains("send-to-localhost-button")) {
+            const textarea = event.target
+              .closest(".textareaContainer")
+              .querySelector("textarea"); // traverse to .textareaContainer
             const text = textarea.value;
 
-            const notification = document.createElement('div');
-            notification.id = 'notification';
-            notification.textContent = 'sending ...';
+            const notification = document.createElement("div");
+            notification.id = "notification";
+            notification.textContent = "sending ...";
             document.body.appendChild(notification);
 
-            notification.classList.add('show');
+            notification.classList.add("show");
 
             // customize port number to your needs
-            fetch('http://localhost:4242', {
-                method: 'POST',
-                body: text,
-                headers: {
-                    'Content-Type': 'text/plain'
-                }
+            fetch("http://localhost:4242", {
+              method: "POST",
+              body: text,
+              headers: {
+                "Content-Type": "text/plain",
+              },
             })
-            .then(response => {
+              .then((response) => {
                 if (!response.ok) {
-                    console.error('http error', response);
-                    notification.textContent = `error: ${response.status} ${response.statusText}`;
-                    notification.classList.add('error');
+                  console.error("http error", response);
+                  notification.textContent = `error: ${response.status} ${response.statusText}`;
+                  notification.classList.add("error");
                 } else {
-                   console.log('text sent to localhost:4242');
-                   notification.textContent = 'sent successfully';
-                   notification.classList.remove('error');
+                  console.log("text sent to localhost:4242");
+                  notification.textContent = "sent successfully";
+                  notification.classList.remove("error");
                 }
                 return response.text();
-            })
-            .then(data => {
-                console.log('response from server:', data);
+              })
+              .then((data) => {
+                console.log("response from server:", data);
                 textarea.focus();
-            })
-            .catch(error => {
-                console.error('error sending text to localhost:4242:', error);
-                notification.textContent = 'error sending data';
-                notification.classList.add('error');
+              })
+              .catch((error) => {
+                console.error("error sending text to localhost:4242:", error);
+                notification.textContent = "error sending data";
+                notification.classList.add("error");
                 textarea.focus();
-            })
-            .finally(() => {
+              })
+              .finally(() => {
                 // remove notification after 4 seconds
                 setTimeout(() => {
-                    notification.classList.remove('show');
-                    notification.classList.remove('error');
-                    document.body.removeChild(notification);
+                  notification.classList.remove("show");
+                  notification.classList.remove("error");
+                  document.body.removeChild(notification);
                 }, 4000);
-            });
-        }
+              });
+          }
 
-        if (event.target.classList.contains('duplicate-button')) {
-            const container = event.target.closest('.textareaContainer'); // traverse to .textareaContainer
+          if (event.target.classList.contains("duplicate-button")) {
+            const container = event.target.closest(".textareaContainer"); // traverse to .textareaContainer
             const newContainer = container.cloneNode(true);
-            const originalTextarea = container.querySelector('textarea');
-            const newTextarea = newContainer.querySelector('textarea');
+            const originalTextarea = container.querySelector("textarea");
+            const newTextarea = newContainer.querySelector("textarea");
             newTextarea.value = originalTextarea.value;
-            container.parentNode.insertBefore(newContainer, container.nextSibling);
+            container.parentNode.insertBefore(
+              newContainer,
+              container.nextSibling,
+            );
+          }
+        });
+
+        // set focus on the first textarea and move the cursor to the end
+        const firstTextarea = document.querySelector("textarea");
+        if (firstTextarea) {
+          firstTextarea.focus();
+          firstTextarea.selectionStart = firstTextarea.selectionEnd =
+            firstTextarea.value.length;
         }
-    });
-
-    // set focus on the first textarea and move the cursor to the end
-    const firstTextarea = document.querySelector('textarea');
-    if (firstTextarea) {
-        firstTextarea.focus();
-        firstTextarea.selectionStart = firstTextarea.selectionEnd = firstTextarea.value.length;
-    }
-});
-</script>
-
-</body>
+      });
+    </script>
+  </body>
 </html>

@@ -7,7 +7,7 @@ Releases:
   - v0.2.0 - 2025-04-18: minor improvements
   - v0.3.0 - 2025-05-24: minor improvements
   - v0.4.0 - 2025-07-12: minor improvements
-  - v0.5.0 - 2025-12-13: minor improvements
+  - v0.5.0 - 2025-12-18: minor improvements
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -91,7 +91,12 @@ body {
   font-size: 1em;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: normal;
   margin-top: 0.8em;
   margin-bottom: 0.6em;
@@ -100,16 +105,29 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: 0.2em;
 }
 
-h1, h2 {
+h1,
+h2 {
   border-bottom: 1px solid #dddddd;
 }
 
-h1 { font-size: 2.1em; }
-h2 { font-size: 1.8em; }
-h3 { font-size: 1.4em; }
-h4 { font-size: 1.3em; }
-h5 { font-size: 1.2em; }
-h6 { font-size: 1.1em; }
+h1 {
+  font-size: 2.1em;
+}
+h2 {
+  font-size: 1.8em;
+}
+h3 {
+  font-size: 1.4em;
+}
+h4 {
+  font-size: 1.3em;
+}
+h5 {
+  font-size: 1.2em;
+}
+h6 {
+  font-size: 1.1em;
+}
 
 p {
   margin-bottom: 0.3em;
@@ -124,7 +142,8 @@ a:hover {
   text-decoration: underline;
 }
 
-ul, ol {
+ul,
+ol {
   margin-bottom: 1em;
   padding-top: 0em;
   padding-left: 2em;
@@ -186,7 +205,8 @@ table {
   margin-bottom: 1em;
 }
 
-th, td {
+th,
+td {
   border: 1px solid #dddddd;
   padding: 0.5em;
   text-align: left;
@@ -212,11 +232,19 @@ figcaption {
   color: #777777;
 }
 
-/* inline elements */
-strong { font-weight: bold; }
-em { font-style: italic; }
-del { text-decoration: line-through; }
-ins { text-decoration: underline; }
+/* -- inline elements -- */
+strong {
+  font-weight: bold;
+}
+em {
+  font-style: italic;
+}
+del {
+  text-decoration: line-through;
+}
+ins {
+  text-decoration: underline;
+}
 
 details {
   padding: 0.2em 0.4em;
@@ -241,7 +269,7 @@ summary {
   text-indent: -2em;
 }
 
-/* other elements */
+/* -- other elements -- */
 
 abbr[title] {
   cursor: help;
@@ -265,18 +293,17 @@ sup {
 
 kbd {
   font-family: monospace;
-  font-size: 1.0em;
+  font-size: 1em;
   background-color: #f0f0f0;
   padding: 4px 4px;
   border: 1px solid #dddddd;
   border-radius: 5px;
   margin: 0px 5px;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); 
-
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 mark {
-  background-color: #FFFF7D;
+  background-color: #ffff7d;
   color: black;
   padding: 2px 5px;
 }
@@ -284,60 +311,67 @@ mark {
 /* for use with code syntax highlighter */
 code[class*="language-"],
 pre[class*="language-"] {
-  font-size: 1.0em;
+  font-size: 1em;
   line-height: 1.3em;
 }
 
-/* dark mode styles */
+/* -- dark mode styles -- */
+
 @media (prefers-color-scheme: dark) {
   body {
     color-scheme: dark;
     color: #eeeeee;
-    background-color: #121212; /* dark background */
+    background-color: #121212;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    color: #eeeeee; /* lighter header color */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #eeeeee;
   }
 
-  h1, h2 {
-    border-bottom: 1px solid #555555; /* darker border for headers */
+  h1,
+  h2 {
+    border-bottom: 1px solid #555555;
   }
 
   a {
-    color: #64b5f6; /* lighter link color */
+    color: #64b5f6;
   }
 
   blockquote {
-    border-left-color: #333333; /* darker blockquote border */
+    border-left-color: #333333;
   }
 
   code {
-    background-color: #333333; /* darker code background */
-    color: #eeeeee; /* lighter code color */
+    background-color: #333333;
+    color: #eeeeee;
   }
 
   pre {
-    background-color: #333333; /* darker pre background */
+    background-color: #333333;
     color: #eeeeee;
-    border: 1px solid #555555; /* darker pre border */
+    border: 1px solid #555555;
   }
 
   hr {
-    background: #555555; /* darker horizontal rule */
+    background: #555555;
   }
 
   th {
-    background-color: #333333; /* darker table header */
+    background-color: #333333;
     color: #eeeeee;
   }
 
   td {
-    border-color: #555555; /* darker table border */
+    border-color: #555555;
   }
 
   table {
-    border-color: #555555; /* darker table border */
+    border-color: #555555;
   }
 
   details {
