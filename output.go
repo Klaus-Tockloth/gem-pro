@@ -98,6 +98,16 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 			promptString.WriteString("```\n")
 			promptString.WriteString("\n***\n")
 		}
+
+		if len(includeStores) > 0 {
+			promptString.WriteString("**Data referenced by the Prompt (from FileSearchStores):**\n")
+			promptString.WriteString("\n```plaintext\n")
+			for _, storeID := range includeStores {
+				promptString.WriteString(fmt.Sprintf("Included Store: %s\n", storeID))
+			}
+			promptString.WriteString("```\n")
+			promptString.WriteString("\n***\n")
+		}
 	}
 
 	// write prompt to current markdown request/response file

@@ -13,28 +13,30 @@ import (
 // ProgConfig represents program configuration
 type ProgConfig struct {
 	// Gemini configration
-	GeminiAPIKey                   string   `yaml:"GeminiAPIKey"`
-	GeminiAiModel                  string   // one of the following models
-	GeminiLiteAiModel              string   `yaml:"GeminiLiteAiModel"`
-	GeminiFlashAiModel             string   `yaml:"GeminiFlashAiModel"`
-	GeminiProAiModel               string   `yaml:"GeminiProAiModel"`
-	GeminiDefaultAiModel           string   `yaml:"GeminiDefaultAiModel"`
-	GeminiResponseModalities       []string `yaml:"GeminiResponseModalities"`
-	GeminiCandidateCount           int32    `yaml:"GeminiCandidateCount"`
-	GeminiMaxOutputTokens          int32    `yaml:"GeminiMaxOutputTokens"`
-	GeminiTemperature              float32  `yaml:"GeminiTemperature"`
-	GeminiTopP                     float32  `yaml:"GeminiTopP"`
-	GeminiTopK                     float32  `yaml:"GeminiTopK"`
-	GeminiSystemInstruction        string   `yaml:"GeminiSystemInstruction"`
-	GeminiCodeExecution            bool     `yaml:"GeminiCodeExecution"`
-	GeminiGroundigWithGoogleSearch bool     `yaml:"GeminiGroundigWithGoogleSearch"`
-	GeminiGroundigWithGoogleMaps   bool     `yaml:"GeminiGroundigWithGoogleMaps"`
-	GeminiMaxThinkingBudget        *int32   `yaml:"GeminiMaxThinkingBudget"`
-	GeminiThinkingLevel            string   `yaml:"GeminiThinkingLevel"`
-	GeminiIncludeThoughts          bool     `yaml:"GeminiIncludeThoughts"`
-	GeminiCacheName                string   `yaml:"GeminiCacheName"`
-	GeminiCacheTimeToLive          int      `yaml:"GeminiCacheTimeToLive"`
-	GeminiMediaResolution          string   `yaml:"GeminiMediaResolution"`
+	GeminiAPIKey                        string   `yaml:"GeminiAPIKey"`
+	GeminiAiModel                       string   // one of the following models
+	GeminiLiteAiModel                   string   `yaml:"GeminiLiteAiModel"`
+	GeminiFlashAiModel                  string   `yaml:"GeminiFlashAiModel"`
+	GeminiProAiModel                    string   `yaml:"GeminiProAiModel"`
+	GeminiDefaultAiModel                string   `yaml:"GeminiDefaultAiModel"`
+	GeminiResponseModalities            []string `yaml:"GeminiResponseModalities"`
+	GeminiCandidateCount                int32    `yaml:"GeminiCandidateCount"`
+	GeminiMaxOutputTokens               int32    `yaml:"GeminiMaxOutputTokens"`
+	GeminiTemperature                   float32  `yaml:"GeminiTemperature"`
+	GeminiTopP                          float32  `yaml:"GeminiTopP"`
+	GeminiTopK                          float32  `yaml:"GeminiTopK"`
+	GeminiSystemInstruction             string   `yaml:"GeminiSystemInstruction"`
+	GeminiGroundingWithCodeExecution    bool     `yaml:"GeminiGroundingWithCodeExecution"`
+	GeminiGroundigWithGoogleSearch      bool     `yaml:"GeminiGroundigWithGoogleSearch"`
+	GeminiGroundigWithGoogleMaps        bool     `yaml:"GeminiGroundigWithGoogleMaps"`
+	GeminiGroundingWithFileSearchStores []string `yaml:"GeminiGroundingWithFileSearchStores"`
+
+	GeminiMaxThinkingBudget *int32 `yaml:"GeminiMaxThinkingBudget"`
+	GeminiThinkingLevel     string `yaml:"GeminiThinkingLevel"`
+	GeminiIncludeThoughts   bool   `yaml:"GeminiIncludeThoughts"`
+	GeminiCacheName         string `yaml:"GeminiCacheName"`
+	GeminiCacheTimeToLive   int    `yaml:"GeminiCacheTimeToLive"`
+	GeminiMediaResolution   string `yaml:"GeminiMediaResolution"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -390,7 +392,7 @@ generateGeminiModelConfig generates a configuration object for the Gemini AI mod
 genai.GenerateContentConfig object and configures it based on the program settings for interacting
 with the Gemini AI model.
 */
-func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
+func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.GenerateContentConfig {
 	generateContentConfig := &genai.GenerateContentConfig{
 		// HTTPOptions *HTTPOptions
 		// SystemInstruction *Content
@@ -453,7 +455,7 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 	}
 
 	generateContentConfig.Tools = []*genai.Tool{}
-	if progConfig.GeminiCodeExecution {
+	if progConfig.GeminiGroundingWithCodeExecution {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
 	}
 	if progConfig.GeminiGroundigWithGoogleSearch {
@@ -461,6 +463,13 @@ func generateGeminiModelConfig(cacheName string) *genai.GenerateContentConfig {
 	}
 	if progConfig.GeminiGroundigWithGoogleMaps {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
+	}
+	if len(storeNames) > 0 {
+		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{
+			FileSearch: &genai.FileSearch{
+				FileSearchStoreNames: storeNames,
+			},
+		})
 	}
 
 	if cacheName != "" {
@@ -540,6 +549,11 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 			}
 			if tool.CodeExecution != nil {
 				fmt.Printf("  Tool              : CodeExecution\n")
+			}
+			if tool.FileSearch != nil {
+				// TODO: formatting (separate lines for each store?)
+				fmt.Printf("  Tool              : FileSearchStores: %s)\n",
+					strings.Join(tool.FileSearch.FileSearchStoreNames, ", "))
 			}
 		}
 	}

@@ -15,20 +15,67 @@ printUsage prints the program's usage instructions to the standard output. It di
 for the program, including command-line options, examples, and notes about its functionality and terms of service.
 */
 func printUsage() {
+
 	fmt.Printf("\nUsage:\n")
 	fmt.Printf("  %s [options] [files]\n", progName)
 
 	fmt.Printf("\nExamples:\n")
+	fmt.Printf("  # Basic: Start and type prompt into terminal, file, browser\n")
 	fmt.Printf("  %s\n", progName)
-	fmt.Printf("  %s -model alternate\n", progName)
-	fmt.Printf("  %s -chatmode\n", progName)
-	fmt.Printf("  %s -candidates 2\n", progName)
-	fmt.Printf("  %s -temperature 1.8\n", progName)
-	fmt.Printf("  %s *.go README.md\n", progName)
-	fmt.Printf("  %s -filelist ganymed-project-files.txt\n", progName)
+	fmt.Printf("\n  # Prompt via Pipe\n")
+	fmt.Printf("  echo \"Explain this code\" | %s main.go\n", progName)
+	fmt.Printf("\n  # Using a file list for context\n")
+	fmt.Printf("  %s -filelist sources.txt\n", progName)
+	fmt.Printf("\n  # RAG Workflow: Create store and add files\n")
+	fmt.Printf("  %s -create-store \"MyProject\"\n", progName)
+	fmt.Printf("  %s -add-to-store \"stores/123\" *.go\n", progName)
 
+	// TODO: remove
 	fmt.Printf("\nOptions:\n")
 	flag.PrintDefaults()
+
+	groups := []struct {
+		name  string
+		flags []string
+	}{
+		{"Model Selection", []string{"lite", "flash", "pro", "default", "list-models"}},
+		{"Generation Parameters", []string{"candidates", "temperature", "topp"}},
+		{"Grounding", []string{"code-execution", "google-search", "google-maps"}},
+		{"RAG / File Search Stores", []string{"list-stores", "create-store", "add-to-store", "list-store-content", "delete-store", "include-store"}},
+		{"Context Caching", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
+		{"Google File Store", []string{"upload-files", "include-files", "list-files", "delete-files"}},
+		{"Input & Configuration", []string{"config", "filelist", "chatmode"}},
+	}
+
+	fmt.Printf("\nOptions [Grouped]:\n")
+	for _, group := range groups {
+		fmt.Printf("\n[%s]\n", group.name)
+		for _, flagName := range group.flags {
+			flagFlag := flag.Lookup(flagName)
+			if flagFlag == nil {
+				continue
+			}
+
+			var placeholder string
+			getter, ok := flagFlag.Value.(interface{ Get() interface{} })
+			if ok {
+				switch getter.Get().(type) {
+				case string, *stringArray, stringArray, []string:
+					placeholder = " <string>"
+				case int, int32, int64:
+					placeholder = " <int>"
+				case float32, float64:
+					placeholder = " <float>"
+				}
+			}
+
+			const indent = "\n                          "
+			usageText := strings.ReplaceAll(flagFlag.Usage, "\n", indent)
+			fmt.Printf("  -%-22s %s", flagFlag.Name+placeholder, usageText)
+			fmt.Printf(" (default: %s)", flagFlag.DefValue)
+			fmt.Printf("\n")
+		}
+	}
 
 	var help = `
 Remark Concerning Options:

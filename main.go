@@ -27,9 +27,10 @@ Releases:
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
                           list of MIMI type replacements added to config
-  - v0.11.0 - 2025-12-17: support for think level, libs updated, default configuration optimized for Gemini 3
+  - v0.11.0 - 2025-12-22: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
 						  markdown to ansi renderer replaced (glamour), option '-filelist' can be used multiple times
+						  'FileSearchStores' (RAG, Retrieval-Augmented Generation) added
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -79,7 +80,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.11.0"
-	progDate    = "2025-12-17"
+	progDate    = "2025-12-22"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -136,32 +137,45 @@ func (s *stringArray) Set(value string) error {
 	return nil
 }
 
+/*
+Get implements the flag.Getter interface.
+*/
+func (s *stringArray) Get() interface{} {
+	return []string(*s)
+}
+
 // command line parameters
 var (
 	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
 	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
 	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
 	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.\nOverrides the value in the YAML config.")
-	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.8) increase creativity/diversity;\nlower values increase focus/determinism. Overrides the value in the YAML config.")
-	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P / nucleus sampling).\nOverrides the value in the YAML config.")
+	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.")
+	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.2) increase creativity.\nLower values (e.g., 0.8) increase focus.")
+	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P).")
 	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
 	// special handling for option 'filelist'
-	listModels    = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
-	chatmode      = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
-	uploadFiles   = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
-	deleteFiles   = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
-	listFiles     = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
-	includeFiles  = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
-	createCache   = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
-	deleteCache   = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
-	listCache     = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
-	includeCache  = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
-	codeExecution = flag.Bool("code-execution", false, "Lets Gemini use code to solve complex tasks.")
-	googleSearch  = flag.Bool("google-search", false, "Grounding with Google Search.")
-	googleMaps    = flag.Bool("google-maps", false, "Grounding with Google Maps.")
+	listModels       = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
+	chatmode         = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
+	uploadFiles      = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
+	deleteFiles      = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
+	listFiles        = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
+	includeFiles     = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
+	createCache      = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
+	deleteCache      = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
+	listCache        = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
+	includeCache     = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
+	codeExecution    = flag.Bool("code-execution", false, "Lets Gemini use code to solve complex tasks.")
+	googleSearch     = flag.Bool("google-search", false, "Grounding with Google Search.")
+	googleMaps       = flag.Bool("google-maps", false, "Grounding with Google Maps.")
+	createStore      = flag.String("create-store", "", "Creates a new FileSearchStore with the given display name.")
+	deleteStore      = flag.String("delete-store", "", "Deletes the FileSearchStore with the given name or ID.")
+	listStores       = flag.Bool("list-stores", false, "Lists all FileSearchStores.")
+	addToStore       = flag.String("add-to-store", "", "Adds the given files (via args or -filelist) to the specified FileSearchStore (Name/ID).")
+	listStoreContent = flag.String("list-store-content", "", "Lists all documents within the specified FileSearchStore (Name/ID).")
 )
 var fileLists stringArray
+var includeStores stringArray
 
 /*
 main starts this program. It is the entry point of the application, responsible for parsing command-line
@@ -179,8 +193,9 @@ func main() {
 	// logical terminal width
 	terminalWidth := progConfig.AnsiOutputLineLength
 
-	// register the variable for the flag
-	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\nThese files (one filename per line) will be included with the prompt(s).")
+	// register the variables for the flags
+	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\nThese files (one filename per line) will be included with the prompt.")
+	flag.Var(&includeStores, "include-store", "Includes the specified FileSearchStore (Name/ID) in the prompt (can be repeated).")
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -214,6 +229,11 @@ func main() {
 	if err != nil {
 		fmt.Printf("error [%v] loading configuration\n", err)
 		os.Exit(1)
+	}
+
+	// join FileSearchStores from YAML and CLI
+	if len(progConfig.GeminiGroundingWithFileSearchStores) > 0 {
+		includeStores = append(includeStores, progConfig.GeminiGroundingWithFileSearchStores...)
 	}
 
 	// set Gemini AI model
@@ -263,6 +283,7 @@ func main() {
 	// handle standalone actions
 	handleStandaloneFileActions()
 	handleStandaloneCacheActions()
+	handleStandaloneStoreActions()
 
 	if *listModels {
 		showAvailableGeminiModels(terminalWidth)
@@ -351,7 +372,7 @@ func main() {
 	printGeminiModelInfo(geminiModelInfo, terminalWidth)
 
 	// generate and print Gemini model configuration (adds cache if defined)
-	geminiModelConfig := generateGeminiModelConfig(cacheName)
+	geminiModelConfig := generateGeminiModelConfig(cacheName, includeStores)
 	printGeminiModelConfig(geminiModelConfig, terminalWidth)
 
 	// define prompt channel
@@ -530,7 +551,7 @@ func overwriteConfigValues(setFlags map[string]bool) {
 		progConfig.GeminiTopP = float32(*topp)
 	}
 	if setFlags["code-execution"] {
-		progConfig.GeminiCodeExecution = *codeExecution
+		progConfig.GeminiGroundingWithCodeExecution = *codeExecution
 	}
 	if setFlags["google-search"] {
 		progConfig.GeminiGroundigWithGoogleSearch = *googleSearch
@@ -809,6 +830,40 @@ func handleStandaloneCacheActions() {
 		} else {
 			fmt.Printf("%s\n", cacheDetails)
 		}
+		os.Exit(0)
+	}
+}
+
+/*
+handleStandaloneStoreActions verarbeitet die neuen Store-Befehle.
+*/
+func handleStandaloneStoreActions() {
+	if *listStores {
+		fmt.Printf("\nListing FileSearchStores:\n")
+		listGeminiFileSearchStores("  ")
+		fmt.Printf("\n")
+		os.Exit(0)
+	}
+	if *createStore != "" {
+		fmt.Printf("\nCreating FileSearchStore '%s':\n", *createStore)
+		createGeminiFileSearchStore(*createStore)
+		fmt.Printf("\n")
+		os.Exit(0)
+	}
+	if *deleteStore != "" {
+		fmt.Printf("\nDeleting FileSearchStore '%s':\n", *deleteStore)
+		deleteGeminiFileSearchStore(*deleteStore)
+		fmt.Printf("\n")
+		os.Exit(0)
+	}
+	if *addToStore != "" {
+		fmt.Printf("\nAdding files to Store '%s':\n", *addToStore)
+		addFilesToFileSearchStore(*addToStore, filesToHandle)
+		fmt.Printf("\n")
+		os.Exit(0)
+	}
+	if *listStoreContent != "" {
+		listFilesInFileSearchStore(*listStoreContent, "  ")
 		os.Exit(0)
 	}
 }

@@ -101,6 +101,13 @@ Abhängig vom Einsatzfall stehen verschiedene Möglichkeiten zur Nutzung von Dat
 
 Die vorgenannten Varianten sind kombinierbar und unterscheiden sich in ihrer Wirkung auf den Prompt nicht. Liegt der zu berücksichtigende Satz an Dateien bereits im Google-File-Store vor, so genügt es im Prompt darauf zu referenzieren. Ein wiederholtes, zeitaufwändiges Hochladen mit jedem neuen Prompt ist somit nicht notwendig. Die Lebensdauer der Dateien im Google-File-Store ist begrenzt. Die Dateien werden nach einer bestimmten Zeit (z.B. 48 Stunden) automatisch gelöscht. Der Satz an Dateien im Google-File-Store wird als 'Einheit' betrachtet und immer vollständig im Prompt referenziert.
 
+**Zusammenfassung der Strategien zur Datei-Integration:**
+
+Je nach Datenmenge und Verwendungszweck empfiehlt sich einer der folgenden Ansätze:
+*   **Direkt:** Textinhalt wird Teil des Prompts (flüchtig, für kleine Datenmengen).
+*   **Google File Store:** Upload via API (temporär ca. 48h verfügbar, für mittelgroße Datenmengen/Kontexte).
+*   **FileSearchStores (RAG):** Persistente Indexierung im Store (dauerhaft verfügbar, optimiert für sehr große Dokumentensammlungen).
+
 ### Umgang mit einem expliziten Cache
 
 Ein Cache beinhaltet 1-n Dateien. Die Dateien werden bei der Erzeugung des Caches tokenisiert. Ein Cache bietet somit zwei Vorteile:
@@ -136,9 +143,19 @@ Ist dieses Tool aktiviert, kann das KI-Modell auf die umfangreichen und aktuelle
 
 *Kontextuelles Verständnis:* Das Tool ermöglicht es dem Modell, räumliche Zusammenhänge zu verstehen. Auf eine Anfrage wie "Schlage eine Route für einen Spaziergang in Berlin vor, die an historischen Sehenswürdigkeiten vorbeiführt" kann das Modell eine logische und thematisch passende Wegbeschreibung erstellen, die auf den realen Gegebenheiten von Google Maps basiert.
 
-#### Code Execution
+#### Grounding mit FileSearchStores (RAG)
+
+Ist dieses Tool aktiviert, nutzt das KI-Modell einen oder mehrere vom Benutzer definierte 'FileSearchStores' als Wissensbasis. Dies wird als *RAG* (Retrieval-Augmented Generation) bezeichnet. Im Gegensatz zum direkten Hochladen von Dateien in den Prompt oder der Nutzung eines Caches (wo der Inhalt Teil des Kontextfensters wird), durchsucht das Modell hierbei den Store gezielt nach Informationen, die für die Beantwortung der aktuellen Anfrage relevant sind.
+
+Dies eignet sich hervorragend für große Dokumentensammlungen (z. B. technische Handbücher, Gesetzestexte, Firmenrichtlinien), die zu umfangreich für einen einzelnen Prompt wären. Das Modell zitiert in der Regel die Fundstellen aus dem Store in seiner Antwort.
+
+#### Grounding mittels Code Execution
 
 Dieses Tool erlaubt es dem KI-Modell, Code (in der Regel Python) zu generieren, auszuführen und zu validieren, um eine Lösung für eine Anfrage zu finden. Dies ist besonders nützlich für mathematische Berechnungen, Datenanalysen oder logische Probleme, bei denen eine exakte Ausführung von Schritten erforderlich ist. Das Modell kann so Aufgaben lösen, die präzise und wiederholbare Ergebnisse erfordern.
+
+#### Grounding mittels Function Calling
+
+Spezielles, firmeninternes oder geschütztes Wissen steht dem KI-Modell nicht zur Verfügung. Dieses Wissen ist oft nur durch autorisierte Abfragen (API) zugänglich. Funktionsaufrufe (Function Calling) ermöglichen dem KI-Modell entsprechende Datenabfragen, deren Ergebnisse dann in die Antwort einfließen. Da die technische Umsetzung der Funktionsausführung jedoch spezialisierte, auf den Anwendungsfall zugeschnittene KI-Clients erfordert, ist dies nicht Bestandteil dieses allgemeinen KI-Clients.
 
 ### Gemini KI-Modelle
 
@@ -290,6 +307,13 @@ Depending on the use case, various options are available for utilizing file cont
   
 The aforementioned variants can be combined and do not differ in their effect on the prompt. If the set of files to be considered already exists in the Google File Store, it is sufficient to reference it in the prompt. Repeated, time-consuming uploading with every new prompt is therefore not required. The lifespan of the files in the Google File Store is limited. The files are automatically deleted after a certain time (e.g., 48 hours). The set of files in the Google File Store is considered as a 'unit' and is always fully referenced in the prompt.
 
+**Summary of File Integration Strategies:**
+
+Depending on the data volume and use case, one of the following approaches is recommended:
+*   **Direct:** Text content becomes part of the prompt (volatile, for small data sets).
+*   **Google File Store:** Upload via API (available temporarily for ~48h, for medium-sized data sets/contexts).
+*   **FileSearchStores (RAG):** Persistent indexing in a store (permanently available, optimized for very large document collections).
+
 ### Handling an Explicit Cache
 A cache contains 1-n files. The files are tokenized when the cache is created. A cache therefore offers two advantages:
 
@@ -316,7 +340,7 @@ When this tool is enabled, the AI model can access Google Search to find up-to-d
 
 *Targeted URL context:* In the prompt, one or more specific URLs can be given directly to the model. The model then primarily uses the content of these pages as a knowledge base for its answer. This is ideal for tasks such as summarizing an article or answering questions about specific online documentation.
 
-**Grounding with Google Maps**
+#### Grounding with Google Maps
 
 When this tool is activated, the AI model can access the extensive and up-to-date geodata from Google Maps. This enables more precise, relevant, and fact-based answers to location-based inquiries. The model can thus directly integrate information about places, routes, or surroundings into its responses and enrich them with contextual details.
 
@@ -324,9 +348,19 @@ When this tool is activated, the AI model can access the extensive and up-to-dat
 
 *Contextual Understanding:* The tool allows the model to understand spatial relationships. In response to a query like "Suggest a walking route in Berlin that passes by historical landmarks," the model can create a logical and thematically appropriate itinerary based on the real-world data from Google Maps.
 
-#### Code Execution
+#### Grounding with FileSearchStores (RAG)
+
+When this tool is enabled, the AI model uses one or more user-defined 'FileSearchStores' as a knowledge base. This is referred to as *RAG* (Retrieval-Augmented Generation). Unlike uploading files directly into the prompt or using a cache (where content becomes part of the context window), the model specifically searches the store for information relevant to answering the current query.
+
+This is ideal for large collections of documents (e.g., technical manuals, legal texts, company policies) that would be too extensive for a single prompt. The model typically cites the sources found in the store within its response.
+
+#### Grounding with Code Execution
 
 This tool allows the AI model to generate, execute, and validate code (typically Python) to find a solution to a prompt. This is especially useful for mathematical calculations, data analysis, or logical problems that require a precise execution of steps. It enables the model to solve tasks that demand accurate and repeatable results.
+
+#### Grounding with Function Calling
+
+Specialized, internal, or proprietary knowledge is not available to the AI model. This knowledge is often only accessible through authorized queries (APIs). Function Calling allows the AI model to request such data, and the results are then incorporated into the response. However, since the technical implementation of executing these functions requires specialized AI clients tailored to the specific use case, this feature is not part of this general-purpose AI client.
 
 ### Gemini AI models
 
