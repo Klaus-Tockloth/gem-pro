@@ -102,3 +102,23 @@ func readPromptFromLocalhost(promptChannel chan string) http.HandlerFunc {
 		_, _ = fmt.Fprintln(w, "prompt received")
 	}
 }
+
+/*
+readPromptFromPipe reads the complete content from standard input (pipe) until EOF.
+It sends the content as a single prompt to the promptChannel.
+*/
+func readPromptFromPipe(promptChannel chan string) {
+	// Read everything from the pipe (until EOF)
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Printf("error [%v] reading from pipe\n", err)
+		os.Exit(1)
+	}
+
+	if len(data) == 0 {
+		// handle empty pipe gracefully
+		os.Exit(0)
+	}
+
+	promptChannel <- string(data)
+}

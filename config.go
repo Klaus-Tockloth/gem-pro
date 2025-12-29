@@ -12,31 +12,40 @@ import (
 
 // ProgConfig represents program configuration
 type ProgConfig struct {
-	// Gemini configration
-	GeminiAPIKey                        string   `yaml:"GeminiAPIKey"`
-	GeminiAiModel                       string   // one of the following models
-	GeminiLiteAiModel                   string   `yaml:"GeminiLiteAiModel"`
-	GeminiFlashAiModel                  string   `yaml:"GeminiFlashAiModel"`
-	GeminiProAiModel                    string   `yaml:"GeminiProAiModel"`
-	GeminiDefaultAiModel                string   `yaml:"GeminiDefaultAiModel"`
-	GeminiResponseModalities            []string `yaml:"GeminiResponseModalities"`
-	GeminiCandidateCount                int32    `yaml:"GeminiCandidateCount"`
-	GeminiMaxOutputTokens               int32    `yaml:"GeminiMaxOutputTokens"`
-	GeminiTemperature                   float32  `yaml:"GeminiTemperature"`
-	GeminiTopP                          float32  `yaml:"GeminiTopP"`
-	GeminiTopK                          float32  `yaml:"GeminiTopK"`
+	// Gemini configuration
+	GeminiAPIKey string `yaml:"GeminiAPIKey"`
+
+	GeminiAiModel           string // one of the following models
+	GeminiLiteAiModel       string `yaml:"GeminiLiteAiModel"`
+	GeminiFlashAiModel      string `yaml:"GeminiFlashAiModel"`
+	GeminiProAiModel        string `yaml:"GeminiProAiModel"`
+	GeminiFlashImageAiModel string `yaml:"GeminiFlashImageAiModel"`
+	GeminiProImageAiModel   string `yaml:"GeminiProImageAiModel"`
+	GeminiDefaultAiModel    string `yaml:"GeminiDefaultAiModel"`
+
+	GeminiResponseModalities []string `yaml:"GeminiResponseModalities"`
+	GeminiImageAspectRatio   string   `yaml:"GeminiImageAspectRatio"`
+	GeminiImageResolution    string   `yaml:"GeminiImageResolution"`
+
+	GeminiCandidateCount  *int32   `yaml:"GeminiCandidateCount"`
+	GeminiMaxOutputTokens *int32   `yaml:"GeminiMaxOutputTokens"`
+	GeminiTemperature     *float32 `yaml:"GeminiTemperature"`
+	GeminiTopP            *float32 `yaml:"GeminiTopP"`
+	GeminiTopK            *float32 `yaml:"GeminiTopK"`
+
 	GeminiSystemInstruction             string   `yaml:"GeminiSystemInstruction"`
 	GeminiGroundingWithCodeExecution    bool     `yaml:"GeminiGroundingWithCodeExecution"`
-	GeminiGroundigWithGoogleSearch      bool     `yaml:"GeminiGroundigWithGoogleSearch"`
+	GeminiGroundingWithGoogleSearch     bool     `yaml:"GeminiGroundingWithGoogleSearch"`
+	GeminiGroundingWithURLContext       bool     `yaml:"GeminiGroundingWithURLContext"`
 	GeminiGroundigWithGoogleMaps        bool     `yaml:"GeminiGroundigWithGoogleMaps"`
 	GeminiGroundingWithFileSearchStores []string `yaml:"GeminiGroundingWithFileSearchStores"`
 
-	GeminiMaxThinkingBudget *int32 `yaml:"GeminiMaxThinkingBudget"`
-	GeminiThinkingLevel     string `yaml:"GeminiThinkingLevel"`
-	GeminiIncludeThoughts   bool   `yaml:"GeminiIncludeThoughts"`
-	GeminiCacheName         string `yaml:"GeminiCacheName"`
-	GeminiCacheTimeToLive   int    `yaml:"GeminiCacheTimeToLive"`
-	GeminiMediaResolution   string `yaml:"GeminiMediaResolution"`
+	GeminiMaxThinkingBudget    *int32 `yaml:"GeminiMaxThinkingBudget"`
+	GeminiThinkingLevel        string `yaml:"GeminiThinkingLevel"`
+	GeminiIncludeThoughts      bool   `yaml:"GeminiIncludeThoughts"`
+	GeminiCacheName            string `yaml:"GeminiCacheName"`
+	GeminiCacheTimeToLive      int    `yaml:"GeminiCacheTimeToLive"`
+	GeminiInputMediaResolution string `yaml:"GeminiInputMediaResolution"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -110,7 +119,7 @@ type ProgConfig struct {
 }
 
 // progConfig contains program configuration
-var progConfig = ProgConfig{GeminiCandidateCount: -1, GeminiTemperature: -1.0, GeminiTopP: -1.0, GeminiTopK: -1.0, GeminiMaxOutputTokens: -1}
+var progConfig = ProgConfig{}
 
 /*
 loadConfiguration loads program configuration from a YAML file. It reads the specified YAML file,
@@ -135,8 +144,8 @@ func loadConfiguration(configFile string) error {
 	if progConfig.GeminiAPIKey == "" {
 		return fmt.Errorf("empty GeminiAPIKey not allowed")
 	}
-	if progConfig.GeminiCandidateCount <= 0 {
-		return fmt.Errorf("empty GeminiCandidateCount not allowed")
+	if progConfig.GeminiCandidateCount == nil || *progConfig.GeminiCandidateCount <= 0 {
+		return fmt.Errorf("empty or invalid GeminiCandidateCount not allowed")
 	}
 
 	// markdown
@@ -271,13 +280,27 @@ func loadConfiguration(configFile string) error {
 	}
 
 	// media resolution
-	if progConfig.GeminiMediaResolution != "" {
-		switch strings.ToLower(progConfig.GeminiMediaResolution) {
+	if progConfig.GeminiInputMediaResolution != "" {
+		switch strings.ToLower(progConfig.GeminiInputMediaResolution) {
 		case "low":
 		case "medium":
 		case "high":
 		default:
-			return fmt.Errorf("unsupported media resolution [%s]", progConfig.GeminiMediaResolution)
+			return fmt.Errorf("unsupported media resolution [%s]", progConfig.GeminiInputMediaResolution)
+		}
+	}
+
+	// image generation
+	if progConfig.GeminiImageAspectRatio != "" {
+		validRatios := map[string]bool{"auto": true, "1:1": true,
+			"9:16": true, "16:9": true,
+			"3:4": true, "4:3": true,
+			"2:3": true, "3:2": true,
+			"4:5": true, "5:4": true,
+			"21:9": true,
+		}
+		if !validRatios[progConfig.GeminiImageAspectRatio] {
+			fmt.Printf("warning: unusual aspect ratio [%s]\n", progConfig.GeminiImageAspectRatio)
 		}
 	}
 
@@ -392,7 +415,7 @@ generateGeminiModelConfig generates a configuration object for the Gemini AI mod
 genai.GenerateContentConfig object and configures it based on the program settings for interacting
 with the Gemini AI model.
 */
-func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.GenerateContentConfig {
+func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames []string) *genai.GenerateContentConfig {
 	generateContentConfig := &genai.GenerateContentConfig{
 		// HTTPOptions *HTTPOptions
 		// SystemInstruction *Content
@@ -426,23 +449,23 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 		// ImageConfig *ImageConfig
 	}
 	// configure AI model parameters
-	if progConfig.GeminiCandidateCount > -1 {
-		generateContentConfig.CandidateCount = progConfig.GeminiCandidateCount
+	if progConfig.GeminiCandidateCount != nil {
+		generateContentConfig.CandidateCount = *progConfig.GeminiCandidateCount
 	}
 	if len(progConfig.GeminiResponseModalities) > 0 {
 		generateContentConfig.ResponseModalities = append(generateContentConfig.ResponseModalities, progConfig.GeminiResponseModalities...)
 	}
-	if progConfig.GeminiTemperature > -1.0 {
-		generateContentConfig.Temperature = genai.Ptr(progConfig.GeminiTemperature)
+	if progConfig.GeminiTemperature != nil {
+		generateContentConfig.Temperature = progConfig.GeminiTemperature
 	}
-	if progConfig.GeminiTopP > -1.0 {
-		generateContentConfig.TopP = genai.Ptr(progConfig.GeminiTopP)
+	if progConfig.GeminiTopP != nil {
+		generateContentConfig.TopP = progConfig.GeminiTopP
 	}
-	if progConfig.GeminiTopK > -1.0 {
-		generateContentConfig.TopK = genai.Ptr(progConfig.GeminiTopK)
+	if progConfig.GeminiTopK != nil {
+		generateContentConfig.TopK = progConfig.GeminiTopK
 	}
-	if progConfig.GeminiMaxOutputTokens > -1 {
-		generateContentConfig.MaxOutputTokens = progConfig.GeminiMaxOutputTokens
+	if progConfig.GeminiMaxOutputTokens != nil && *progConfig.GeminiMaxOutputTokens > 0 {
+		generateContentConfig.MaxOutputTokens = *progConfig.GeminiMaxOutputTokens
 	}
 	if progConfig.GeminiSystemInstruction != "" {
 		// read file with Gemini system instruction
@@ -458,8 +481,11 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 	if progConfig.GeminiGroundingWithCodeExecution {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
 	}
-	if progConfig.GeminiGroundigWithGoogleSearch {
+	if progConfig.GeminiGroundingWithGoogleSearch {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
+	}
+	if progConfig.GeminiGroundingWithURLContext {
+		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{URLContext: &genai.URLContext{}})
 	}
 	if progConfig.GeminiGroundigWithGoogleMaps {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
@@ -501,13 +527,31 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 		ThinkingLevel:   thinkingLevel,
 	}
 
-	switch strings.ToLower(progConfig.GeminiMediaResolution) {
+	switch strings.ToLower(progConfig.GeminiInputMediaResolution) {
 	case "low":
 		generateContentConfig.MediaResolution = genai.MediaResolutionLow
 	case "medium":
 		generateContentConfig.MediaResolution = genai.MediaResolutionMedium
 	case "high":
 		generateContentConfig.MediaResolution = genai.MediaResolutionHigh
+	}
+
+	/*
+		type ImageConfig struct {
+			AspectRatio              string
+			ImageSize                string
+			OutputMIMEType           string
+			OutputCompressionQuality *int32
+		}
+	*/
+	if isImageRequest && (progConfig.GeminiImageAspectRatio != "" || progConfig.GeminiImageResolution != "") {
+		generateContentConfig.ImageConfig = &genai.ImageConfig{}
+		if progConfig.GeminiImageAspectRatio != "" {
+			generateContentConfig.ImageConfig.AspectRatio = progConfig.GeminiImageAspectRatio
+		}
+		if progConfig.GeminiImageResolution != "" {
+			generateContentConfig.ImageConfig.ImageSize = progConfig.GeminiImageResolution
+		}
 	}
 
 	return generateContentConfig
@@ -535,7 +579,9 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 		fmt.Printf("  TopK              : %v\n", *geminiModelConfig.TopK)
 	}
 	fmt.Printf("  CandidateCount    : %v\n", geminiModelConfig.CandidateCount)
-	fmt.Printf("  MaxOutputTokens   : %v\n", geminiModelConfig.MaxOutputTokens)
+	if geminiModelConfig.MaxOutputTokens > 0 {
+		fmt.Printf("  MaxOutputTokens   : %v\n", geminiModelConfig.MaxOutputTokens)
+	}
 	if geminiModelConfig.ResponseMIMEType != "" {
 		fmt.Printf("  ResponseMIMEType  : %v\n", geminiModelConfig.ResponseMIMEType)
 	}
@@ -543,6 +589,9 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 		for _, tool := range geminiModelConfig.Tools {
 			if tool.GoogleSearch != nil {
 				fmt.Printf("  Tool              : GoogleSearch\n")
+			}
+			if tool.URLContext != nil {
+				fmt.Printf("  Tool              : URLContext\n")
 			}
 			if tool.GoogleMaps != nil {
 				fmt.Printf("  Tool              : GoogleMaps\n")
@@ -552,7 +601,7 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 			}
 			if tool.FileSearch != nil {
 				// TODO: formatting (separate lines for each store?)
-				fmt.Printf("  Tool              : FileSearchStores: %s)\n",
+				fmt.Printf("  Tool              : FileSearchStores: %s\n",
 					strings.Join(tool.FileSearch.FileSearchStoreNames, ", "))
 			}
 		}
@@ -569,7 +618,15 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if progConfig.GeminiThinkingLevel != "" {
 		fmt.Printf("  ThinkingLevel     : %s\n", progConfig.GeminiThinkingLevel)
 	}
-	if progConfig.GeminiMediaResolution != "" {
-		fmt.Printf("  MediaResolution   : %s\n", progConfig.GeminiMediaResolution)
+	if progConfig.GeminiInputMediaResolution != "" {
+		fmt.Printf("  MediaResolution   : %s\n", progConfig.GeminiInputMediaResolution)
+	}
+	if geminiModelConfig.ImageConfig != nil {
+		if geminiModelConfig.ImageConfig.AspectRatio != "" {
+			fmt.Printf("  ImageAspectRatio  : %s\n", geminiModelConfig.ImageConfig.AspectRatio)
+		}
+		if geminiModelConfig.ImageConfig.ImageSize != "" {
+			fmt.Printf("  ImageSize         : %s\n", geminiModelConfig.ImageConfig.ImageSize)
+		}
 	}
 }

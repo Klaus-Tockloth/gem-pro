@@ -40,6 +40,34 @@ func writePromptInput() {
 	}
 }
 
+//go:embed README.md
+var readmeBytes []byte
+
+/*
+writeReadme writes the embedded README.md to the current directory.
+*/
+func writeReadme() {
+	filename := "README.md"
+	err := os.WriteFile(filename, readmeBytes, 0600)
+	if err != nil {
+		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+	}
+}
+
+//go:embed gem-pro.png
+var gemProPngBytes []byte
+
+/*
+writeGemProPng writes the embedded gem-pro.png to the current directory.
+*/
+func writeGemProPng() {
+	filename := "gem-pro.png"
+	err := os.WriteFile(filename, gemProPngBytes, 0600)
+	if err != nil {
+		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+	}
+}
+
 //go:embed assets
 var assetsFS embed.FS
 

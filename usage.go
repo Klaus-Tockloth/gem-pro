@@ -15,36 +15,71 @@ printUsage prints the program's usage instructions to the standard output. It di
 for the program, including command-line options, examples, and notes about its functionality and terms of service.
 */
 func printUsage() {
-
 	fmt.Printf("\nUsage:\n")
 	fmt.Printf("  %s [options] [files]\n", progName)
 
-	fmt.Printf("\nExamples:\n")
-	fmt.Printf("  # Basic: Start and type prompt into terminal, file, browser\n")
-	fmt.Printf("  %s\n", progName)
-	fmt.Printf("\n  # Prompt via Pipe\n")
-	fmt.Printf("  echo \"Explain this code\" | %s main.go\n", progName)
-	fmt.Printf("\n  # Using a file list for context\n")
-	fmt.Printf("  %s -filelist sources.txt\n", progName)
-	fmt.Printf("\n  # RAG Workflow: Create store and add files\n")
-	fmt.Printf("  %s -create-store \"MyProject\"\n", progName)
-	fmt.Printf("  %s -add-to-store \"stores/123\" *.go\n", progName)
+	fmt.Printf("\nExamples [Grouped]:\n")
 
-	// TODO: remove
-	fmt.Printf("\nOptions:\n")
-	flag.PrintDefaults()
+	fmt.Printf("[Interactive]\n")
+	fmt.Printf("  # Interactive mode (type into terminal, file or browser)\n")
+	fmt.Printf("  %s\n", progName)
+
+	fmt.Printf("\n[Piping & Output Control]\n")
+	fmt.Printf("  # Read from pipe and define specific output filenames\n")
+	fmt.Printf("  cat prompt.txt | %s -out my-result\n", progName)
+	fmt.Printf("  # Result: my-result.md, my-result.html, my-result.ansi\n")
+
+	fmt.Printf("\n[Working with Local Files]\n")
+	fmt.Printf("  # Analyze specific files directly (sent with prompt)\n")
+	fmt.Printf("  %s -pro main.go utils.go\n", progName)
+	fmt.Printf("  # Use a file list for batch processing context\n")
+	fmt.Printf("  %s -filelist source_files.txt\n", progName)
+
+	fmt.Printf("\n[Tools & Grounding]\n")
+	fmt.Printf("  # Google Search: Research current events\n")
+	fmt.Printf("  %s -google-search\n", progName)
+	fmt.Printf("  # URL Context: Summarize a specific webpage\n")
+	fmt.Printf("  %s -url-context https://example.com/article\n", progName)
+	fmt.Printf("  # Google Maps: Find locations\n")
+	fmt.Printf("  %s -google-maps\n", progName)
+	fmt.Printf("  # Code Execution: Solve complex math or logic\n")
+	fmt.Printf("  %s -code-execution\n", progName)
+
+	fmt.Printf("\n[Chat Mode]\n")
+	fmt.Printf("  # Start a conversation session (remember history)\n")
+	fmt.Printf("  %s -chatmode -pro\n", progName)
+	fmt.Printf("  # Chat with initial file context (files sent only once)\n")
+	fmt.Printf("  %s -chatmode config.yaml\n", progName)
+
+	fmt.Printf("\n[Advanced Context: Caching (High Performance / Cost Saving)]\n")
+	fmt.Printf("  # Step 1: Create a cache from a library of PDF/Text files\n")
+	fmt.Printf("  %s -create-cache *.pdf\n", progName)
+	fmt.Printf("  # Step 2: Query the model using the cached content\n")
+	fmt.Printf("  %s -include-cache\n", progName)
+	fmt.Printf("  # Manage cache\n")
+	fmt.Printf("  %s -list-cache\n", progName)
+	fmt.Printf("  %s -delete-cache\n", progName)
+
+	fmt.Printf("\n[Advanced Context: RAG (FileSearchStores / Persistent Knowledge)]\n")
+	fmt.Printf("  # Step A: Create store\n")
+	fmt.Printf("  %s -create-store \"ProjectDocs\"\n", progName)
+	fmt.Printf("  # Step B: Add knowledge base documents\n")
+	fmt.Printf("  %s -add-to-store \"stores/<ID>\" docs/*.md\n", progName)
+	fmt.Printf("  # Step C: Query using the knowledge base\n")
+	fmt.Printf("  %s -include-store \"stores/<ID>\"\n", progName)
 
 	groups := []struct {
 		name  string
 		flags []string
 	}{
-		{"Model Selection", []string{"lite", "flash", "pro", "default", "list-models"}},
-		{"Generation Parameters", []string{"candidates", "temperature", "topp"}},
-		{"Grounding", []string{"code-execution", "google-search", "google-maps"}},
-		{"RAG / File Search Stores", []string{"list-stores", "create-store", "add-to-store", "list-store-content", "delete-store", "include-store"}},
-		{"Context Caching", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
-		{"Google File Store", []string{"upload-files", "include-files", "list-files", "delete-files"}},
-		{"Input & Configuration", []string{"config", "filelist", "chatmode"}},
+		{"Model Selection", []string{"lite", "flash", "pro", "flash-image", "pro-image", "default", "list-models"}},
+		{"Generation Parameters", []string{"candidates"}},
+		{"Grounding / Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
+		{"Chat & Interaction", []string{"chatmode", "config", "filelist"}},
+		{"Output Control", []string{"out"}},
+		{"Context: Caching (High Performance)", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
+		{"Context: Google File Store (Temporary)", []string{"upload-files", "include-files", "list-files", "delete-files"}},
+		{"Context: RAG / FileSearchStores (Persistent)", []string{"list-stores", "create-store", "delete-store", "add-to-store", "delete-from-store", "include-store", "list-store-content"}},
 	}
 
 	fmt.Printf("\nOptions [Grouped]:\n")
@@ -78,10 +113,6 @@ func printUsage() {
 	}
 
 	var help = `
-Remark Concerning Options:
-  A default value of -1 for numeric options indicates that the option was not set via the command line. 
-  The program will use the value from the YAML configuration file or the API's default if not specified there.
-
 Notes:
   - Integrate Gemini AI responses into your workflow by prompting via this tool.
   - Submit prompts via the following input channels: Terminal, File, localhost.

@@ -27,10 +27,13 @@ Releases:
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
                           list of MIMI type replacements added to config
-  - v0.11.0 - 2025-12-22: support for think level, libs updated, default configuration optimized for Gemini 3
+  - v0.11.0 - 2025-12-29: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
 						  markdown to ansi renderer replaced (glamour), option '-filelist' can be used multiple times
-						  'FileSearchStores' (RAG, Retrieval-Augmented Generation) added
+						  tool 'FileSearchStores' (RAG, Retrieval-Augmented Generation) added
+						  CLI paramaters 'temperature' and 'topp' removed, tool 'URLContext' added
+						  README.md embedded in application, README.md revised, usage/help revised
+						  pipe support revised, image support
 
 Copyright:
 - © 2025 | Klaus Tockloth
@@ -47,6 +50,8 @@ Remarks:
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
 - Support for "Stop Sequence".
+- Support batch mode.
+- Improve output naming.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -80,7 +85,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.11.0"
-	progDate    = "2025-12-22"
+	progDate    = "2025-12-29"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -146,14 +151,14 @@ func (s *stringArray) Get() interface{} {
 
 // command line parameters
 var (
-	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
-	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
-	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
-	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	candidates   = flag.Int("candidates", -1, "Specifies the number of candidate responses the AI should generate.")
-	temperature  = flag.Float64("temperature", -1.0, "Controls the randomness of the AI's responses. Higher values (e.g., 1.2) increase creativity.\nLower values (e.g., 0.8) increase focus.")
-	topp         = flag.Float64("topp", -1.0, "Sets the cumulative probability threshold for token selection during sampling (Top-P).")
-	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	liteModel       = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
+	flashModel      = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
+	proModel        = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
+	flashImageModel = flag.Bool("flash-image", false, "Specifies the Gemini AI flash image generation model (Nano Banana).")
+	proImageModel   = flag.Bool("pro-image", false, "Specifies the Gemini AI pro image generation model (Nano Banana Pro).")
+	defaultModel    = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
+	candidates      = flag.Int("candidates", 0, "Specifies the number of candidate responses the AI should generate.")
+	config          = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
 	// special handling for option 'filelist'
 	listModels       = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
 	chatmode         = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
@@ -167,12 +172,15 @@ var (
 	includeCache     = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
 	codeExecution    = flag.Bool("code-execution", false, "Lets Gemini use code to solve complex tasks.")
 	googleSearch     = flag.Bool("google-search", false, "Grounding with Google Search.")
+	urlContext       = flag.Bool("url-context", false, "Grounding with URL Context (read content from URLs in prompt).")
 	googleMaps       = flag.Bool("google-maps", false, "Grounding with Google Maps.")
 	createStore      = flag.String("create-store", "", "Creates a new FileSearchStore with the given display name.")
 	deleteStore      = flag.String("delete-store", "", "Deletes the FileSearchStore with the given name or ID.")
 	listStores       = flag.Bool("list-stores", false, "Lists all FileSearchStores.")
 	addToStore       = flag.String("add-to-store", "", "Adds the given files (via args or -filelist) to the specified FileSearchStore (Name/ID).")
+	deleteFromStore  = flag.String("delete-from-store", "", "Deletes the specified FileSearchStore document (full Name/ID).")
 	listStoreContent = flag.String("list-store-content", "", "Lists all documents within the specified FileSearchStore (Name/ID).")
+	outputBase       = flag.String("out", "", "Specifies the base filename for the output files.\n E.g. 'response-1' -> 'response-1.md', 'response-1.html', 'response-1.ansi'.")
 )
 var fileLists stringArray
 var includeStores stringArray
@@ -209,6 +217,12 @@ func main() {
 	if !fileExists(*config) {
 		writeConfig()
 	}
+	if !fileExists("README.md") {
+		writeReadme()
+	}
+	if !fileExists("gem-pro.png") {
+		writeGemProPng()
+	}
 
 	// 'assets' in current directory (to render current HTML file in current directory)
 	directory := "./assets"
@@ -231,6 +245,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// handle custom output base filename
+	if *outputBase != "" {
+		progConfig.MarkdownPromptResponseFile = *outputBase + ".md"
+		progConfig.HTMLPromptResponseFile = *outputBase + ".html"
+		progConfig.AnsiPromptResponseFile = *outputBase + ".ansi"
+	}
+
 	// join FileSearchStores from YAML and CLI
 	if len(progConfig.GeminiGroundingWithFileSearchStores) > 0 {
 		includeStores = append(includeStores, progConfig.GeminiGroundingWithFileSearchStores...)
@@ -238,6 +259,7 @@ func main() {
 
 	// set Gemini AI model
 	progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
+	isImageRequest := false
 	switch {
 	case *liteModel:
 		progConfig.GeminiAiModel = progConfig.GeminiLiteAiModel
@@ -245,12 +267,23 @@ func main() {
 		progConfig.GeminiAiModel = progConfig.GeminiFlashAiModel
 	case *proModel:
 		progConfig.GeminiAiModel = progConfig.GeminiProAiModel
+	case *flashImageModel:
+		progConfig.GeminiAiModel = progConfig.GeminiFlashImageAiModel
+		isImageRequest = true
+	case *proImageModel:
+		progConfig.GeminiAiModel = progConfig.GeminiProImageAiModel
+		isImageRequest = true
 	case *defaultModel:
 		progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
 	}
 	if progConfig.GeminiAiModel == "" {
 		fmt.Printf("empty Gemini AI model not allowed\n")
 		os.Exit(1)
+	}
+
+	// detect image model
+	if strings.Contains(progConfig.GeminiAiModel, "image") {
+		isImageRequest = true
 	}
 
 	// build list of files given via command line
@@ -372,7 +405,7 @@ func main() {
 	printGeminiModelInfo(geminiModelInfo, terminalWidth)
 
 	// generate and print Gemini model configuration (adds cache if defined)
-	geminiModelConfig := generateGeminiModelConfig(cacheName, includeStores)
+	geminiModelConfig := generateGeminiModelConfig(isImageRequest, cacheName, includeStores)
 	printGeminiModelConfig(geminiModelConfig, terminalWidth)
 
 	// define prompt channel
@@ -396,8 +429,18 @@ func main() {
 	// start graceful shutdown handler
 	go handleShutdown(shutdownTrigger)
 
-	// start input readers
-	inputPossibilities := startInputReaders(promptChannel, progConfig)
+	// check if input is piped
+	isPiped := isInputPiped()
+	inputPossibilities := []string{}
+
+	if isPiped {
+		// pipe mode: read strictly from Stdin until EOF
+		go readPromptFromPipe(promptChannel)
+		inputPossibilities = append(inputPossibilities, "Pipe")
+	} else {
+		// interactive mode: start configured readers (Terminal, File, Localhost)
+		inputPossibilities = startInputReaders(promptChannel, progConfig)
+	}
 
 	// create chat mode session
 	chat := &genai.Chat{}
@@ -415,7 +458,11 @@ func main() {
 	var resp *genai.GenerateContentResponse
 	var respErr error
 	for {
-		fmt.Printf("Waiting for input from %s ...\n", strings.Join(inputPossibilities, ", "))
+		if !isPiped {
+			fmt.Printf("Waiting for input from %s ...\n", strings.Join(inputPossibilities, ", "))
+		} else {
+			fmt.Printf("Processing piped input ...\n")
+		}
 
 		// read prompt from channel
 		prompt := <-promptChannel
@@ -507,7 +554,10 @@ func main() {
 			// chat mode
 			resp, respErr = chat.SendMessage(ctx, parts...)
 		} else {
-			// non-chat mode
+			// non-chat mode: text AND image generation for Gemini 3 models
+			if isImageRequest {
+				fmt.Printf("%02d:%02d:%02d: Generating content (image/text) ...\n", now.Hour(), now.Minute(), now.Second())
+			}
 			resp, respErr = client.Models.GenerateContent(ctx, progConfig.GeminiAiModel, contents, geminiModelConfig)
 		}
 		finishProcessing = time.Now()
@@ -526,6 +576,11 @@ func main() {
 		// handle response
 		handleResponse(resp, respErr, prompt)
 
+		// If input was piped, we are in "One-Shot" mod: process one prompt, get one response, and exit.
+		if isPiped {
+			os.Exit(0)
+		}
+
 		// increase chat number
 		if *chatmode {
 			chatNumber++
@@ -542,19 +597,17 @@ the YAML configuration file.
 */
 func overwriteConfigValues(setFlags map[string]bool) {
 	if setFlags["candidates"] {
-		progConfig.GeminiCandidateCount = int32(*candidates)
-	}
-	if setFlags["temperature"] {
-		progConfig.GeminiTemperature = float32(*temperature)
-	}
-	if setFlags["topp"] {
-		progConfig.GeminiTopP = float32(*topp)
+		val := int32(*candidates)
+		progConfig.GeminiCandidateCount = &val
 	}
 	if setFlags["code-execution"] {
 		progConfig.GeminiGroundingWithCodeExecution = *codeExecution
 	}
 	if setFlags["google-search"] {
-		progConfig.GeminiGroundigWithGoogleSearch = *googleSearch
+		progConfig.GeminiGroundingWithGoogleSearch = *googleSearch
+	}
+	if setFlags["url-context"] {
+		progConfig.GeminiGroundingWithURLContext = *urlContext
 	}
 	if setFlags["google-maps"] {
 		progConfig.GeminiGroundigWithGoogleMaps = *googleMaps
@@ -569,10 +622,14 @@ like Markdown and HTML.
 func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt string) {
 	now := finishProcessing
 	fmt.Printf("%02d:%02d:%02d: Processing response ...\n", now.Hour(), now.Minute(), now.Second())
-	if respErr != nil {
+	switch {
+	case respErr != nil:
 		processError(respErr)
-	} else {
+	case resp != nil:
 		processResponse(resp)
+	default:
+		unknownErr := fmt.Errorf("unexpected state: received neither a response nor an error from Gemini API")
+		processError(unknownErr)
 	}
 
 	// print prompt and response to terminal
@@ -862,8 +919,22 @@ func handleStandaloneStoreActions() {
 		fmt.Printf("\n")
 		os.Exit(0)
 	}
+	if *deleteFromStore != "" {
+		fmt.Printf("\nDeleting document from FileSearchStore:\n")
+		deleteFileFromFileSearchStore(*deleteFromStore)
+		fmt.Printf("\n")
+		os.Exit(0)
+	}
 	if *listStoreContent != "" {
 		listFilesInFileSearchStore(*listStoreContent, "  ")
 		os.Exit(0)
 	}
+}
+
+/*
+isInputPiped verifies if input pipe is connected.
+*/
+func isInputPiped() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) == 0
 }

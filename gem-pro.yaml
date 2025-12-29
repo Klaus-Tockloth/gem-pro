@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.11 - 2025-12-22: corresponding to program release
+# - v0.11 - 2025-12-29: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -24,11 +24,23 @@
 # 'pass:api-key': pass contains the api-key
 GeminiAPIKey: 'env:GEMINI_API_KEY'
 
-# Gemini AI model family (options: -lite, -flash, -pro, -default)
-GeminiLiteAiModel: models/gemini-flash-lite-latest
-GeminiFlashAiModel: models/gemini-flash-latest
-GeminiProAiModel: models/gemini-pro-latest
-GeminiDefaultAiModel: models/gemini-flash-latest
+# Gemini AI text model family (options: -lite, -flash, -pro)
+GeminiLiteAiModel: models/gemini-2.5-flash-lite-preview-09-2025
+GeminiFlashAiModel: models/gemini-3-flash-preview
+GeminiProAiModel: models/gemini-3-pro-preview
+
+# Gemini AI image model family (options: -flash-image [Nano Banana], -pro-image [Nano Banana Pro])
+GeminiFlashImageAiModel: models/gemini-2.5-flash-image
+GeminiProImageAiModel: models/gemini-3-pro-image-preview
+
+# Gemini AI default model
+GeminiDefaultAiModel: models/gemini-3-pro-image-preview
+
+# TODO: Gemini AI model family (options: -lite, -flash, -pro, -default)
+# GeminiLiteAiModel: models/gemini-flash-lite-latest
+# GeminiFlashAiModel: models/gemini-flash-latest
+# GeminiProAiModel: models/gemini-pro-latest
+# GeminiDefaultAiModel: models/gemini-flash-latest
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
 GeminiResponseModalities:
@@ -38,33 +50,48 @@ GeminiResponseModalities:
 # number of generated responses to return (int)
 GeminiCandidateCount: 1
 
+# Image Generation: AspectRatio: '1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', or '21:9'
+# Note: Important technical setting not possible within the prompt.
+# Square
+#   1:1: Best for profile pictures (avatars), Instagram grid posts, and logo design. It is the most neutral format for general subjects.
+# Vertical (Portrait)
+#   9:16: The standard for full-screen mobile content. Use this for TikTok, Instagram Reels, YouTube Shorts, and mobile wallpapers.
+#   2:3: Classic photography ratio (35mm film rotated). Great for portrait photography and Pinterest pins.
+#   3:4: Common in digital cameras and iPads. Good for portraits that need a bit more width than 2:3.
+#   4:5: The optimized vertical format for Instagram Feed posts. It takes up the maximum amount of screen space.
+# Horizontal (Landscape)
+#   16:9: The standard for YouTube videos, television, monitors, and presentation slides.
+#   3:2: Classic 35mm photography ratio. The standard for landscape photography and DSLR sensors.
+#   4:3: Traditional monitor shape and standard digital camera sensor. Great for general illustrations and classic TV style.
+#   5:4: A slightly taller landscape, often used in classic large-format art prints (like 8x10 or 16x20 inches).
+#   21:9: Ultrawide or Cinematic. Use this for movie concept art, gaming wallpapers, or wide panoramic landscapes.
+GeminiImageAspectRatio: "4:3"
+
+# Image Generation: Resolution/ImageSize: "1K", "2K", "4K"
+# Note: Important technical setting not possible within the prompt.
+# 1K (Standard / Low usage): Rapid prototyping, testing prompts, or thumbnail creation.
+# 2K (High Definition): General purpose web use, digital art portfolios, and standard screen viewing.
+# 4K (Ultra High Definition): Printing, desktop wallpapers, professional post-production, or highly detailed illustrations.
+GeminiImageResolution: "1K"
+
 # control the randomness of the output (varies by model, float)
 # Values can range over [0.0, MaxTemperature], inclusive. A higher value will produce responses that
 # are more varied, while a value closer to 0.0 will typically result in less surprising responses
 # from the model.
-# The temperature controls the degree of randomness in token selection. The temperature is used for
-# sampling during response generation, which occurs when topP and topK are applied. Lower temperatures
-# are good for prompts that require a more deterministic or less open-ended response, while higher
-# temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic,
-# meaning that the highest probability response is always selected.
-# Info for Gemini 3: Google recommends to keep the default temperature. 
+# Important for Gemini 3 (and Reasoning Models):
+# Google strongly recommends keeping the temperature parameter at its default value (usually 1.0).
+# Changing the temperature (especially setting it below 1.0) may lead to unexpected behavior, 
+# such as looping or degraded performance in reasoning tasks.
 GeminiTemperature:
 
 # maximum cumulative probability of tokens to consider when sampling (float)
-# The topP parameter changes how the model selects tokens for output. Tokens are selected from the
-# most to least probable until the sum of their probabilities equals the topP value. For example,
-# if tokens A, B, and C have a probability of 0.3, 0.2, and 0.1 and the topP value is 0.5, then the
-# model will select either A or B as the next token by using the temperature and exclude C as a
-# candidate.
+# The topP parameter changes how the model selects tokens for output.
+# Important for Gemini 3
+# It is recommended to keep this at the default value (typically 0.95).
 GeminiTopP:
 
 # maximum number of tokens to consider when sampling (int)
-# The topK parameter changes how the model selects tokens for output. A topK of 1 means the
-# selected token is the most probable among all the tokens in the model's vocabulary (also 
-# called greedy decoding), while a topK of 3 means that the next token is selected from among
-# the 3 most probable using the temperature. For each token selection step, the topK tokens
-# with the highest probabilities are sampled. Tokens are then further filtered based on topP
-# with the final token selected using temperature sampling.
+# The topK parameter changes how the model selects tokens for output.
 GeminiTopK:
 
 # maximum number of tokens to include in a candidate (int)
@@ -74,6 +101,7 @@ GeminiMaxOutputTokens:
 
 # SystemInstruction (also known as "system prompt") is a more forceful prompt to the model.
 # The model will adhere the instructions more strongly than if they appeared in a normal prompt.
+# Typical usage: Optional tone and style instructions for the model.
 # Examples:
 # - 'Translate prompt from English to German. Pay attention to correct grammar and a fluent style.'
 # - 'Use the technical terms common in the subject area. Avoid filler words.'
@@ -91,7 +119,10 @@ GeminiSystemInstruction:
 GeminiGroundingWithCodeExecution: false
 
 # ground responses with Google Search (not supported by all AI models, affects other settings)
-GeminiGroundigWithGoogleSearch: true
+GeminiGroundingWithGoogleSearch: true
+
+# ground responses using specific URLs provided in the prompt
+GeminiGroundingWithURLContext: true
 
 # ground responses with Google Maps (not supported by all AI models, affects other settings)
 GeminiGroundigWithGoogleMaps: false
@@ -99,7 +130,8 @@ GeminiGroundigWithGoogleMaps: false
 # ground responses with user defined FileSearchStores (RAG, Retrieval-Augmented Generation)
 GeminiGroundingWithFileSearchStores:
 # - fileSearchStores/demo-store-0no9k650jg7w
-# - fileSearchStores/my-knowledge-1no6j533g3x
+# - fileSearchStores/my-knowledge-57qmn5qr3qt5
+# - ...
 
 # max thinking budget (AI model must support this setting, -1 = dynamic thinking, 0 = no thinking)
 # Lite, Flash : -1, 0-24576 (24576 = use as much budget as possible)
@@ -108,7 +140,7 @@ GeminiGroundingWithFileSearchStores:
 # Info: Deprecated for 'Gemini 3'. Use thinking level instead.
 GeminiMaxThinkingBudget:
 
-# level of thoughts tokens that the model should generate (e.g. minimal, low, medium or high)
+# level of thoughts tokens that the model should generate (minimal, low, medium or high)
 GeminiThinkingLevel: high
 
 # include thoughts in the response (true, false) (AI model must support this setting)
@@ -123,9 +155,10 @@ GeminiCacheName: gem-pro-cache
 # Keep in mind that caching objects has costs.
 GeminiCacheTimeToLive: 1
 
-# media resolution (low, medium, high) affects images, videos and pdfs
+# input media resolution (low, medium, high) affects images, videos and pdfs
 # recommended settings: image=high, video=low/medium, pdf=medium
-GeminiMediaResolution: medium
+# Note: Affects only INPUT files. 
+GeminiInputMediaResolution: medium
 
 # Markdown rendering section
 # --------------------------
@@ -180,7 +213,8 @@ HTMLPromptResponseFile: prompt-response.html
 # output of current prompt/response pair (%s = placeholder for name of file)
 # it is also possible to specify the browser (e.g. 'open -a "Google Chrome" %s')
 HTMLOutput: true
-HTMLOutputApplicationMacOS: 'open %s'
+# TODO: HTMLOutputApplicationMacOS: 'open %s'
+HTMLOutputApplicationMacOS: 'open -a "Google Chrome" %s'
 HTMLOutputApplicationLinux: 'xdg-open %s'
 HTMLOutputApplicationWindows: 'cmd /c start "" %s'
 HTMLOutputApplicationOther:

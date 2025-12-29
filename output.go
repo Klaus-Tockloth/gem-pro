@@ -215,7 +215,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 							Path:   pathname,
 						}
 						encodedURL := u.String()
-						regularContent.WriteString(fmt.Sprintf("[%s](%s)\n\n", filename, encodedURL))
+						regularContent.WriteString(fmt.Sprintf("\n![%s](%s)\n\n", filename, encodedURL))
 					}
 				}
 				if part.Text != "" { // ensure that part.Text is not from Thought
@@ -314,17 +314,39 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	}
 
 	temperatureInfo := "Temperature: default"
-	if progConfig.GeminiTemperature > -1.0 {
-		temperatureInfo = fmt.Sprintf("Temperature: %.2f", progConfig.GeminiTemperature)
+	if progConfig.GeminiTemperature != nil {
+		temperatureInfo = fmt.Sprintf("Temperature: %.2f", *progConfig.GeminiTemperature)
 	}
 	toppInfo := "TopP: default"
-	if progConfig.GeminiTopP > -1.0 {
-		toppInfo = fmt.Sprintf("TopP: %.2f", progConfig.GeminiTopP)
+	if progConfig.GeminiTopP != nil {
+		toppInfo = fmt.Sprintf("TopP: %.2f", *progConfig.GeminiTopP)
 	}
 
 	// print response metadata
 	responseString.WriteString("```plaintext\n")
 	responseString.WriteString(fmt.Sprintf("AI model   : %v (%s, %s)\n", resp.ModelVersion, temperatureInfo, toppInfo))
+
+	var activeTools []string
+	if progConfig.GeminiGroundingWithGoogleSearch {
+		activeTools = append(activeTools, "Google Search")
+	}
+	if progConfig.GeminiGroundingWithURLContext {
+		activeTools = append(activeTools, "URLContext")
+	}
+	if progConfig.GeminiGroundingWithCodeExecution {
+		activeTools = append(activeTools, "Code Execution")
+	}
+	if progConfig.GeminiGroundigWithGoogleMaps {
+		activeTools = append(activeTools, "Google Maps")
+	}
+	if len(includeStores) > 0 {
+		activeTools = append(activeTools, "FileSearchStores")
+	}
+
+	if len(activeTools) > 0 {
+		responseString.WriteString(fmt.Sprintf("Tools      : %s\n", strings.Join(activeTools, ", ")))
+	}
+
 	responseString.WriteString(fmt.Sprintf("Generated  : %v\n", finishProcessing.Format(time.RFC850)))
 
 	duration := finishProcessing.Sub(startProcessing)

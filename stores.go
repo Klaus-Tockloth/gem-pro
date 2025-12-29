@@ -10,7 +10,7 @@ import (
 )
 
 /*
-listGeminiFileSearchStores lists all available FileSearchStores.
+listGeminiFileSearchStores lists all available FileSearchStores in a detailed block format.
 */
 func listGeminiFileSearchStores(indent string) {
 	ctx := context.Background()
@@ -22,21 +22,31 @@ func listGeminiFileSearchStores(indent string) {
 		log.Fatalf("error [%v] creating Gemini AI client", err)
 	}
 
+	fmt.Printf("\n%sFull Store Name (ID)\n", indent)
+	fmt.Printf("%s  Display Name\n", indent)
+	fmt.Printf("%s  Create Time, Update Time\n", indent)
+	fmt.Printf("%s  Active Docs, Total Size\n\n", indent)
+
 	found := false
 	for store, err := range client.FileSearchStores.All(ctx) {
 		if err != nil {
 			log.Fatalf("error [%v] retrieving FileSearchStores", err)
 		}
-		if !found {
-			fmt.Printf("%s%-30s %-30s %-20s\n", indent, "Name (ID)", "Display Name", "Create Time")
-			found = true
-		}
-		fmt.Printf("%s%-30s %-30s %-20s\n",
-			indent, store.Name, store.DisplayName, store.CreateTime.Local().Format(time.RFC822))
+
+		found = true
+		createTimeStr := store.CreateTime.Local().Format("20060102-150405")
+		updateTimeStr := store.UpdateTime.Local().Format("20060102-150405")
+		sizeKiB := float64(store.SizeBytes) / 1024.0
+
+		// block format
+		fmt.Printf("%s%s\n", indent, store.Name)
+		fmt.Printf("%s  %s\n", indent, store.DisplayName)
+		fmt.Printf("%s  %s, %s\n", indent, createTimeStr, updateTimeStr)
+		fmt.Printf("%s  %d active documents, %.1f KiB\n\n", indent, store.ActiveDocumentsCount, sizeKiB)
 	}
 
 	if !found {
-		fmt.Printf("%sno FileSearchStores found\n", indent)
+		fmt.Printf("%sno FileSearchStores found\n", indent+"  ")
 	}
 }
 
@@ -117,12 +127,20 @@ func addFilesToFileSearchStore(storeName string, files []FileToHandle) {
 
 		fmt.Printf("  Uploading %s ... ", fileToHandle.Filepath)
 
+		mimeType := fileToHandle.MimeType
+		if ReplacementMIMETypeMap != nil {
+			replacement, ok := ReplacementMIMETypeMap[mimeType]
+			if ok {
+				mimeType = replacement
+			}
+		}
+
 		op, err := client.FileSearchStores.UploadToFileSearchStoreFromPath(ctx,
 			fileToHandle.Filepath,
 			storeName,
 			&genai.UploadToFileSearchStoreConfig{
 				DisplayName: fileToHandle.Filepath,
-				MIMEType:    fileToHandle.MimeType,
+				MIMEType:    mimeType,
 			})
 		if err != nil {
 			fmt.Printf("FAILED: %v\n", err)
@@ -150,6 +168,36 @@ func addFilesToFileSearchStore(storeName string, files []FileToHandle) {
 }
 
 /*
+deleteFileFromFileSearchStore deletes a specific document from a FileSearchStore.
+documentName is the full resource name (ID) of the document to delete.
+*/
+func deleteFileFromFileSearchStore(documentName string) {
+	if documentName == "" {
+		return
+	}
+
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  progConfig.GeminiAPIKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		log.Fatalf("error [%v] creating Gemini AI client", err)
+	}
+
+	fmt.Printf("  Deleting document '%s' ... ", documentName)
+	forceDelete := true
+	err = client.FileSearchStores.Documents.Delete(ctx, documentName, &genai.DeleteDocumentConfig{
+		Force: &forceDelete,
+	})
+	if err != nil {
+		fmt.Printf("FAILED: %v\n", err)
+	} else {
+		fmt.Printf("DONE\n")
+	}
+}
+
+/*
 listFilesInFileSearchStore lists all documents (files) within a specific store.
 storeName is the ID/name of the store (e.g., "fileSearchStores/12345").
 */
@@ -163,7 +211,10 @@ func listFilesInFileSearchStore(storeName string, indent string) {
 		log.Fatalf("error [%v] creating Gemini AI client", err)
 	}
 
-	fmt.Printf("%sListing documents in store '%s':\n", indent, storeName)
+	fmt.Printf("\nListing documents in store '%s':\n\n", storeName)
+	fmt.Printf("%sFull Document Name (ID)\n", indent)
+	fmt.Printf("%s  Full Display Name\n", indent)
+	fmt.Printf("%s  Create Time, Size, MIMEType\n\n", indent)
 
 	found := false
 	for doc, err := range client.FileSearchStores.Documents.All(ctx, storeName) {
@@ -171,14 +222,14 @@ func listFilesInFileSearchStore(storeName string, indent string) {
 			log.Fatalf("error [%v] retrieving documents from store '%s'", err, storeName)
 		}
 
-		if !found {
-			fmt.Printf("%s%-40s %-30s %-20s\n",
-				indent+"  ", "Document Name (ID)", "Display Name", "Create Time")
-			found = true
-		}
+		found = true
+		createTimeStr := doc.CreateTime.Local().Format("20060102-150405")
+		sizeKiB := float64(doc.SizeBytes) / 1024.0
 
-		fmt.Printf("%s%-40s %-30s %-20s\n",
-			indent+"  ", doc.Name, doc.DisplayName, doc.CreateTime.Local().Format(time.RFC822))
+		// block format
+		fmt.Printf("%s%s\n", indent, doc.Name)
+		fmt.Printf("%s  %s\n", indent, doc.DisplayName)
+		fmt.Printf("%s  %s, %.1f KiB, %s\n\n", indent, createTimeStr, sizeKiB, doc.MIMEType)
 	}
 
 	if !found {
