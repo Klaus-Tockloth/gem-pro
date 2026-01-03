@@ -353,26 +353,59 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	responseString.WriteString(fmt.Sprintf("Processing : %.1f secs for %d %s\n", duration.Seconds(),
 		len(resp.Candidates), pluralize(len(resp.Candidates), "candidate")))
 
+	/*
+	   Cost Calculation Logic (Corrected for SDK v0.8.0+ / Gemini 1.5+ / Gemini 3):
+	   Total Tokens = Prompt + Tools + Candidates + Thoughts
+	   1. Input Total: PromptTokenCount + ToolUsePromptTokenCount
+	   2. Net Prompt : PromptTokenCount - CachedContentTokenCount
+	   3. Tools      : ToolUsePromptTokenCount
+	   4. Output     : CandidatesTokenCount + ThoughtsTokenCount
+	*/
 	if resp.UsageMetadata != nil {
-		list := []string{}
-		if resp.UsageMetadata.CachedContentTokenCount > 0 {
-			list = append(list, fmt.Sprintf("CachedContent: %v", resp.UsageMetadata.CachedContentTokenCount))
+		u := resp.UsageMetadata
+
+		// Output Header: Total Tokens
+		responseString.WriteString(fmt.Sprintf("Tokens     : %d (Total)\n", u.TotalTokenCount))
+
+		// 1. Input Group
+		// Calculate absolute Input Total (Text + Tools)
+		totalInputCount := u.PromptTokenCount + u.ToolUsePromptTokenCount
+
+		// Calculate "Net" Prompt (New/Uncached Text)
+		// Assumption: Cached content is a subset of the standard PromptTokenCount.
+		netPromptCount := u.PromptTokenCount - u.CachedContentTokenCount
+		if netPromptCount < 0 {
+			netPromptCount = 0 // Safety fallback
 		}
-		if resp.UsageMetadata.ThoughtsTokenCount > 0 {
-			list = append(list, fmt.Sprintf("Thoughts: %v", resp.UsageMetadata.ThoughtsTokenCount))
+
+		inputDetails := []string{fmt.Sprintf("Prompt: %d", netPromptCount)}
+
+		// Only show Tools/Cached if they are actually used
+		if u.ToolUsePromptTokenCount > 0 {
+			inputDetails = append(inputDetails, fmt.Sprintf("Tools: %d", u.ToolUsePromptTokenCount))
 		}
-		if resp.UsageMetadata.ToolUsePromptTokenCount > 0 {
-			list = append(list, fmt.Sprintf("Tools: %v", resp.UsageMetadata.ToolUsePromptTokenCount))
+		if u.CachedContentTokenCount > 0 {
+			inputDetails = append(inputDetails, fmt.Sprintf("Cached: %d", u.CachedContentTokenCount))
 		}
-		if resp.UsageMetadata.PromptTokenCount > 0 {
-			list = append(list, fmt.Sprintf("Prompt: %v", resp.UsageMetadata.PromptTokenCount))
+
+		// Display Total Input and breakdown
+		responseString.WriteString(fmt.Sprintf("  Input    : %d (%s)\n",
+			totalInputCount, strings.Join(inputDetails, ", ")))
+
+		// 2. Output Group
+		// We sum them up to show the real total output volume.
+		totalOutputCount := u.CandidatesTokenCount + u.ThoughtsTokenCount
+
+		outputDetails := []string{fmt.Sprintf("Candidates: %d", u.CandidatesTokenCount)}
+
+		if u.ThoughtsTokenCount > 0 {
+			outputDetails = append(outputDetails, fmt.Sprintf("Thoughts: %d", u.ThoughtsTokenCount))
 		}
-		if resp.UsageMetadata.CandidatesTokenCount > 0 {
-			list = append(list, fmt.Sprintf("Candidates: %v", resp.UsageMetadata.CandidatesTokenCount))
-		}
-		responseString.WriteString(fmt.Sprintf("Tokens     : %v (%s)\n",
-			resp.UsageMetadata.TotalTokenCount, strings.Join(list, ", ")))
+
+		responseString.WriteString(fmt.Sprintf("  Output   : %d (%s)\n",
+			totalOutputCount, strings.Join(outputDetails, ", ")))
 	}
+
 	if resp.PromptFeedback != nil {
 		responseString.WriteString(fmt.Sprintf("Blocked    : %v\n", resp.PromptFeedback.BlockReasonMessage))
 	}

@@ -126,7 +126,7 @@
     />
   </head>
   <body>
-    <!-- basic prompt (customise prompt to your needs) -->
+    <!-- basic prompt (no content, customise prompt to your needs) -->
     <div class="textareaContainer">
       <textarea rows="15" name="prompt"></textarea>
       <div class="buttonContainer">
@@ -135,63 +135,69 @@
       </div>
     </div>
 
-    <!-- basic prompt (customise prompt to your needs) -->
+    <!-- basic prompt (schema in German, customise prompt to your needs) -->
     <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
+      <textarea rows="15" name="prompt">
+##### KONTEXT & ROLLE #####
+- Welche Rolle soll die KI einnehmen?
+- Was ist der Hintergrund?
+- Wen wollen wir erreichen?
+
+##### AUFGABEN und INPUT #####
+- Was genau soll getan werden?
+- Wie sehen die Input-Daten aus?
+
+##### FORMAT und REGELN #####
+- Wie soll das Ergebnis aussehen? (Länge, Stil, Formatierung).
+- Welche No-Gos gibt es?
+</textarea>
       <div class="buttonContainer">
         <button class="send-to-localhost-button">Send</button>
         <button class="duplicate-button">Copy</button>
       </div>
     </div>
 
-    <!-- basic prompt (customise prompt to your needs) -->
+        <!-- basic prompt (coding schema in German, customise prompt to your needs) -->
     <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
-      <div class="buttonContainer">
-        <button class="send-to-localhost-button">Send</button>
-        <button class="duplicate-button">Copy</button>
-      </div>
-    </div>
+      <textarea rows="15" name="prompt">
+# SYSTEM / ROLLE
+- Du bist ein erfahrener Senior Go-Entwickler und Software-Architekt.
+- Deine Prioritäten sind gute Wartbarkeit, Performance und Sicherheit.
 
-    <!-- basic prompt (customise prompt to your needs) -->
-    <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
-      <div class="buttonContainer">
-        <button class="send-to-localhost-button">Send</button>
-        <button class="duplicate-button">Copy</button>
-      </div>
-    </div>
+# KONTEXT und TECH STACK
+- Kontext: [z.B. Gemini KI - Command-Line-Interface]
+- Sprache: [z.B. Go v1.25]
+- Libs: [z.B. GenAI-SDK v1.40]
+- Constraints: [z.B. Füge keine Packages hinzu.]
 
-    <!-- basic prompt (customise prompt to your needs) -->
-    <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
-      <div class="buttonContainer">
-        <button class="send-to-localhost-button">Send</button>
-        <button class="duplicate-button">Copy</button>
-      </div>
-    </div>
+# AUFGABEN (FEATURE / BUGFIX)
+- Liste und Beschreibung der Aufgaben.
 
-    <!-- basic prompt (customise prompt to your needs) -->
-    <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
-      <div class="buttonContainer">
-        <button class="send-to-localhost-button">Send</button>
-        <button class="duplicate-button">Copy</button>
-      </div>
-    </div>
+## INPUT CODE / LOGS
+- Code und/oder Fehlermeldung.
 
-    <!-- basic prompt (customise prompt to your needs) -->
-    <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
-      <div class="buttonContainer">
-        <button class="send-to-localhost-button">Send</button>
-        <button class="duplicate-button">Copy</button>
-      </div>
-    </div>
+# ANFORDERUNGEN & GUIDELINES
 
-    <!-- basic prompt (customise prompt to your needs) -->
-    <div class="textareaContainer">
-      <textarea rows="15" name="prompt"></textarea>
+## ARCHITEKTUR und PATTERNS
+- Patterns: [falls relevant]
+- Algorithmen: [falls relevant]
+
+## CODE-QUALITÄT
+- Schreibe idiomatischen, defensiven Code.
+- Fehlerbehandlung: Defensive Programmierung.
+- Kommentare: Englisch, nur Header und Blöcke.
+- Naming: Englisch, deskriptiv und konsistent.
+
+## AUFGABEN (Chain of Thought)
+- Implementiere die Lösung.
+- Ergänze sinnvolle Tests.
+
+# AUSGABE-FORMAT
+- Gib immer vollständige Funktionen / Dateien zurück.
+oder
+- Gib nur geänderten/ergänzten Code mit Kontext zurück.
+- Markiere Änderungen durch '// CHANGED: ...'.
+- Markiere Ergänzungen durch '// NEW: ...'.</textarea>
       <div class="buttonContainer">
         <button class="send-to-localhost-button">Send</button>
         <button class="duplicate-button">Copy</button>
