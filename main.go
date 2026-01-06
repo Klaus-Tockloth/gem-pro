@@ -27,7 +27,7 @@ Releases:
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
                           list of MIMI type replacements added to config
-  - v0.11.0 - 2026-01-01: support for think level, libs updated, default configuration optimized for Gemini 3
+  - v0.11.0 - 2026-01-06: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
 						  markdown to ansi renderer replaced (glamour), option '-filelist' can be used multiple times
 						  tool 'FileSearchStores' (RAG, Retrieval-Augmented Generation) added
@@ -53,6 +53,7 @@ ToDos:
 - Support batch mode.
 - Improve output naming.
 - Print prompt/response costs in dollar cents.
+- Support 'Deep Research'.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -86,7 +87,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.11.0"
-	progDate    = "2026-01-01"
+	progDate    = "2026-01-06"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

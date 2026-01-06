@@ -34,12 +34,12 @@ GeminiFlashImageAiModel: models/gemini-2.5-flash-image
 GeminiProImageAiModel: models/gemini-3-pro-image-preview
 
 # Gemini AI default model
-GeminiDefaultAiModel: models/gemini-3-pro-preview
+GeminiDefaultAiModel: models/gemini-3-pro-image-preview
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
 GeminiResponseModalities:
 - TEXT
-# - IMAGE
+- IMAGE
 
 # number of generated responses to return (int)
 GeminiCandidateCount: 1
@@ -116,7 +116,7 @@ GeminiGroundingWithCodeExecution: false
 GeminiGroundingWithGoogleSearch: true
 
 # ground responses using specific URLs provided in the prompt
-GeminiGroundingWithURLContext: true
+GeminiGroundingWithURLContext: false
 
 # ground responses with Google Maps (not supported by all AI models, affects other settings)
 GeminiGroundigWithGoogleMaps: false
@@ -135,10 +135,10 @@ GeminiGroundingWithFileSearchStores:
 GeminiMaxThinkingBudget:
 
 # level of thoughts tokens that the model should generate (minimal, low, medium or high)
-GeminiThinkingLevel: high
+GeminiThinkingLevel:
 
 # include thoughts in the response (true, false) (AI model must support this setting)
-GeminiIncludeThoughts: true
+GeminiIncludeThoughts:
 
 # (logical) name of cache handled by this application (note: only one cache can be added to a prompt)
 # This logical cache name is used for all cache operations (create, list, delete, include).
@@ -152,7 +152,7 @@ GeminiCacheTimeToLive: 1
 # input media resolution (low, medium, high) affects images, videos and pdfs
 # recommended settings: image=high, video=low/medium, pdf=medium
 # Note: Affects only INPUT files. 
-GeminiInputMediaResolution: high
+GeminiInputMediaResolution:
 
 # Markdown rendering section
 # --------------------------

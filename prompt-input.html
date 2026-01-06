@@ -135,21 +135,20 @@
       </div>
     </div>
 
-    <!-- basic prompt (schema in German, customise prompt to your needs) -->
+    <!-- basic prompt (coding schema in German, customise prompt to your needs) -->
     <div class="textareaContainer">
       <textarea rows="15" name="prompt">
-##### KONTEXT & ROLLE #####
-- Welche Rolle soll die KI einnehmen?
-- Was ist der Hintergrund?
-- Wen wollen wir erreichen?
+# Kontext und/oder Hintergrund:
+- ...
 
-##### AUFGABEN und INPUT #####
-- Was genau soll getan werden?
-- Wie sehen die Input-Daten aus?
+# Beschreibung und/oder Daten:
+- ...
 
-##### FORMAT und REGELN #####
-- Wie soll das Ergebnis aussehen? (Länge, Stil, Formatierung).
-- Welche No-Gos gibt es?
+# Aufgaben und/oder Fragen:
+- ...
+
+# Ausgabeformat und/oder Regeln:
+- ...
 </textarea>
       <div class="buttonContainer">
         <button class="send-to-localhost-button">Send</button>
@@ -157,47 +156,21 @@
       </div>
     </div>
 
-        <!-- basic prompt (coding schema in German, customise prompt to your needs) -->
+    <!-- basic prompt (coding schema in English, customise prompt to your needs) -->
     <div class="textareaContainer">
       <textarea rows="15" name="prompt">
-# SYSTEM / ROLLE
-- Du bist ein erfahrener Senior Go-Entwickler und Software-Architekt.
-- Deine Prioritäten sind gute Wartbarkeit, Performance und Sicherheit.
+# Context and/or Background:
+- ...
 
-# KONTEXT und TECH STACK
-- Kontext: [z.B. Gemini KI - Command-Line-Interface]
-- Sprache: [z.B. Go v1.25]
-- Libs: [z.B. GenAI-SDK v1.40]
-- Constraints: [z.B. Füge keine Packages hinzu.]
+# Description and/or Data:
+- ...
 
-# AUFGABEN (FEATURE / BUGFIX)
-- Liste und Beschreibung der Aufgaben.
+# Tasks and/or Questions:
+- ...
 
-## INPUT CODE / LOGS
-- Code und/oder Fehlermeldung.
-
-# ANFORDERUNGEN & GUIDELINES
-
-## ARCHITEKTUR und PATTERNS
-- Patterns: [falls relevant]
-- Algorithmen: [falls relevant]
-
-## CODE-QUALITÄT
-- Schreibe idiomatischen, defensiven Code.
-- Fehlerbehandlung: Defensive Programmierung.
-- Kommentare: Englisch, nur Header und Blöcke.
-- Naming: Englisch, deskriptiv und konsistent.
-
-## AUFGABEN (Chain of Thought)
-- Implementiere die Lösung.
-- Ergänze sinnvolle Tests.
-
-# AUSGABE-FORMAT
-- Gib immer vollständige Funktionen / Dateien zurück.
-oder
-- Gib nur geänderten/ergänzten Code mit Kontext zurück.
-- Markiere Änderungen durch '// CHANGED: ...'.
-- Markiere Ergänzungen durch '// NEW: ...'.</textarea>
+# Output Format and/or Rules:
+- ...
+</textarea>
       <div class="buttonContainer">
         <button class="send-to-localhost-button">Send</button>
         <button class="duplicate-button">Copy</button>
