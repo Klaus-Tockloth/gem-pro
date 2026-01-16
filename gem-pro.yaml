@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.11 - 2026-01-06: corresponding to program release
+# - v0.12 - 2026-01-13: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -43,6 +43,9 @@ GeminiResponseModalities:
 
 # number of generated responses to return (int)
 GeminiCandidateCount: 1
+
+# pure response without any boilerplate
+GeminiPureResponse: false
 
 # Image Generation: AspectRatio: '1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', or '21:9'
 # Note: Important technical setting not possible within the prompt.
@@ -169,7 +172,7 @@ MarkdownOutputApplicationWindows:
 MarkdownOutputApplicationOther:
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
-MarkdownHistory: false
+MarkdownHistory: true
 MarkdownHistoryDirectory: ./history-markdown
 
 # Ansi (terminal) rendering section
@@ -194,7 +197,7 @@ AnsiOutputLineLength: 132
 AnsiOutputTheme: ./assets/glamour-dark-gem-pro.json
 
 # copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
-AnsiHistory: false
+AnsiHistory: true
 AnsiHistoryDirectory: ./history-ansi
 
 # HTML rendering section

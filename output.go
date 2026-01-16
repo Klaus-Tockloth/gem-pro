@@ -30,6 +30,15 @@ It takes a user prompt, formats it into Markdown, ANSI, and HTML, including syst
 files, and saves these formats to respective files.
 */
 func processPrompt(prompt string, chatmode bool, chatNumber int) {
+	// If pure response is requested, do not write prompt to output files.
+	// But ensure files are empty/truncated so they don't contain old data.
+	if progConfig.GeminiPureResponse {
+		_ = os.WriteFile(progConfig.MarkdownPromptResponseFile, []byte(""), 0600)
+		_ = os.WriteFile(progConfig.AnsiPromptResponseFile, []byte(""), 0600)
+		_ = os.WriteFile(progConfig.HTMLPromptResponseFile, []byte(""), 0600)
+		return
+	}
+
 	var promptString strings.Builder
 
 	// text part of prompt (also included in contents)
@@ -145,9 +154,117 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 }
 
 /*
-processResponse processes the Gemini AI model's response and formats it for output. It takes the Gemini AI
-response, extracts content from candidates, formats it into Markdown including citations and metadata, and
-prepares for different output formats.
+getCandidateText extracts the text content from a candidate.
+If includeThoughts is true, it wraps thoughts in the specific HTML/Markdown block used by this application.
+If includeThoughts is false, thoughts are skipped.
+*/
+func getCandidateText(candidate *genai.Candidate, includeThoughts bool) string {
+	if candidate.Content == nil {
+		return "No content available in this candidate.\n"
+	}
+
+	var sb strings.Builder
+	var aggregatedThoughts strings.Builder
+	var regularContent strings.Builder
+
+	for _, part := range candidate.Content.Parts {
+		if part.Thought {
+			if includeThoughts && part.Text != "" {
+				aggregatedThoughts.WriteString(strings.TrimSpace(part.Text) + "\n\n")
+			}
+			continue
+		}
+
+		// regular content (anything that isn't a 'thought')
+		if part.VideoMetadata != nil {
+			regularContent.WriteString("Metadata for a given video.\n")
+		}
+		if part.CodeExecutionResult != nil {
+			regularContent.WriteString("\nCode Execution Result:\n")
+			regularContent.WriteString("\n```plaintext\n")
+			if part.CodeExecutionResult.Outcome != genai.OutcomeOK {
+				regularContent.WriteString(fmt.Sprintf("%s\n\n", part.CodeExecutionResult.Outcome))
+			}
+			regularContent.WriteString(strings.TrimSuffix(part.CodeExecutionResult.Output, "\n"))
+			regularContent.WriteString("\n```\n")
+		}
+		if part.ExecutableCode != nil {
+			regularContent.WriteString(fmt.Sprintf("\nExecutable %s Code:\n", part.ExecutableCode.Language))
+			regularContent.WriteString(fmt.Sprintf("\n```%s\n", part.ExecutableCode.Language))
+			regularContent.WriteString(strings.TrimSuffix(part.ExecutableCode.Code, "\n"))
+			regularContent.WriteString("\n```\n")
+		}
+		if part.FileData != nil {
+			regularContent.WriteString(fmt.Sprintf("File Data: URI=%s, MIME=%s\n", part.FileData.FileURI, part.FileData.MIMEType))
+		}
+		if part.FunctionCall != nil {
+			regularContent.WriteString("A predicted [FunctionCall] returned from the model.\n")
+		}
+		if part.FunctionResponse != nil {
+			regularContent.WriteString("The result output of a [FunctionCall].\n")
+		}
+		if part.InlineData != nil {
+			regularContent.WriteString(fmt.Sprintf("Inline data (%.1f KiB, %s) : ", float64(len(part.InlineData.Data))/1024.0, part.InlineData.MIMEType))
+			pathname, filename, err := writeDataToFile(part.InlineData.Data, part.InlineData.MIMEType, finishProcessing)
+			if err != nil {
+				regularContent.WriteString(fmt.Sprintf("error [%v] writing data to file\n", err))
+			} else {
+				u := url.URL{
+					Scheme: "file",
+					Path:   pathname,
+				}
+				encodedURL := u.String()
+				regularContent.WriteString(fmt.Sprintf("\n![%s](%s)\n\n", filename, encodedURL))
+			}
+		}
+		if part.Text != "" { // ensure that part.Text is not from Thought
+			regularContent.WriteString(removeSpacesBetweenNewlineAndCodeblock(part.Text))
+			regularContent.WriteString("\n")
+		}
+	}
+
+	// append thoughts block if requested and available
+	if includeThoughts && aggregatedThoughts.Len() > 0 {
+		sb.WriteString("<!-- AI_THOUGHT_SUMMARY_START -->")
+		sb.WriteString("<!-- AI_THOUGHT_SUMMARY_END -->\n")
+		sb.WriteString("<!-- AI_THOUGHT_CONTENT_START -->\n")
+		sb.WriteString(strings.TrimSpace(aggregatedThoughts.String()) + "\n")
+		sb.WriteString("<!-- AI_THOUGHT_CONTENT_END -->\n\n")
+	}
+
+	// append regular content
+	sb.WriteString(regularContent.String())
+	sb.WriteString("\n")
+
+	return sb.String()
+}
+
+/*
+processPureResponse processes the Gemini AI model's response and formats it for output.
+It extracts content from candidates without adding boilerplate metadata.
+*/
+func processPureResponse(resp *genai.GenerateContentResponse) {
+	var responseString strings.Builder
+
+	// print response candidate(s)
+	for _, candidate := range resp.Candidates {
+		// Get text content, explicitly excluding thoughts
+		responseString.WriteString(getCandidateText(candidate, false))
+
+		// show why the model stopped generating tokens (content)
+		if candidate.FinishReason != genai.FinishReasonStop {
+			responseString.WriteString("\n***\n")
+			responseString.WriteString(fmt.Sprintf("Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason))
+		}
+	}
+
+	// append response string to request/response files
+	appendResponseString(responseString)
+}
+
+/*
+processResponse processes the Gemini AI model's response and formats it for output.
+It includes headers, thoughts (if configured), citations, grounding, and metadata.
 */
 func processResponse(resp *genai.GenerateContentResponse) {
 	var responseString strings.Builder
@@ -159,85 +276,10 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		} else {
 			responseString.WriteString("**Response from Gemini:**\n\n")
 		}
-		if candidate.Content == nil {
-			responseString.WriteString("No content available in this candidate.\n")
-			continue
-		}
 
-		var aggregatedThoughts strings.Builder
-		var regularContent strings.Builder
-
-		if candidate.Content != nil {
-			for _, part := range candidate.Content.Parts {
-				if part.Thought {
-					if part.Text != "" {
-						aggregatedThoughts.WriteString(strings.TrimSpace(part.Text) + "\n\n") // add 'thought' and paragraph
-					}
-					continue
-				}
-
-				// regular content (anything that isn't a 'thought')
-				if part.VideoMetadata != nil {
-					regularContent.WriteString("Metadata for a given video.\n")
-				}
-				if part.CodeExecutionResult != nil {
-					regularContent.WriteString("\nCode Execution Result:\n")
-					regularContent.WriteString("\n```plaintext\n")
-					if part.CodeExecutionResult.Outcome != genai.OutcomeOK {
-						regularContent.WriteString(fmt.Sprintf("%s\n\n", part.CodeExecutionResult.Outcome))
-					}
-					regularContent.WriteString(strings.TrimSuffix(part.CodeExecutionResult.Output, "\n"))
-					regularContent.WriteString("\n```\n")
-				}
-				if part.ExecutableCode != nil {
-					regularContent.WriteString(fmt.Sprintf("\nExecutable %s Code:\n", part.ExecutableCode.Language))
-					regularContent.WriteString(fmt.Sprintf("\n```%s\n", part.ExecutableCode.Language))
-					regularContent.WriteString(strings.TrimSuffix(part.ExecutableCode.Code, "\n"))
-					regularContent.WriteString("\n```\n")
-				}
-				if part.FileData != nil {
-					regularContent.WriteString(fmt.Sprintf("File Data: URI=%s, MIME=%s\n", part.FileData.FileURI, part.FileData.MIMEType))
-				}
-				if part.FunctionCall != nil {
-					regularContent.WriteString("A predicted [FunctionCall] returned from the model.\n")
-				}
-				if part.FunctionResponse != nil {
-					regularContent.WriteString("The result output of a [FunctionCall].\n")
-				}
-				if part.InlineData != nil {
-					regularContent.WriteString(fmt.Sprintf("Inline data (%.1f KiB, %s) : ", float64(len(part.InlineData.Data))/1024.0, part.InlineData.MIMEType))
-					pathname, filename, err := writeDataToFile(part.InlineData.Data, part.InlineData.MIMEType, finishProcessing)
-					if err != nil {
-						regularContent.WriteString(fmt.Sprintf("error [%v] writing data to file\n", err))
-					} else {
-						u := url.URL{
-							Scheme: "file",
-							Path:   pathname,
-						}
-						encodedURL := u.String()
-						regularContent.WriteString(fmt.Sprintf("\n![%s](%s)\n\n", filename, encodedURL))
-					}
-				}
-				if part.Text != "" { // ensure that part.Text is not from Thought
-					regularContent.WriteString(removeSpacesBetweenNewlineAndCodeblock(part.Text))
-					regularContent.WriteString("\n")
-				}
-			}
-		}
-
-		// add thoughts block
-		if aggregatedThoughts.Len() > 0 {
-			responseString.WriteString("<!-- AI_THOUGHT_SUMMARY_START -->")
-			responseString.WriteString("<!-- AI_THOUGHT_SUMMARY_END -->\n")
-			responseString.WriteString("<!-- AI_THOUGHT_CONTENT_START -->\n")
-			// ensure the thoughts content itself is treated as Markdown block
-			responseString.WriteString(strings.TrimSpace(aggregatedThoughts.String()) + "\n")
-			responseString.WriteString("<!-- AI_THOUGHT_CONTENT_END -->\n\n")
-		}
-
-		// add regular content
-		responseString.WriteString(regularContent.String())
-		responseString.WriteString("\n")
+		// Get text content, including thoughts based on config (Thoughts are part of the 'text' logic in getCandidateText)
+		// Note: progConfig.GeminiIncludeThoughts ensures we receive them from API, passing 'true' here formats them.
+		responseString.WriteString(getCandidateText(candidate, true))
 
 		// build list of text citation source URIs
 		citationURIs := []string{}

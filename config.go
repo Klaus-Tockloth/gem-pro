@@ -28,6 +28,7 @@ type ProgConfig struct {
 	GeminiImageResolution    string   `yaml:"GeminiImageResolution"`
 
 	GeminiCandidateCount  *int32   `yaml:"GeminiCandidateCount"`
+	GeminiPureResponse    bool     `yaml:"GeminiPureResponse"`
 	GeminiMaxOutputTokens *int32   `yaml:"GeminiMaxOutputTokens"`
 	GeminiTemperature     *float32 `yaml:"GeminiTemperature"`
 	GeminiTopP            *float32 `yaml:"GeminiTopP"`
@@ -629,4 +630,119 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 			fmt.Printf("  ImageSize         : %s\n", geminiModelConfig.ImageConfig.ImageSize)
 		}
 	}
+}
+
+/*
+showCompactConfiguration zeigt eine sehr kompakte Übersicht der wichtigsten Parameter.
+*/
+func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.GenerateContentConfig) {
+	fmt.Printf("\n--- %s %s ---------------------------------------------------\n", progName, progVersion)
+
+	// Modell & Limits
+	inLimit := fmt.Sprintf("%dk", modelInfo.InputTokenLimit/1024)
+	if modelInfo.InputTokenLimit >= 1048576 {
+		inLimit = fmt.Sprintf("%dM", modelInfo.InputTokenLimit/1048576)
+	}
+	outLimit := fmt.Sprintf("%dk", modelInfo.OutputTokenLimit/1024)
+	fmt.Printf("Model  : %s (Limits: %s In / %s Out)\n", modelInfo.Name, inLimit, outLimit)
+
+	// Config
+	configParts := []string{fmt.Sprintf("%d Candidate(s)", *progConfig.GeminiCandidateCount)}
+	if progConfig.GeminiThinkingLevel != "" {
+		configParts = append(configParts, "Thinking: "+progConfig.GeminiThinkingLevel)
+	}
+	if progConfig.GeminiInputMediaResolution != "" {
+		configParts = append(configParts, "MediaResolution: "+progConfig.GeminiInputMediaResolution)
+	}
+	fmt.Printf("Config : %s\n", strings.Join(configParts, ", "))
+
+	// Tools
+	var activeTools []string
+	if progConfig.GeminiGroundingWithGoogleSearch {
+		activeTools = append(activeTools, "GoogleSearch")
+	}
+	if progConfig.GeminiGroundingWithURLContext {
+		activeTools = append(activeTools, "URLContext")
+	}
+	if progConfig.GeminiGroundingWithCodeExecution {
+		activeTools = append(activeTools, "CodeExecution")
+	}
+	if progConfig.GeminiGroundigWithGoogleMaps {
+		activeTools = append(activeTools, "GoogleMaps")
+	}
+	if len(activeTools) > 0 {
+		fmt.Printf("Tools  : %s\n", strings.Join(activeTools, ", "))
+	}
+
+	// Context (Files, Cache, RAG)
+	okCount := 0
+	warnCount := 0
+	errorCount := 0
+	for _, f := range filesToHandle {
+		switch f.State {
+		case "ok":
+			okCount++
+		case "warn":
+			warnCount++
+		case "error":
+			errorCount++
+		}
+	}
+
+	if len(filesToHandle) > 0 {
+		loadedCount := okCount + warnCount
+		infoPart := fmt.Sprintf("Files  : %d local files loaded", loadedCount)
+
+		var details []string
+		if warnCount > 0 {
+			details = append(details, fmt.Sprintf("%d %s", warnCount, pluralize(warnCount, "warning")))
+		}
+		if errorCount > 0 {
+			details = append(details, fmt.Sprintf("%d %s", errorCount, pluralize(errorCount, "error")))
+		}
+
+		if len(details) > 0 {
+			infoPart += fmt.Sprintf(" (%s)", strings.Join(details, ", "))
+		}
+		fmt.Printf("%s\n", infoPart)
+	}
+
+	if *includeFiles {
+		fmt.Printf("Remote : Included files from Google File Store\n")
+	}
+	if modelConfig.CachedContent != "" {
+		fmt.Printf("Cache  : %s\n", modelConfig.CachedContent)
+	}
+	if len(includeStores) > 0 {
+		fmt.Printf("RAG    : %s\n", strings.Join(includeStores, ", "))
+	}
+
+	// Mode
+	modeStr := "Non-Chat"
+	if *chatmode {
+		modeStr = "Chat"
+	}
+	if progConfig.GeminiPureResponse {
+		modeStr += ", Pure-Response"
+	}
+	fmt.Printf("Mode   : %s\n", modeStr)
+
+	// Output
+	var outputs []string
+	if progConfig.AnsiOutput {
+		outputs = append(outputs, "Terminal")
+	}
+	if progConfig.HTMLOutput {
+		outputs = append(outputs, "HTML")
+	}
+	if progConfig.MarkdownOutput {
+		outputs = append(outputs, "Markdown")
+	}
+	fmt.Printf("Output : %s\n", strings.Join(outputs, ", "))
+
+	fmt.Printf("Quit   : CTRL-C\n")
+	fmt.Printf("-----------------------------------------------------------------------\n")
+	fmt.Printf("Free Tier: Data is used by Google to improve AI. No confidential data!\n")
+	fmt.Printf("Paid Tier: Data is private and not used for training (GCP terms apply).\n")
+	fmt.Printf("-----------------------------------------------------------------------\n\n")
 }

@@ -11,152 +11,111 @@ import (
 )
 
 /*
-printUsage prints the program's usage instructions to the standard output. It displays detailed usage instructions
-for the program, including command-line options, examples, and notes about its functionality and terms of service.
+printUsage prints the program's usage instructions to the standard output.
 */
 func printUsage() {
 	fmt.Printf("\nUsage:\n")
 	fmt.Printf("  %s [options] [files]\n", progName)
 
-	fmt.Printf("\nExamples [Grouped]:\n")
+	fmt.Printf("\nExamples:\n")
 
-	fmt.Printf("[Interactive]\n")
-	fmt.Printf("  # Interactive mode (type into terminal, file or browser)\n")
-	fmt.Printf("  %s\n", progName)
+	// Interactive
+	fmt.Printf("  %-30s %s\n", "[Interactive Mode]", progName)
 
-	fmt.Printf("\n[Piping & Output Control]\n")
-	fmt.Printf("  # Read from pipe and define specific output filenames\n")
-	fmt.Printf("  cat prompt.txt | %s -out my-result\n", progName)
-	fmt.Printf("  # Result: my-result.md, my-result.html, my-result.ansi\n")
+	// Piping
+	fmt.Printf("  %-30s %s\n", "[Piped Input]", "cat task.txt | "+progName+" -out result")
+	fmt.Printf("  %-30s %s\n", "[Pure Response]", "echo \"Hello\" | "+progName+" -pure-response")
 
-	fmt.Printf("\n[Working with Local Files]\n")
-	fmt.Printf("  # Analyze specific files directly (sent with prompt)\n")
-	fmt.Printf("  %s -pro main.go utils.go\n", progName)
-	fmt.Printf("  # Use a file list for batch processing context\n")
-	fmt.Printf("  %s -filelist source_files.txt\n", progName)
+	// Files
+	fmt.Printf("  %-30s %s\n", "[Local source files]", progName+" -pro main.go utils.go")
+	fmt.Printf("  %-30s %s\n", "[Use list of files]", progName+" -filelist sources.txt")
 
-	fmt.Printf("\n[Tools & Grounding]\n")
-	fmt.Printf("  # Google Search: Research current events\n")
-	fmt.Printf("  %s -google-search\n", progName)
-	fmt.Printf("  # URL Context: Summarize a specific webpage\n")
-	fmt.Printf("  %s -url-context https://example.com/article\n", progName)
-	fmt.Printf("  # Google Maps: Find locations\n")
-	fmt.Printf("  %s -google-maps\n", progName)
-	fmt.Printf("  # Code Execution: Solve complex math or logic\n")
-	fmt.Printf("  %s -code-execution\n", progName)
+	// Grounding
+	fmt.Printf("  %-30s %s\n", "[Web-Search & No Maps]", progName+" -google-search -google-maps=false")
+	fmt.Printf("  %-30s %s\n", "[Research specific URL]", progName+" -url-context https://go.dev")
 
-	fmt.Printf("\n[Chat Mode]\n")
-	fmt.Printf("  # Start a conversation session (remember history)\n")
-	fmt.Printf("  %s -chatmode -pro\n", progName)
-	fmt.Printf("  # Chat with initial file context (files sent only once)\n")
-	fmt.Printf("  %s -chatmode config.yaml\n", progName)
+	// RAG / Stores
+	fmt.Printf("  %-30s %s\n", "[Create Knowledge Base]", progName+" -create-store \"LegalDocs\"")
+	fmt.Printf("  %-30s %s\n", "[Populate Knowledge Base]", progName+" -add-to-store stores/12345 -filelist docs.txt")
+	fmt.Printf("  %-30s %s\n", "[Query with Store ID]", progName+" -include-store stores/12345")
 
-	fmt.Printf("\n[Advanced Context: Caching (High Performance / Cost Saving)]\n")
-	fmt.Printf("  # Step 1: Create a cache from a library of PDF/Text files\n")
-	fmt.Printf("  %s -create-cache *.pdf\n", progName)
-	fmt.Printf("  # Step 2: Query the model using the cached content\n")
-	fmt.Printf("  %s -include-cache\n", progName)
-	fmt.Printf("  # Manage cache\n")
-	fmt.Printf("  %s -list-cache\n", progName)
-	fmt.Printf("  %s -delete-cache\n", progName)
+	// Caching
+	fmt.Printf("  %-30s %s\n", "[Cache large files]", progName+" -create-cache *.pdf")
 
-	fmt.Printf("\n[Advanced Context: RAG (FileSearchStores / Persistent Knowledge)]\n")
-	fmt.Printf("  # Step A: Create store\n")
-	fmt.Printf("  %s -create-store \"ProjectDocs\"\n", progName)
-	fmt.Printf("  # Step B: Add knowledge base documents\n")
-	fmt.Printf("  %s -add-to-store \"stores/<ID>\" docs/*.md\n", progName)
-	fmt.Printf("  # Step C: Query using the knowledge base\n")
-	fmt.Printf("  %s -include-store \"stores/<ID>\"\n", progName)
-
+	// Groups
 	groups := []struct {
 		name  string
 		flags []string
 	}{
 		{"Model Selection", []string{"lite", "flash", "pro", "flash-image", "pro-image", "default", "list-models"}},
-		{"Generation Parameters", []string{"candidates"}},
-		{"Grounding / Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
-		{"Chat & Interaction", []string{"chatmode", "config", "filelist"}},
+		{"Generation Parameters", []string{"candidates", "pure-response"}},
+		{"Grounding & Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
+		{"Chat & Interaction", []string{"chatmode", "verbose", "config", "filelist"}},
 		{"Output Control", []string{"out"}},
-		{"Context: Caching (High Performance)", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
-		{"Context: Google File Store (Temporary)", []string{"upload-files", "include-files", "list-files", "delete-files"}},
-		{"Context: RAG / FileSearchStores (Persistent)", []string{"list-stores", "create-store", "delete-store", "add-to-store", "delete-from-store", "include-store", "list-store-content"}},
+		{"Context: Caching (High Perf)", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
+		{"Context: Google File Store", []string{"upload-files", "include-files", "list-files", "delete-files"}},
+		{"Context: RAG (Persistent)", []string{"list-stores", "create-store", "delete-store", "add-to-store", "delete-from-store", "include-store", "list-store-content"}},
 	}
 
-	fmt.Printf("\nOptions [Grouped]:\n")
+	fmt.Printf("\nOptions:\n")
+	fmt.Println("  Note: CLI flags override settings in your YAML configuration. Use '-flag=false' to disable boolean options.")
+
 	for _, group := range groups {
-		fmt.Printf("\n[%s]\n", group.name)
+		fmt.Printf("\n  [%s]\n", group.name)
 		for _, flagName := range group.flags {
-			flagFlag := flag.Lookup(flagName)
-			if flagFlag == nil {
+			f := flag.Lookup(flagName)
+			if f == nil {
 				continue
 			}
 
-			var placeholder string
-			getter, ok := flagFlag.Value.(interface{ Get() interface{} })
-			if ok {
+			// Placeholder
+			placeholder := ""
+			if getter, ok := f.Value.(interface{ Get() interface{} }); ok {
 				switch getter.Get().(type) {
 				case string, *stringArray, stringArray, []string:
-					placeholder = " <string>"
+					placeholder = " <str>"
 				case int, int32, int64:
 					placeholder = " <int>"
-				case float32, float64:
-					placeholder = " <float>"
 				}
 			}
 
-			const indent = "\n                          "
-			usageText := strings.ReplaceAll(flagFlag.Usage, "\n", indent)
-			fmt.Printf("  -%-22s %s", flagFlag.Name+placeholder, usageText)
-			fmt.Printf(" (default: %s)", flagFlag.DefValue)
-			fmt.Printf("\n")
+			// Flag Name + Placeholder
+			flagPart := fmt.Sprintf("-%s%s", f.Name, placeholder)
+
+			// Indent Usage Text
+			usageLines := strings.Split(f.Usage, "\n")
+			fmt.Printf("    %-28s %s", flagPart, usageLines[0])
+
+			// Show default if appropriate
+			if f.DefValue != "" && f.DefValue != "false" && f.DefValue != "[]" {
+				fmt.Printf(" (default: %s)", f.DefValue)
+			}
+			fmt.Println()
+
+			// Indent further description lines
+			for _, line := range usageLines[1:] {
+				fmt.Printf("    %-28s %s\n", "", strings.TrimSpace(line))
+			}
 		}
 	}
 
-	var help = `
-Notes:
-  - Integrate Gemini AI responses into your workflow by prompting via this tool.
-  - Submit prompts via the following input channels: Terminal, File, localhost.
-  - Output is available in Markdown, HTML, or ANSI format.
-  - Files specified on the command line or via the -filelist option are sent to Gemini AI as part of the prompt context.
+	fmt.Printf("\nCore Concepts:\n")
+	fmt.Printf("  %-30s %s\n", "[Input Channels]", "Interactive Terminal, File-Watch (prompt-input.txt), localhost:4242.")
+	fmt.Printf("  %-30s %s\n", "[Terminal Inject]", "Type '<<< filename.txt' in terminal to load file content as prompt.")
+	fmt.Printf("  %-30s %s\n", "[Output Formats]", "Markdown (raw), ANSI (terminal color), HTML (browser with JS features).")
+	fmt.Printf("  %-30s %s\n", "[Chat Mode]", "AI remembers history. Files are sent only with the FIRST prompt.")
+	fmt.Printf("  %-30s %s\n", "[Non-Chat Mode]", "Each prompt is isolated. Files are sent with EVERY prompt.")
+	fmt.Printf("  %-30s %s\n", "[Exit Interactive]", "Type Ctrl+C to quit.")
 
-Notes Concerning Non-Chat Mode (Default):
-  - Each prompt is treated independently.
-  - The AI does not retain conversation history from previous interactions.
-  - Files are sent with every prompt submitted in this mode.
+	fmt.Printf("\nEnvironment Variables:\n")
+	fmt.Printf("  %-30s %s\n", "[GEMINI_API_KEY]", "Your API Key from ai.google.dev (Mandatory).")
+	fmt.Printf("  %-30s %s\n", "[HTTPS_PROXY]", "Used if set and no proxy is defined in YAML.")
 
-Notes Concerning Chat Mode (-chatmode flag):
-  - The AI maintains conversation history within the current session.
-  - Files are sent only once, with the initial prompt of the session.
- 
-Terms of Service for Google Gemini AI:
-  Your use of the Google Gemini AI service is subject to the Google Terms of Service (policies.google.com/terms) 
-  and the Generative AI Prohibited Use Policy (policies.google.com/terms/generative-ai/use-policy). 
-  Visit the Gemini Apps Privacy Hub (support.google.com/gemini?p=privacy_help) to learn how Google uses 
-  your Gemini Apps data. See also the Gemini Apps FAQ (gemini.google.com/faq).
+	fmt.Printf("\nTerms & Privacy:\n")
+	fmt.Printf("  %-30s %s\n", "[Free Tier]", "Google uses your data to improve their models. DO NOT use private data.")
+	fmt.Printf("  %-30s %s\n", "[Paid Tier]", "Data is not used for training (requires GCP billing).")
 
-Using the Free or Experimental Version of Google Gemini AI:
-  - Google may use all input data provided to the free/experimental service to improve Gemini AI.
-  - Therefore, do not submit any private or confidential information when using this version.
-
-Using the Paid Version of Google Gemini AI:
-  - Google does not use input data provided via the paid service to improve Gemini AI.
-  - Connecting your API key to a Google Cloud Platform (GCP) billing account enables access to paid service features.
-
-Required Setup:
-  - Obtain a personal Gemini API Key from Google AI Studio (ai.google.dev).
-  - Configure the API Key in your shell environment:
-    macOS, Linux   : export GEMINI_API_KEY="Your-API-Key"
-    Windows (cmd)  : set GEMINI_API_KEY=Your-API-Key
-    Windows (Pwsh) : $env:GEMINI_API_KEY="Your-API-Key"
-  - Optional: Associate your Gemini API Key with a GCP billing account for paid usage.
- 
-Tip:
-  The included 'prompt-input.html' file provides a basic web interface for crafting prompts 
-  and sending them to 'gem-pro' (requires localhost input configuration). 
-  A web browser is also helpful for rendering HTML-formatted output from the tool.
-`
-
-	fmt.Printf("%s\n", help)
+	fmt.Printf("\nFor more details, see the embedded README.md or visit ai.google.dev.\n\n")
 	os.Exit(1)
 }
 

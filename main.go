@@ -34,6 +34,8 @@ Releases:
 						  CLI paramaters 'temperature' and 'topp' removed, tool 'URLContext' added
 						  README.md embedded in application, README.md revised, usage/help revised
 						  pipe support revised, image support, token calculation revised
+  - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
+                          help/usage output revised
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -86,8 +88,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.11.0"
-	progDate    = "2026-01-06"
+	progVersion = "v0.12.0"
+	progDate    = "2026-01-12"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -167,7 +169,7 @@ var (
 	uploadFiles      = flag.Bool("upload-files", false, "Uploads given files to Google File Store and exits.")
 	deleteFiles      = flag.Bool("delete-files", false, "Deletes given files from Google File Store and exits.")
 	listFiles        = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
-	includeFiles     = flag.Bool("include-files", false, "Includes all uploaded files from Google File Store in prompt to Gemini AI.")
+	includeFiles     = flag.Bool("include-files", false, "Includes all previously uploaded files from Google File Store in prompt to Gemini AI.")
 	createCache      = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
 	deleteCache      = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
 	listCache        = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
@@ -176,13 +178,15 @@ var (
 	googleSearch     = flag.Bool("google-search", false, "Grounding with Google Search.")
 	urlContext       = flag.Bool("url-context", false, "Grounding with URL Context (read content from URLs in prompt).")
 	googleMaps       = flag.Bool("google-maps", false, "Grounding with Google Maps.")
-	createStore      = flag.String("create-store", "", "Creates a new FileSearchStore with the given display name.")
+	createStore      = flag.String("create-store", "", "Creates a new FileSearchStore with the given name and displays its ID.")
 	deleteStore      = flag.String("delete-store", "", "Deletes the FileSearchStore with the given name or ID.")
 	listStores       = flag.Bool("list-stores", false, "Lists all FileSearchStores.")
 	addToStore       = flag.String("add-to-store", "", "Adds the given files (via args or -filelist) to the specified FileSearchStore (Name/ID).")
 	deleteFromStore  = flag.String("delete-from-store", "", "Deletes the specified FileSearchStore document (full Name/ID).")
 	listStoreContent = flag.String("list-store-content", "", "Lists all documents within the specified FileSearchStore (Name/ID).")
 	outputBase       = flag.String("out", "", "Specifies the base filename for the output files.\n E.g. 'response-1' -> 'response-1.md', 'response-1.html', 'response-1.ansi'.")
+	pureResponse     = flag.Bool("pure-response", false, "Pure response without any boilerplate.")
+	verbose          = flag.Bool("verbose", false, "Detailed output of configuration and model information.")
 )
 var fileLists stringArray
 var includeStores stringArray
@@ -193,15 +197,6 @@ arguments, loading configuration, initializing resources, and running the main p
 */
 func main() {
 	var err error
-
-	fmt.Printf("\nProgram:\n")
-	fmt.Printf("  Name    : %s\n", progName)
-	fmt.Printf("  Release : %s - %s\n", progVersion, progDate)
-	fmt.Printf("  Purpose : %s\n", progPurpose)
-	fmt.Printf("  Info    : %s\n", progInfo)
-
-	// logical terminal width
-	terminalWidth := progConfig.AnsiOutputLineLength
 
 	// register the variables for the flags
 	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\nThese files (one filename per line) will be included with the prompt.")
@@ -215,6 +210,14 @@ func main() {
 	flag.Visit(func(f *flag.Flag) {
 		setFlags[f.Name] = true
 	})
+
+	if *verbose {
+		fmt.Printf("\nProgram:\n")
+		fmt.Printf("  Name    : %s\n", progName)
+		fmt.Printf("  Release : %s - %s\n", progVersion, progDate)
+		fmt.Printf("  Purpose : %s\n", progPurpose)
+		fmt.Printf("  Info    : %s\n", progInfo)
+	}
 
 	if !fileExists(*config) {
 		writeConfig()
@@ -292,25 +295,27 @@ func main() {
 	filesToHandle = buildGivenFiles(flag.Args(), fileLists)
 
 	// shows files given via command line
-	fmt.Printf("\nFiles given via command line:\n")
-	if len(filesToHandle) == 0 {
-		fmt.Printf("  none\n")
-	} else {
-		for _, fileToHandle := range filesToHandle {
-			if fileToHandle.State != "error" {
-				// add replacement MIME type (e.g. 'text/x-perl -> text/plain')
-				mimeType := fileToHandle.MimeType
-				if ReplacementMIMETypeMap != nil {
-					replacement, ok := ReplacementMIMETypeMap[fileToHandle.MimeType]
-					if ok {
-						mimeType += fmt.Sprintf(" -> %s", replacement)
+	if *verbose {
+		fmt.Printf("\nFiles given via command line:\n")
+		if len(filesToHandle) == 0 {
+			fmt.Printf("  none\n")
+		} else {
+			for _, fileToHandle := range filesToHandle {
+				if fileToHandle.State != "error" {
+					// add replacement MIME type (e.g. 'text/x-perl -> text/plain')
+					mimeType := fileToHandle.MimeType
+					if ReplacementMIMETypeMap != nil {
+						replacement, ok := ReplacementMIMETypeMap[fileToHandle.MimeType]
+						if ok {
+							mimeType += fmt.Sprintf(" -> %s", replacement)
+						}
 					}
+					fmt.Printf("  %-5s %s (%s, %s, %s)\n",
+						fileToHandle.State, fileToHandle.Filepath, fileToHandle.LastUpdate, fileToHandle.FileSize, mimeType)
+				} else {
+					fmt.Printf("  %-5s %s %s\n",
+						fileToHandle.State, fileToHandle.Filepath, fileToHandle.ErrorMessage)
 				}
-				fmt.Printf("  %-5s %s (%s, %s, %s)\n",
-					fileToHandle.State, fileToHandle.Filepath, fileToHandle.LastUpdate, fileToHandle.FileSize, mimeType)
-			} else {
-				fmt.Printf("  %-5s %s %s\n",
-					fileToHandle.State, fileToHandle.Filepath, fileToHandle.ErrorMessage)
 			}
 		}
 	}
@@ -321,11 +326,11 @@ func main() {
 	handleStandaloneStoreActions()
 
 	if *listModels {
-		showAvailableGeminiModels(terminalWidth)
+		showAvailableGeminiModels(progConfig.AnsiOutputLineLength)
 		os.Exit(0)
 	}
 
-	if *includeFiles {
+	if *includeFiles && *verbose {
 		filelist := listFilesUploadedToGemini("  ")
 		fmt.Printf("\nInclude files given via Google file store:\n")
 		if len(filelist) == 0 {
@@ -339,16 +344,15 @@ func main() {
 	cacheDetails := ""
 	if *includeCache {
 		cacheName, cacheDetails = listAIModelSpecificCache("  ")
-		fmt.Printf("\nInclude AI model specific cache:\n")
 		if len(cacheName) == 0 {
 			fmt.Printf("  error: no AI model specific cache found\n\n")
 			os.Exit(1)
 		}
-		fmt.Printf("%s", cacheDetails)
+		if *verbose {
+			fmt.Printf("\nInclude AI model specific cache:\n")
+			fmt.Printf("%s", cacheDetails)
+		}
 	}
-
-	// show configuration
-	showConfiguration()
 
 	// initialize this program
 	initializeProgram()
@@ -398,17 +402,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	// get and print Gemini AI model information
+	// get Gemini AI model information
 	geminiModelInfo, err := client.Models.Get(ctx, progConfig.GeminiAiModel, nil)
 	if err != nil {
 		fmt.Printf("error [%v] getting AI model information\n", err)
 		return
 	}
-	printGeminiModelInfo(geminiModelInfo, terminalWidth)
 
-	// generate and print Gemini model configuration (adds cache if defined)
+	// generate Gemini model configuration (adds cache if defined)
 	geminiModelConfig := generateGeminiModelConfig(isImageRequest, cacheName, includeStores)
-	printGeminiModelConfig(geminiModelConfig, terminalWidth)
+
+	// show start/config parameter
+	if *verbose {
+		showConfiguration()
+		printGeminiModelInfo(geminiModelInfo, progConfig.AnsiOutputLineLength)
+		printGeminiModelConfig(geminiModelConfig, progConfig.AnsiOutputLineLength)
+	} else {
+		showCompactConfiguration(geminiModelInfo, geminiModelConfig)
+	}
 
 	// define prompt channel
 	promptChannel := make(chan string)
@@ -418,15 +429,20 @@ func main() {
 	signal.Notify(shutdownTrigger, syscall.SIGINT)  // kill -SIGINT pid -> interrupt
 	signal.Notify(shutdownTrigger, syscall.SIGTERM) // kill -SIGTERM pid -> terminated
 
-	fmt.Printf("\nOperation mode:\n")
-	if *chatmode {
-		fmt.Printf("  Running in chat mode.\n")
-	} else {
-		fmt.Printf("  Running in non-chat mode.\n")
-	}
+	if *verbose {
+		fmt.Printf("\nOperation mode:\n")
+		if *chatmode {
+			fmt.Printf("  Running in chat mode.\n")
+		} else {
+			fmt.Printf("  Running in non-chat mode.\n")
+		}
+		if progConfig.GeminiPureResponse {
+			fmt.Printf("  Running in pure-response mode.\n")
+		}
 
-	fmt.Printf("\nProgram termination:\n")
-	fmt.Printf("  Press CTRL-C to terminate this program.\n\n")
+		fmt.Printf("\nProgram termination:\n")
+		fmt.Printf("  Press CTRL-C to terminate this program.\n\n")
+	}
 
 	// start graceful shutdown handler
 	go handleShutdown(shutdownTrigger)
@@ -614,6 +630,9 @@ func overwriteConfigValues(setFlags map[string]bool) {
 	if setFlags["google-maps"] {
 		progConfig.GeminiGroundigWithGoogleMaps = *googleMaps
 	}
+	if setFlags["pure-response"] {
+		progConfig.GeminiPureResponse = *pureResponse
+	}
 }
 
 /*
@@ -628,7 +647,11 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 	case respErr != nil:
 		processError(respErr)
 	case resp != nil:
-		processResponse(resp)
+		if progConfig.GeminiPureResponse {
+			processPureResponse(resp)
+		} else {
+			processResponse(resp)
+		}
 	default:
 		unknownErr := fmt.Errorf("unexpected state: received neither a response nor an error from Gemini API")
 		processError(unknownErr)
