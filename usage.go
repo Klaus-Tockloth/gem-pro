@@ -105,6 +105,8 @@ func printUsage() {
 	fmt.Printf("  %-30s %s\n", "[Output Formats]", "Markdown (raw), ANSI (terminal color), HTML (browser with JS features).")
 	fmt.Printf("  %-30s %s\n", "[Chat Mode]", "AI remembers history. Files are sent only with the FIRST prompt.")
 	fmt.Printf("  %-30s %s\n", "[Non-Chat Mode]", "Each prompt is isolated. Files are sent with EVERY prompt.")
+	fmt.Printf("  %-30s %s\n", "[File Lists]", "Files passed via -filelist can contain comments (# or //)")
+	fmt.Printf("  %-30s %s\n", "", "and empty lines, which will be ignored during processing.")
 	fmt.Printf("  %-30s %s\n", "[Exit Interactive]", "Type Ctrl+C to quit.")
 
 	fmt.Printf("\nEnvironment Variables:\n")

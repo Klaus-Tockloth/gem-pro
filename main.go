@@ -36,6 +36,7 @@ Releases:
 						  pipe support revised, image support, token calculation revised
   - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
                           help/usage output revised
+  - v0.13.0 - 2026-01-13: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -88,8 +89,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.12.0"
-	progDate    = "2026-01-12"
+	progVersion = "v0.13.0"
+	progDate    = "2026-01-31"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -199,7 +200,8 @@ func main() {
 	var err error
 
 	// register the variables for the flags
-	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\nThese files (one filename per line) will be included with the prompt.")
+	flag.Var(&fileLists, "filelist", "Specifies a file containing a list of files to upload (can be repeated).\n"+
+		"Entries are one filename per line. Empty lines and comments (# or //) are ignored.")
 	flag.Var(&includeStores, "include-store", "Includes the specified FileSearchStore (Name/ID) in the prompt (can be repeated).")
 
 	flag.Usage = printUsage

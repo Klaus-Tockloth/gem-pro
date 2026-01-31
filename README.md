@@ -127,12 +127,16 @@ Je nach Datenmenge und Verwendungszweck empfiehlt sich einer der folgenden Ansä
 *   **FileSearchStores (RAG):** Persistente Indexierung im Store (dauerhaft verfügbar, optimiert für sehr große Dokumentensammlungen).
 
 **Nutzung von Dateilisten (`-filelist`):**
-Statt viele Dateien einzeln in der Kommandozeile zu nennen, können diese in einer Datei aufgelistet werden.
+Statt viele Dateien einzeln in der Kommandozeile zu nennen, können diese in einer Datei aufgelistet werden. 
+Leere Zeilen sowie Zeilen, die mit `#` oder `//` beginnen (Kommentare), werden ignoriert.
 
 *Beispielinhalt von `sources.txt`:*
 ```text
+# Quelldateien
 main.go
 config.go
+
+// Dokumentation
 README.md
 ```
 
@@ -384,11 +388,15 @@ Depending on the data volume and use case, one of the following approaches is re
 
 **Using File Lists (`-filelist`):**
 Instead of specifying many files individually on the command line, they can be listed in a file.
+Empty lines and lines starting with `#` or `//` (comments) are ignored.
 
 *Example content of `sources.txt`:*
 ```text
+# Source files
 main.go
 config.go
+
+// Documentation
 README.md
 ```
 

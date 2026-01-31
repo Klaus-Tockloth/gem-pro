@@ -198,7 +198,11 @@ func slurpFile(filename string) ([]string, error) {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
+		// ignore empty lines and lines starting with # or //
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+			continue
+		}
 		lines = append(lines, line)
 	}
 
