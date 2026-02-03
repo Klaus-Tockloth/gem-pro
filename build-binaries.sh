@@ -9,6 +9,7 @@
 # - v1.1.0 - 2025-05-19: gosec added
 # - v1.2.0 - 2025-11-21: errexit added
 # - v1.3.0 - 2025-12-10: revised
+# - v1.4.0 - 2026-02-03: revised
 # ------------------------------------
 
 set -o errexit
@@ -19,6 +20,7 @@ rm -r ./binaries
 mkdir ./binaries
 
 # renew vendor content
+go mod tidy
 go mod vendor
 
 # lint

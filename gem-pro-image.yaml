@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.12 - 2026-01-13: corresponding to program release
+# - v0.14 - 2026-02-03: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -248,6 +248,23 @@ HTMLFooter: |
   <script>hljs.highlightAll();</script>
   <!-- add 'copy to clipboard' button to all '<pre><code>' block elements -->
   <script src="assets/copy-to-clipboard.js"></script>
+  <!-- mathjax: adds both block math and inline math support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,  // allows \$
+        processEnvironments: true
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+      }
+    };
+  </script>
   </body>
   </html>
 

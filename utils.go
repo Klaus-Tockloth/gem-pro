@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -372,92 +371,9 @@ func writeDataToFile(data []byte, mimeType string, timestamp time.Time) (string,
 }
 
 /*
-removeSpacesBetweenNewlineAndCodeblock removes spaces between a newline character and the start of a code block (```).
-This is useful for cleaning up markdown or similar text where extra spaces might interfere with code block rendering.
-Example:
-Markdown NOK : "```bash\n    go get github.com/tkrajina/gpxgo/gpx\n    ```"
-Markdown OK  : "```bash\n    go get github.com/tkrajina/gpxgo/gpx\n```"
-*/
-func removeSpacesBetweenNewlineAndCodeblock(input string) string {
-	var output strings.Builder
-	length := len(input)
-	for i := 0; i < length; i++ {
-		if input[i] == '\n' {
-			j := i + 1
-			for j < length && input[j] == ' ' {
-				j++
-			}
-
-			// check if backticks follow the spaces
-			if j+2 < length && input[j:j+3] == "```" {
-				output.WriteByte('\n') // keep only the newline, remove spaces
-				i = j - 1              // adjust the index accordingly
-			} else {
-				output.WriteByte(input[i]) // keep the original character
-			}
-		} else {
-			output.WriteByte(input[i]) // take over all other characters unchanged
-		}
-	}
-	return output.String()
-}
-
-/*
-cleanMarkdownIndentation corrects faulty indentations, but preserves the indentation of list items.
-It aims to preserve indentation for:
-- Lines within code blocks (which start and end with three backticks).
-- List items (lines starting with *, -, +, or a number followed by a period).
-For all other lines, it removes leading spaces to ensure the content is left-aligned.
-*/
-func cleanMarkdownIndentation(markdown string) string {
-	var result strings.Builder
-	scanner := bufio.NewScanner(strings.NewReader(markdown))
-
-	inFencedCodeBlock := false
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		trimmedLine := strings.TrimSpace(line)
-
-		if strings.HasPrefix(trimmedLine, "```") { // also cover ```go etc.
-			inFencedCodeBlock = !inFencedCodeBlock
-			result.WriteString(line + "\n")
-			continue
-		}
-
-		if inFencedCodeBlock {
-			result.WriteString(line + "\n")
-		} else {
-			// Check if the line is a list item. Yes: preserve original line with its indentation. No: remove indentation.
-			if isListItem(strings.TrimLeft(line, " ")) {
-				result.WriteString(line + "\n")
-			} else {
-				correctedLine := strings.TrimLeft(line, " ")
-				result.WriteString(correctedLine + "\n")
-			}
-		}
-	}
-	return strings.TrimSuffix(result.String(), "\n")
-}
-
-/*
-isListItem checks if a line looks like a list item after trimming.
-*/
-func isListItem(trimmedLine string) bool {
-	if strings.HasPrefix(trimmedLine, "* ") ||
-		strings.HasPrefix(trimmedLine, "- ") ||
-		strings.HasPrefix(trimmedLine, "+ ") {
-		return true
-	}
-	// checks for numbered lists like "1. ", "12. " etc.
-	matched, _ := regexp.MatchString(`^\d+\.\s`, trimmedLine)
-	return matched
-}
-
-/*
-parseMIMETypeReplacements analysiert eine Liste von Zeichenketten mit MIME-Typ-Paaren
-(z. B. "key1 = value1", "key2 = value2") und gibt sie als map[string]string zurück.
-Es wird ein Fehler zurückgegeben, wenn ein Paar fehlerhaft ist.
+parseMIMETypeReplacements parses a list of strings containing MIME type pairs
+(e.g., "key1 = value1", "key2 = value2") and returns them as a map[string]string.
+It returns an error if a pair is malformed.
 */
 func parseMIMETypeReplacements(replacements []string) (map[string]string, error) {
 	mimeMap := make(map[string]string)
@@ -465,23 +381,22 @@ func parseMIMETypeReplacements(replacements []string) (map[string]string, error)
 	for _, pair := range replacements {
 		trimmedPair := strings.TrimSpace(pair)
 
-		// Ignoriere leere Einträge, die durch zusätzliche Zeilenumbrüche entstehen könnten.
+		// Ignore empty entries that might occur due to additional newlines.
 		if trimmedPair == "" {
 			continue
 		}
 
-		// Teile das Paar am ersten '=' in Schlüssel und Wert.
-		// Die Verwendung von SplitN mit 2 stellt sicher, dass wir nur am ersten '=' trennen.
+		// Split the pair into key and value at the first '='.
 		parts := strings.SplitN(trimmedPair, "=", 2)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("ungültiges MIME-Typ-Paarformat: %q. Erwartet wird 'key = value'", trimmedPair)
+			return nil, fmt.Errorf("invalid MIME type pair format: %q. Expected 'key = value'", trimmedPair)
 		}
 
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
 
 		if key == "" {
-			return nil, fmt.Errorf("der Schlüssel des MIME-Typs darf im Paar nicht leer sein: %q", trimmedPair)
+			return nil, fmt.Errorf("MIME type key cannot be empty in pair: %q", trimmedPair)
 		}
 		mimeMap[key] = value
 	}

@@ -36,7 +36,8 @@ Releases:
 						  pipe support revised, image support, token calculation revised
   - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
                           help/usage output revised
-  - v0.13.0 - 2026-01-13: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
+  - v0.13.0 - 2026-01-31: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
+  - v0.14.0 - 2026-02-03: libs updated, markdown cleanup improved, goldmark extension 'mathjax' added
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -80,6 +81,7 @@ import (
 	"syscall"
 	"time"
 
+	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
@@ -89,8 +91,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.13.0"
-	progDate    = "2026-01-31"
+	progVersion = "v0.14.0"
+	progDate    = "2026-02-03"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -364,7 +366,7 @@ func main() {
 
 	// create markdown parser (WithUnsafe() ensures to render potentially dangerous links like "file:///Users/...")
 	markdownParser = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, &TargetBlankExtension{}),
+		goldmark.WithExtensions(extension.GFM, mathjax.MathJax, &TargetBlankExtension{}),
 		goldmark.WithRendererOptions(html.WithUnsafe()),
 	)
 

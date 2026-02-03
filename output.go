@@ -497,10 +497,13 @@ appendResponseString appends a given response string (which can be a successful 
 to the current request / response files in Markdown, ANSI, and HTML formats.
 */
 func appendResponseString(responseString strings.Builder) {
-	originalMarkdownWithHTMLComments := responseString.String()
+	rawMarkdown := responseString.String()
+
+	// remove outer Markdown wrapper
+	unwrappedMarkdown := unwrapMarkdownBlock(rawMarkdown)
 
 	// cleanup Markdown
-	cleanedMarkdown := cleanMarkdownIndentation(originalMarkdownWithHTMLComments)
+	cleanedMarkdown := cleanMarkdownIndentation(unwrappedMarkdown)
 
 	// 1. prepare Markdown for direct file saving (and ANSI rendering)
 	// replace HTML comment tags with pure Markdown equivalents
@@ -541,10 +544,9 @@ func appendResponseString(responseString strings.Builder) {
 	}
 
 	// 3. render markdown response as html (using original string with comments)
-	htmlData := originalMarkdownWithHTMLComments // use the original string with HTML comments
+	htmlData := unwrappedMarkdown
 	if progConfig.HTMLRendering {
-		// renderMarkdown2HTML will convert the comments to <details>
-		htmlData = renderMarkdown2HTML(originalMarkdownWithHTMLComments)
+		htmlData = renderMarkdown2HTML(unwrappedMarkdown)
 	}
 
 	// append response string to current html request/response file
