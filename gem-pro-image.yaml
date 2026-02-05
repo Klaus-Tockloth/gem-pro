@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.14 - 2026-02-03: corresponding to program release
+# - v0.14 - 2026-02-05: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -100,6 +100,8 @@ GeminiMaxOutputTokens:
 # The model will adhere the instructions more strongly than if they appeared in a normal prompt.
 # Typical usage: Optional tone and style instructions for the model.
 # Examples:
+# - 'Provide raw markdown only, no conversational filler, no wrapping code blocks.
+#    Ensure LaTeX math blocks ($$) are always placed on their own new lines.'
 # - 'Translate prompt from English to German. Pay attention to correct grammar and a fluent style.'
 # - 'Use the technical terms common in the subject area. Avoid filler words.'
 # - 'All questions should be answered comprehensively with details, unless the user requests a
@@ -110,7 +112,7 @@ GeminiMaxOutputTokens:
 # By giving the model system instructions, you provide the model additional context to understand the
 # task, generate more customized responses, and adhere to specific guidelines over the full user interaction 
 # with the model. System instructions are provided via text file (e.g. gemini-system-instruction.txt).
-GeminiSystemInstruction:
+GeminiSystemInstruction: gemini-system-instruction.txt
 
 # ground response allowing the AI model to generate and execute program code (in a sandbox)
 GeminiGroundingWithCodeExecution: false
@@ -224,7 +226,7 @@ HTMLMaxLengthTitle: 200
 
 # list of HTML elements to replace or remove (modifies HTML output)
 HTMLReplaceElements:
-# - 'class="language-mermaid"': 'class="mermaid"'
+- 'class="language-mermaid"': 'class="mermaid"'
 
 # header to insert at beginning of html page (do not change title, %s is placeholder for prompt)
 HTMLHeader: |
@@ -264,6 +266,24 @@ HTMLFooter: |
         processHtmlClass: 'tex2jax_process'
       }
     };
+  </script>
+  <!-- mermaid: add mermaid grafic support -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    document.addEventListener("DOMContentLoaded", async () => {
+      const mermaidCodes = document.querySelectorAll('pre code.mermaid');
+      for (const codeBlock of mermaidCodes) {
+        const preTag = codeBlock.parentElement;
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = codeBlock.textContent;
+        preTag.replaceWith(div);
+      }
+      await mermaid.run({
+        querySelector: '.mermaid'
+      });
+    });
   </script>
   </body>
   </html>

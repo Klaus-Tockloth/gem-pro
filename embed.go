@@ -115,3 +115,17 @@ func writeAssets(basepath string) {
 		log.Fatalf("embed: error [%v] at writeAssets() exploring assetsFS", err)
 	}
 }
+
+//go:embed gemini-system-instruction.txt
+var geminiSystemInstructionTxtBytes []byte
+
+/*
+writeReadme writes the embedded gemini-system-instruction.txt to the current directory.
+*/
+func writeGeminiSystemInstruction() {
+	filename := "gemini-system-instruction.txt"
+	err := os.WriteFile(filename, geminiSystemInstructionTxtBytes, 0600)
+	if err != nil {
+		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+	}
+}

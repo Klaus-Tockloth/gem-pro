@@ -37,7 +37,8 @@ Releases:
   - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
                           help/usage output revised
   - v0.13.0 - 2026-01-31: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
-  - v0.14.0 - 2026-02-03: libs updated, markdown cleanup improved, goldmark extension 'mathjax' added
+  - v0.14.0 - 2026-02-05: libs updated, go v1.25.6, markdown cleanup improved,
+                          'mathjax' support added, 'mermaid' support added, default system instruction added
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -58,6 +59,7 @@ ToDos:
 - Improve output naming.
 - Print prompt/response costs in dollar cents.
 - Support 'Deep Research'.
+- Include 'gemini-system-instruction.txt' in binary.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -92,7 +94,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.14.0"
-	progDate    = "2026-02-03"
+	progDate    = "2026-02-05"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -231,6 +233,9 @@ func main() {
 	}
 	if !fileExists("gem-pro.png") {
 		writeGemProPng()
+	}
+	if !fileExists("gemini-system-instruction.txt") {
+		writeGeminiSystemInstruction()
 	}
 
 	// 'assets' in current directory (to render current HTML file in current directory)

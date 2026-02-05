@@ -499,11 +499,8 @@ to the current request / response files in Markdown, ANSI, and HTML formats.
 func appendResponseString(responseString strings.Builder) {
 	rawMarkdown := responseString.String()
 
-	// remove outer Markdown wrapper
-	unwrappedMarkdown := unwrapMarkdownBlock(rawMarkdown)
-
 	// cleanup Markdown
-	cleanedMarkdown := cleanMarkdownIndentation(unwrappedMarkdown)
+	cleanedMarkdown := cleanMarkdown(rawMarkdown)
 
 	// 1. prepare Markdown for direct file saving (and ANSI rendering)
 	// replace HTML comment tags with pure Markdown equivalents
@@ -543,10 +540,10 @@ func appendResponseString(responseString strings.Builder) {
 		}
 	}
 
-	// 3. render markdown response as html (using original string with comments)
-	htmlData := unwrappedMarkdown
+	// 3. render markdown response as html (using cleaned string with comments)
+	htmlData := cleanedMarkdown
 	if progConfig.HTMLRendering {
-		htmlData = renderMarkdown2HTML(unwrappedMarkdown)
+		htmlData = renderMarkdown2HTML(cleanedMarkdown)
 	}
 
 	// append response string to current html request/response file

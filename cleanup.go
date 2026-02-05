@@ -1,248 +1,99 @@
-/*
-Markdown Cleaning Utilities
-This file provides functions to sanitize and normalize Markdown output received from
-AI models. It handles common issues like unnecessary outer wrappers, inconsistent
-indentation in code blocks, and the preservation of structural Markdown elements.
-*/
-
 package main
 
 import (
-	"bufio"
 	"regexp"
 	"strings"
 )
 
 var (
-	listItemRegex      = regexp.MustCompile(`^(\d+[\.\)]|\*|-|\+)\s`)
-	definitionRegex    = regexp.MustCompile(`^:\s`)
+	// markdownBlockRegex detects an outer markdown wrapper.
+	// Matches: ```markdown (optional), Newline, Content, Newline, ```.
 	markdownBlockRegex = regexp.MustCompile(`(?i)^\x60{3}(?:markdown)?\s*\n(?s)(.*)\n\x60{3}$`)
 )
 
 /*
-cleanMarkdownIndentation normalizes the indentation of a Markdown string.
-It removes accidental leading whitespace from standard text while carefully
-preserving structural indentation required for lists, blockquotes, and tables.
-
-It implements "Smart Dedent" for fenced code blocks: if a code block is indented,
-the content within is shifted left relative to the opening backticks.
-
-It also detects and preserves indentation within LaTeX/Math blocks ($$ ... $$
-and \[ ... \]) to ensure mathematical formulas retain their formatting.
-
-Example:
-
-	Input:
-	  "    This is a paragraph."
-	  "    * List item"
-	  "    ```go"
-	  "        fmt.Println(1)"
-	  "    ```"
-
-	Output:
-	  "This is a paragraph."
-	  "    * List item" (Preserved)
-	  "```go"
-	  "    fmt.Println(1)" (Shifted left by 4 spaces)
-	  "```"
+cleanMarkdown normalizes the AI's markdown output for further processing.
+It removes technical artifacts (wrappers) and corrects syntax errors,
+such as indented code fences, that prevent parsers like Goldmark from rendering correctly.
 */
-func cleanMarkdownIndentation(markdown string) string {
-	var result strings.Builder
-	scanner := bufio.NewScanner(strings.NewReader(markdown))
+func cleanMarkdown(input string) string {
+	// 1. Remove outer markdown wrapper if present.
+	// Many LLMs tend to wrap the entire response in ```markdown ... ```.
+	result := unwrapMarkdownBlock(input)
 
-	inFencedCodeBlock := false
-	inMathBlock := false
-	currentBlockIndent := 0
+	// 2. Remove whitespace at the beginning and end of the document.
+	result = strings.TrimSpace(result)
 
-	for scanner.Scan() {
-		originalLine := scanner.Text()
+	// 3. Specific fix for code blocks:
+	// Removes spaces before ``` if they immediately follow a newline.
+	// Reason: Indented backticks (e.g., 4 spaces) are often interpreted in Markdown
+	// as an "Indented Code Block" or quote, breaking syntax highlighting for the
+	// actual "Fenced Code Block".
+	result = removeSpacesBetweenNewlineAndCodeblock(result)
 
-		// Preserve Hard Line Breaks (standard Markdown: two spaces at end of line)
-		trimmedLine := strings.TrimRight(originalLine, " \t")
-		if strings.HasSuffix(originalLine, "  ") && len(trimmedLine) > 0 {
-			trimmedLine += "  "
-		}
-
-		if len(strings.TrimSpace(trimmedLine)) == 0 {
-			result.WriteString("\n")
-			continue
-		}
-
-		contentCheck := strings.TrimSpace(trimmedLine)
-
-		// Handle Fenced Code Blocks
-		if strings.HasPrefix(contentCheck, "```") {
-			if !inFencedCodeBlock {
-				inFencedCodeBlock = true
-				currentBlockIndent = strings.Index(originalLine, "`")
-				if currentBlockIndent < 0 {
-					currentBlockIndent = 0
-				}
-			} else {
-				inFencedCodeBlock = false
-				currentBlockIndent = 0
-			}
-			result.WriteString(contentCheck + "\n")
-			continue
-		}
-
-		// Handle LaTeX/Math Blocks
-		// Case 1: $$ Block (Display Math)
-		if strings.HasPrefix(contentCheck, "$$") {
-			// Check: Is it a single-line block? (e.g. "$$ E=mc^2 $$")
-			if len(contentCheck) > 2 && strings.HasSuffix(contentCheck, "$$") {
-				// Single-liner -> Keep status, just write.
-				// We use trimmedLine to preserve potential leading whitespace (indentation).
-				result.WriteString(trimmedLine + "\n")
-				continue
-			}
-			// It is a multi-liner toggle (start or end)
-			inMathBlock = !inMathBlock
-			result.WriteString(trimmedLine + "\n")
-			continue
-		}
-		// Case 2: \[ ... \] Block (Display Math)
-		if strings.HasPrefix(contentCheck, "\\[") {
-			// Check: Is it a single-line block? (e.g. "\[ a^2 + b^2 = c^2 \]")
-			if strings.HasSuffix(contentCheck, "\\]") {
-				// Single-liner -> Do not change status
-				result.WriteString(trimmedLine + "\n")
-				continue
-			}
-			// Start of a multi-line block
-			inMathBlock = true
-			result.WriteString(trimmedLine + "\n")
-			continue
-		}
-		// Case 3: \] End of a block
-		if strings.HasPrefix(contentCheck, "\\]") {
-			inMathBlock = false
-			result.WriteString(trimmedLine + "\n")
-			continue
-		}
-
-		switch {
-		case inFencedCodeBlock:
-			// Apply Smart Dedent: Remove the same amount of space as the opening backticks
-			var linePayload string
-			prefixSpaceCount := 0
-			for _, r := range originalLine {
-				if r == ' ' {
-					prefixSpaceCount++
-				} else {
-					break
-				}
-			}
-
-			if prefixSpaceCount >= currentBlockIndent {
-				linePayload = originalLine[currentBlockIndent:]
-			} else {
-				linePayload = strings.TrimLeft(originalLine, " ")
-			}
-			result.WriteString(strings.TrimRight(linePayload, " \t") + "\n")
-
-		case inMathBlock:
-			result.WriteString(trimmedLine + "\n")
-
-		default:
-			// Handle standard text
-			leftTrimmed := strings.TrimLeft(trimmedLine, " ")
-
-			if shouldPreserveIndentation(leftTrimmed) {
-				result.WriteString(trimmedLine + "\n")
-			} else {
-				result.WriteString(leftTrimmed + "\n")
-			}
-		}
-	}
-	return strings.TrimSuffix(result.String(), "\n")
+	return result
 }
 
 /*
-shouldPreserveIndentation determines if a line's leading spaces are semantically
-meaningful in Markdown. It returns true for:
-- Blockquotes (starting with >)
-- Tables (starting with |)
-- Footnotes (starting with [^)
-- Horizontal rules (---, ***)
-- Ordered and unordered lists
-- HTML blocks
-- Definition lists
-*/
-func shouldPreserveIndentation(line string) bool {
-	if strings.HasPrefix(line, ">") ||
-		strings.HasPrefix(line, "|") ||
-		strings.HasPrefix(line, "[^") ||
-		strings.HasPrefix(line, "<") {
-		return true
-	}
-	if isHorizontalRule(line) ||
-		listItemRegex.MatchString(line) ||
-		definitionRegex.MatchString(line) {
-		return true
-	}
-	return false
-}
-
-/*
-isHorizontalRule checks if a line represents a Markdown horizontal rule.
-Example: ---, ***, ___
-*/
-func isHorizontalRule(line string) bool {
-	if strings.HasPrefix(line, "---") ||
-		strings.HasPrefix(line, "***") ||
-		strings.HasPrefix(line, "___") {
-		return true
-	}
-	return false
-}
-
-/*
-unwrapMarkdownBlock removes "outer" markdown code wrappers that LLMs
-frequently use to encapsulate their entire response.
-
-Example:
-
-	Input:  "```markdown\n# Title\nContent\n```"
-	Output: "# Title\nContent"
+unwrapMarkdownBlock removes the outer code block frame if the AI
+has wrapped the entire response within one.
 */
 func unwrapMarkdownBlock(input string) string {
+	// Trim to ensure regex matches the start/end correctly.
 	trimmed := strings.TrimSpace(input)
+
 	groups := markdownBlockRegex.FindStringSubmatch(trimmed)
 	if len(groups) == 2 {
+		// Group 1 contains the content inside the backticks.
 		return groups[1]
 	}
 	return input
 }
 
 /*
-removeSpacesBetweenNewlineAndCodeblock eliminates leading whitespace specifically
-before backtick markers that follow a newline. This fixes rendering issues in many
-Markdown parsers where an indented backtick block is treated as a literal paragraph
-instead of a fenced code block.
+removeSpacesBetweenNewlineAndCodeblock searches for the sequence:
+[Newline] + [Spaces] + [```]
+and replaces it with:
+[Newline] + [```]
 
-Example:
-
-	Input:  "\n    ```bash"
-	Output: "\n```bash"
+This is safer than a global "unindent" because it preserves indentation
+within code (e.g., Python) or lists.
 */
 func removeSpacesBetweenNewlineAndCodeblock(input string) string {
 	var output strings.Builder
+	// Optimization: Pre-allocate buffer size.
+	output.Grow(len(input))
+
 	length := len(input)
 	for i := 0; i < length; i++ {
+		// Check for newline.
 		if input[i] == '\n' {
+			// Lookahead.
 			j := i + 1
+
+			// Skip all subsequent spaces.
 			for j < length && input[j] == ' ' {
 				j++
 			}
 
-			if j+2 < length && input[j:j+3] == "```" {
+			// Check if a code block (```) starts after the spaces.
+			if j+2 < length && input[j] == '`' && input[j+1] == '`' && input[j+2] == '`' {
+				// Match: We found an indented code block.
+
+				// 1. Write the newline.
 				output.WriteByte('\n')
+
+				// 2. "Delete" the spaces by setting the main index i to the position
+				// BEFORE the backticks (j-1). In the next loop iteration,
+				// i will be incremented and land exactly on the first backtick.
 				i = j - 1
 			} else {
+				// No match: It was just an empty line or normal text.
+				// Write the newline normally.
 				output.WriteByte(input[i])
 			}
 		} else {
+			// Copy normal character.
 			output.WriteByte(input[i])
 		}
 	}

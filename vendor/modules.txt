@@ -57,14 +57,14 @@ github.com/charmbracelet/glamour/styles
 ## explicit; go 1.18
 github.com/charmbracelet/lipgloss
 github.com/charmbracelet/lipgloss/table
-# github.com/charmbracelet/x/ansi v0.11.5
+# github.com/charmbracelet/x/ansi v0.11.6
 ## explicit; go 1.24.2
 github.com/charmbracelet/x/ansi
 github.com/charmbracelet/x/ansi/parser
 # github.com/charmbracelet/x/cellbuf v0.0.15
 ## explicit; go 1.24.2
 github.com/charmbracelet/x/cellbuf
-# github.com/charmbracelet/x/exp/slice v0.0.0-20260203065841-a1c614051099
+# github.com/charmbracelet/x/exp/slice v0.0.0-20260204111555-7642919e0bee
 ## explicit; go 1.24.0
 github.com/charmbracelet/x/exp/slice
 # github.com/charmbracelet/x/term v0.2.2
@@ -145,7 +145,7 @@ github.com/google/s2a-go/stream
 ## explicit; go 1.24.0
 github.com/googleapis/enterprise-certificate-proxy/client
 github.com/googleapis/enterprise-certificate-proxy/client/util
-# github.com/googleapis/gax-go/v2 v2.16.0
+# github.com/googleapis/gax-go/v2 v2.17.0
 ## explicit; go 1.24.0
 github.com/googleapis/gax-go/v2/internallog
 github.com/googleapis/gax-go/v2/internallog/internal
@@ -281,10 +281,10 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genai v1.44.0
+# google.golang.org/genai v1.45.0
 ## explicit; go 1.24
 google.golang.org/genai
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260202165425-ce8ad4cf556b
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.78.0
