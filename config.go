@@ -34,7 +34,6 @@ type ProgConfig struct {
 	GeminiTopP            *float32 `yaml:"GeminiTopP"`
 	GeminiTopK            *float32 `yaml:"GeminiTopK"`
 
-	GeminiSystemInstruction             string   `yaml:"GeminiSystemInstruction"`
 	GeminiGroundingWithCodeExecution    bool     `yaml:"GeminiGroundingWithCodeExecution"`
 	GeminiGroundingWithGoogleSearch     bool     `yaml:"GeminiGroundingWithGoogleSearch"`
 	GeminiGroundingWithURLContext       bool     `yaml:"GeminiGroundingWithURLContext"`
@@ -105,18 +104,13 @@ type ProgConfig struct {
 	NotifyResponseApplicationWindows string `yaml:"NotifyResponseApplicationWindows"`
 	NotifyResponseApplicationOther   string `yaml:"NotifyResponseApplicationOther"`
 
-	// History configuration
-	HistoryFilenameSchema            string `yaml:"HistoryFilenameSchema"`
-	HistoryFilenameAddPrefix         bool   `yaml:"HistoryFilenameAddPrefix"`
-	HistoryFilenameAddPostfix        bool   `yaml:"HistoryFilenameAddPostfix"`
-	HistoryFilenameExtensionMarkdown string `yaml:"HistoryFilenameExtensionMarkdown"`
-	HistoryFilenameExtensionAnsi     string `yaml:"HistoryFilenameExtensionAnsi"`
-	HistoryFilenameExtensionHTML     string `yaml:"HistoryFilenameExtensionHTML"`
-	HistoryMaxFilenameLength         int    `yaml:"HistoryMaxFilenameLength"`
-
 	// General configuration
 	GeneralInternetProxy string   `yaml:"GeneralInternetProxy"`
 	MIMETypeReplacements []string `yaml:"MIMETypeReplacements"`
+
+	// System instruction
+	UserSystemInstruction    string `yaml:"UserSystemInstruction"`
+	IncludeSystemInstruction bool   `yaml:"IncludeSystemInstruction"`
 }
 
 // progConfig contains program configuration
@@ -230,18 +224,6 @@ func loadConfiguration(configFile string) error {
 	}
 	if progConfig.NotifyResponse && progConfig.NotifyResponseApplication == "" {
 		return fmt.Errorf("empty operating system specific NotifyResponseApplication not allowed")
-	}
-
-	// history
-	progConfig.HistoryFilenameSchema = strings.ToLower(progConfig.HistoryFilenameSchema)
-	switch progConfig.HistoryFilenameSchema {
-	case "timestamp":
-	case "prompt":
-	default:
-		return fmt.Errorf("unsupported history filename schema")
-	}
-	if progConfig.HistoryMaxFilenameLength > 255 {
-		return fmt.Errorf("max length of history filename show not be greater than 255")
 	}
 
 	// get api-key (password)
@@ -412,6 +394,59 @@ func initializeProgram() {
 }
 
 /*
+// application-specific, static part of "System-Prompt"
+const appSystemInstruction = `You are a CLI backend processor for 'gem-pro'.
+Your goal: Provide helpful content first, then generate a strict archiving slug.
+
+### FORMATTING RULES
+- Provide raw markdown only.
+- No conversational filler (e.g., "Sure, I can help with that").
+- Do not wrap the entire response in triple backticks (code blocks).
+- Ensure LaTeX math blocks ($$) are always placed on their own new lines.
+
+### METADATA & ARCHIVING
+- You must generate a metadata line at the very end of your response.
+- Create a filename slug based on your generated content.
+- Length: 3-6 words.
+- Format: Lowercase, ASCII only, hyphens for spaces (kebab-case).
+- Language Rules:
+  - Keep main language of response if Latin script used.
+  - Transliteration: ä->ae, ö->oe, ü->ue, ß->ss, ñ->n, etc.
+  - Translation: If content is Non-Latin (Cyrillic, CJK, Arabic, etc.), translate the slug to ENGLISH.
+  - Remove all emojis/symbols.
+
+### OUTPUT FORMAT
+[Actual Content Here]
+...
+[End of Content]
+
+METADATA_SLUG: <your-slug-here>`
+*/
+
+// application-specific, static part of "System-Prompt"
+const appSystemInstruction = `Objective: Provide helpful, accurate content followed by a metadata archiving line.
+
+Constraints:
+1. Response Content: Use raw Markdown only.
+2. No Conversational Filler: Do not include introductory phrases (e.g., "Here is the information").
+3. No Outer Wrappers: Do NOT wrap the entire response in triple backticks (e.g., no ` + "```" + `markdown ... ` + "```" + `). Only use backticks for code examples within the content.
+4. Mathematical Notation: 
+   - Use inline math ($...$) ONLY for single variables or simple values (e.g., $x$, $50\%$).
+   - Use display math ($$...$$) ONLY for complex formulas. 
+   - Every display math block MUST be preceded and followed by a completely empty newline.
+   - Avoid LaTeX for plain text or simple arithmetic to ensure renderer stability.
+5. Archiving: The very last line of the response must be the metadata slug.
+
+Metadata Slug Rules:
+- Format: "METADATA_SLUG: kebab-case-slug"
+- Content: 3-6 descriptive words.
+- Characters: Lowercase ASCII, hyphens only (no symbols/emojis).
+- Localization: Transliterate special characters (ä->ae, etc.). Translate non-Latin content to English for the slug.
+
+Output Structure:
+<Content>`
+
+/*
 generateGeminiModelConfig generates a configuration object for the Gemini AI model. It creates a
 genai.GenerateContentConfig object and configures it based on the program settings for interacting
 with the Gemini AI model.
@@ -468,15 +503,22 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 	if progConfig.GeminiMaxOutputTokens != nil && *progConfig.GeminiMaxOutputTokens > 0 {
 		generateContentConfig.MaxOutputTokens = *progConfig.GeminiMaxOutputTokens
 	}
-	if progConfig.GeminiSystemInstruction != "" {
-		// read file with Gemini system instruction
-		systemInstruction, err := os.ReadFile(progConfig.GeminiSystemInstruction)
+
+	// system prompt composition (application part + optional user part)
+	finalSystemInstruction = appSystemInstruction
+	if progConfig.UserSystemInstruction != "" {
+		userInstructionBytes, err := os.ReadFile(progConfig.UserSystemInstruction)
 		if err != nil {
-			fmt.Printf("error [%v] reading system instruction file\n", err)
+			fmt.Printf("error [%v] reading user system instruction file\n", err)
 			os.Exit(1)
 		}
-		generateContentConfig.SystemInstruction = genai.NewContentFromText(string(systemInstruction), "user")
+
+		// Combine: App Prompt + Header + User Prompt
+		if len(userInstructionBytes) > 0 {
+			finalSystemInstruction += "\n\nUser Context:\n" + string(userInstructionBytes)
+		}
 	}
+	generateContentConfig.SystemInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
 
 	generateContentConfig.Tools = []*genai.Tool{}
 	if progConfig.GeminiGroundingWithCodeExecution {
@@ -633,7 +675,7 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 }
 
 /*
-showCompactConfiguration zeigt eine sehr kompakte Übersicht der wichtigsten Parameter.
+showCompactConfiguration shows a very compact overview of the most important parameters.
 */
 func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.GenerateContentConfig) {
 	fmt.Printf("\n--- %s %s ---------------------------------------------------\n", progName, progVersion)

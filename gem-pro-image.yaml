@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.14 - 2026-02-05: corresponding to program release
+# - v0.14 - 2026-02-08: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -96,24 +96,6 @@ GeminiTopK:
 # is approximately four characters. 100 tokens correspond to roughly 60-80 english words.
 GeminiMaxOutputTokens:
 
-# SystemInstruction (also known as "system prompt") is a more forceful prompt to the model.
-# The model will adhere the instructions more strongly than if they appeared in a normal prompt.
-# Typical usage: Optional tone and style instructions for the model.
-# Examples:
-# - 'Provide raw markdown only, no conversational filler, no wrapping code blocks.
-#    Ensure LaTeX math blocks ($$) are always placed on their own new lines.'
-# - 'Translate prompt from English to German. Pay attention to correct grammar and a fluent style.'
-# - 'Use the technical terms common in the subject area. Avoid filler words.'
-# - 'All questions should be answered comprehensively with details, unless the user requests a
-#    concise response specifically. Respond in the same language as the query.'
-# - 'Answer as concisely as possible.'
-# - 'Don't use technical terms in your response.'
-# System instructions let you steer the behavior of a model based on your specific needs and use cases.
-# By giving the model system instructions, you provide the model additional context to understand the
-# task, generate more customized responses, and adhere to specific guidelines over the full user interaction 
-# with the model. System instructions are provided via text file (e.g. gemini-system-instruction.txt).
-GeminiSystemInstruction: gemini-system-instruction.txt
-
 # ground response allowing the AI model to generate and execute program code (in a sandbox)
 GeminiGroundingWithCodeExecution: false
 
@@ -173,7 +155,7 @@ MarkdownOutputApplicationLinux:
 MarkdownOutputApplicationWindows:
 MarkdownOutputApplicationOther:
 
-# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss-slug.html)
 MarkdownHistory: true
 MarkdownHistoryDirectory: ./history-markdown
 
@@ -198,7 +180,7 @@ AnsiOutputLineLength: 132
 #         see https://github.com/charmbracelet/glamour/tree/master/styles
 AnsiOutputTheme: ./assets/glamour-dark-gem-pro.json
 
-# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss-slug.html)
 AnsiHistory: true
 AnsiHistoryDirectory: ./history-ansi
 
@@ -217,7 +199,7 @@ HTMLOutputApplicationLinux: 'xdg-open %s'
 HTMLOutputApplicationWindows: 'cmd /c start "" %s'
 HTMLOutputApplicationOther:
 
-# copy each prompt/response file to history (schema = yyyymmdd-hhmmss.html)
+# copy each prompt/response file to history (schema = yyyymmdd-hhmmss-slug.html)
 HTMLHistory: true
 HTMLHistoryDirectory: ./history-html
 
@@ -319,32 +301,6 @@ NotifyResponseApplicationLinux: !!str notify-send "gemini-prompt" "Response rece
 NotifyResponseApplicationWindows: !!str msg * /TIME:2 "gemini-prompt - Response received ..."
 NotifyResponseApplicationOther:
 
-# History section
-# ---------------
-
-# filename schema (possible option: timestamp, prompt)
-# timestamp : yyyymmdd-hhmmss.extension
-#             e.g. 20250118-134910.html
-# prompt    : prefix.[your actual prompt].postfix.extension
-#             e.g. [What oceans are thereʔ].20250118-140233.html
-#             e.g. 20250118-140233.[What oceans are thereʔ].html
-# file schema 'prompt' often allows you to infer file content from filename
-HistoryFilenameSchema: prompt
-
-# add timestamp (yyyymmdd-hhmmss) to filename (ensures the uniqueness of the filename)
-# this parameters are only useful in conjunction with filename schema 'prompt' 
-HistoryFilenameAddPrefix: false
-HistoryFilenameAddPostfix: true
-
-# add extension to filename (extensions are often associated with applications)
-HistoryFilenameExtensionMarkdown: md
-HistoryFilenameExtensionAnsi: ansi
-HistoryFilenameExtensionHTML: html
-
-# maximum length of filename (mind your operating system's limitations)
-# this parameter is useful in conjunction with filename schema 'prompt' 
-HistoryMaxFilenameLength: 200
-
 # General settings section
 # ------------------------
 
@@ -363,3 +319,29 @@ MIMETypeReplacements:
 - application/json = text/plain
 - application/x-ndjson = text/plain
 - image/svg+xml = text/plain
+
+# System instruction section
+# --------------------------
+# System Instruction (also known as "System Prompt") is a more forceful prompt to the model.
+# The model will adhere the instructions more strongly than if they appeared in a user prompt.
+# The final "System Prompt" consists of two components:
+# - Application System Prompt
+# - User System Prompt
+# The Application System Prompt is immutable (fixed).
+# The User System Prompt can be freely defined.
+# The application combines both System Prompts.
+
+# Typical usage: Optional tone and style instructions for the model.
+# Examples:
+# - Use the technical terms common in the subject area.
+# - All questions should be answered comprehensively with details.
+# - Answer as concisely as possible.
+# - Don't use technical terms in your response.
+# System instructions let you steer the behavior of a model based on your specific needs and use cases.
+# By giving the model system instructions, you provide the model additional context to understand the
+# task, generate more customized responses, and adhere to specific guidelines over the full user interaction 
+# with the model. System instructions are provided via text file (e.g. user-system-instruction.txt).
+UserSystemInstruction:
+
+# include final system instruction in the response (true, false)
+IncludeSystemInstruction: false

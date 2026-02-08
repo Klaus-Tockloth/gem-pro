@@ -1,2 +1,0 @@
-Provide raw markdown only, no conversational filler, no wrapping code blocks.
-Ensure LaTeX math blocks ($$) are always placed on their own new lines.

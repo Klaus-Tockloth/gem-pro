@@ -6,15 +6,118 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/flytam/filenamify"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid"
 	"github.com/mitchellh/go-wordwrap"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
+
+var (
+	metadataSlugRegex = regexp.MustCompile(`(?m)^METADATA_SLUG:\s*(.+)\s*$`)
+	slugAllowedChars  = regexp.MustCompile(`[^a-z0-9-]+`)
+	slugMultiDash     = regexp.MustCompile(`-+`)
+)
+
+/*
+extractAndCleanSlug extracts the slug from the content and returns the cleaned content
+as well as the found slug.
+If no slug is found, the content is returned unchanged and an empty string is returned.
+*/
+func extractAndCleanSlug(content string) (string, string) {
+	// Search for the slug
+	matches := metadataSlugRegex.FindStringSubmatch(content)
+	slug := ""
+
+	if len(matches) > 1 {
+		rawSlug := matches[1]
+		slug = sanitizeSlug(rawSlug)
+
+		// Remove the metadata line from the content so it does not appear in the output
+		content = metadataSlugRegex.ReplaceAllString(content, "")
+		content = strings.TrimSpace(content)
+	}
+
+	return content, slug
+}
+
+/*
+sanitizeSlug ensures that the slug conforms to the "lowercase, ascii only, kebab-case" format.
+It uses generic unicode normalization to handle chars like ñ, ç, é, etc.
+*/
+func sanitizeSlug(input string) string {
+	// Basic Cleaning and Lowercasing
+	input = strings.TrimSpace(input)
+	input = strings.ToLower(input)
+
+	// Specific Cultural Overrides (Business Logic)
+	// NFD normalization would turn "ä" -> "a", but we explicitly want "ae".
+	// Therefore, we handle these German specifics BEFORE generic normalization.
+	input = strings.ReplaceAll(input, "ä", "ae")
+	input = strings.ReplaceAll(input, "ö", "oe")
+	input = strings.ReplaceAll(input, "ü", "ue")
+	input = strings.ReplaceAll(input, "ß", "ss")
+
+	// Generic Unicode Normalization (NFD + Remove Non-Spacing Marks)
+	// This handles cases like:
+	// "ñ" -> "n" + "~" -> "n"
+	// "é" -> "e" + "´" -> "e"
+	// "ç" -> "c" + "¸" -> "c"
+	t := transform.Chain(
+		norm.NFD,                           // Decompose characters
+		runes.Remove(runes.In(unicode.Mn)), // Remove non-spacing marks (accents, tildes, etc.)
+		norm.NFC,                           // Recompose (optional, ensures standard form for remaining chars)
+	)
+
+	result, _, err := transform.String(t, input)
+	if err != nil {
+		// Fallback to original input if transformation fails (unlikely)
+		fmt.Printf("warning: slug normalization failed for '%s': %v\n", input, err)
+		result = input
+	}
+	input = result
+
+	// Sanitize: Keep only alphanumeric ASCII and hyphens
+	// This removes any characters that survived normalization but aren't letters/numbers
+	// (e.g. emojis, punctuation like '?', '!', brackets).
+	input = slugAllowedChars.ReplaceAllString(input, "-")
+
+	// Cleanup Dashes
+	// No double hyphens
+	input = slugMultiDash.ReplaceAllString(input, "-")
+	// Trim dashes from start/end
+	input = strings.Trim(input, "-")
+
+	// Truncate
+	if len(input) > 100 {
+		input = input[:100]
+		input = strings.TrimRight(input, "-")
+	}
+
+	return input
+}
+
+/*
+buildDestinationFilename generates the filename according to the schema:
+yyyymmdd-hhmmss-<slug>.<extension>
+*/
+func buildDestinationFilename(now time.Time, slug string, extension string) string {
+	const fallbackSlug = "unknown-content"
+
+	if slug == "" {
+		slug = fallbackSlug
+	}
+	timestamp := now.Format("20060102-150405")
+	filename := fmt.Sprintf("%s-%s.%s", timestamp, slug, extension)
+	return filename
+}
 
 /*
 fileExists checks if a file exists at the given filename. It verifies whether a file exists at
@@ -225,90 +328,6 @@ func getFileMimeType(filepath string) (string, error) {
 	mimeType = mimeTypeParts[0]
 
 	return mimeType, nil
-}
-
-/*
-promptToFilename generates a valid filename from a user prompt string. It creates a safe and valid
-filename from a user prompt by replacing problematic characters, truncating it to a maximum length,
-and adding prefixes, postfixes, and extensions as configured.
-*/
-func promptToFilename(prompt string, maxLength int, prefix, postfix, extension string) string {
-	var filename string
-	var err error
-
-	// length correction for 'core' name
-	maxLength -= 2 // "[" + "]"
-	if prefix != "" {
-		maxLength -= len(prefix) + 1
-	}
-	if postfix != "" {
-		maxLength -= 1 + len(postfix)
-	}
-	if extension != "" {
-		maxLength -= 1 + len(extension)
-	}
-
-	// replace problematic characters with visuell similar runes
-	prompt = strings.ReplaceAll(prompt, "?", "ʔ")  // glottal stop
-	prompt = strings.ReplaceAll(prompt, ":", "ː")  // triangular colon
-	prompt = strings.ReplaceAll(prompt, "/", "∕")  // division slash
-	prompt = strings.ReplaceAll(prompt, "\\", "＼") // fullwidth reverse solidus
-	prompt = strings.ReplaceAll(prompt, "*", "⁎")  // low asterisk
-	prompt = strings.ReplaceAll(prompt, "|", "¦")  // broken bar
-	prompt = strings.ReplaceAll(prompt, "<", "‹")  // single left-pointing angle quotation mark
-	prompt = strings.ReplaceAll(prompt, ">", "›")  // single right-pointing angle quotation mark
-	prompt = strings.ReplaceAll(prompt, "\"", "”") // right double quotation mark
-	prompt = strings.ReplaceAll(prompt, ".", "․")  // one dot leader
-
-	filename, err = filenamify.Filenamify(prompt, filenamify.Options{Replacement: " ", MaxLength: maxLength})
-	if err != nil {
-		fmt.Printf("error [%v] at filenamify.Filenamify()\n", err)
-		uuid4, _ := uuid.NewV4()
-		filename = uuid4.String()
-	}
-	filename = "[" + filename + "]"
-
-	if prefix != "" {
-		filename = prefix + "." + filename
-	}
-	if postfix != "" {
-		filename += "." + postfix
-	}
-	if extension != "" {
-		filename += "." + extension
-	}
-
-	return filename
-}
-
-/*
-buildDestinationFilename constructs a destination filename for history files based on the program configuration
-and current context. It generates a filename for saving history files, based on the configured filename schema
-(timestamp or prompt-based), adding prefixes, postfixes, and extensions as specified in the program settings.
-*/
-func buildDestinationFilename(now time.Time, prompt, extension string) string {
-	formatLayout := "20060102-150405"
-	timestamp := now.Format(formatLayout)
-
-	destinationFilename := ""
-	switch progConfig.HistoryFilenameSchema {
-	case "prompt":
-		prefix := ""
-		if progConfig.HistoryFilenameAddPrefix {
-			prefix = timestamp
-		}
-		postfix := ""
-		if progConfig.HistoryFilenameAddPostfix {
-			postfix = timestamp
-		}
-		destinationFilename = promptToFilename(prompt, progConfig.HistoryMaxFilenameLength, prefix, postfix, extension)
-	case "timestamp":
-		destinationFilename = timestamp
-		if extension != "" {
-			destinationFilename += "." + extension
-		}
-	}
-	return destinationFilename
 }
 
 /*

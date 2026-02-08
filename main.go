@@ -37,8 +37,8 @@ Releases:
   - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
                           help/usage output revised
   - v0.13.0 - 2026-01-31: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
-  - v0.14.0 - 2026-02-05: libs updated, go v1.25.6, markdown cleanup improved,
-                          'mathjax' support added, 'mermaid' support added, default system instruction added
+  - v0.14.0 - 2026-02-08: libs updated, go v1.25.7, markdown cleanup improved, file naming revised,
+                          MathJax support added, Mermaid support added, default system instruction added
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -54,12 +54,7 @@ Remarks:
 
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support for "Stop Sequence".
 - Support batch mode.
-- Improve output naming.
-- Print prompt/response costs in dollar cents.
-- Support 'Deep Research'.
-- Include 'gemini-system-instruction.txt' in binary.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -83,7 +78,7 @@ import (
 	"syscall"
 	"time"
 
-	mathjax "github.com/litao91/goldmark-mathjax"
+	"github.com/gohugoio/hugo-goldmark-extensions/passthrough"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
@@ -94,7 +89,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v0.14.0"
-	progDate    = "2026-02-05"
+	progDate    = "2026-02-08"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -120,6 +115,9 @@ type FileToHandle struct {
 
 // filesToHandle holds list of files to handle in prompt or Gemini context
 var filesToHandle []FileToHandle
+
+// finalSystemInstruction holds the complete system prompt (App + User)
+var finalSystemInstruction string
 
 // CacheToHandle represents all tokenized files in AI model specific cache
 type CacheToHandle struct {
@@ -234,8 +232,8 @@ func main() {
 	if !fileExists("gem-pro.png") {
 		writeGemProPng()
 	}
-	if !fileExists("gemini-system-instruction.txt") {
-		writeGeminiSystemInstruction()
+	if !fileExists("user-system-instruction.txt") {
+		writeUserSystemInstruction()
 	}
 
 	// 'assets' in current directory (to render current HTML file in current directory)
@@ -369,9 +367,21 @@ func main() {
 	// overwrite YAML config values with cli parameters
 	overwriteConfigValues(setFlags)
 
+	// configure Markdown Passthrough Extension
+	passthroughExt := passthrough.New(passthrough.Config{
+		InlineDelimiters: []passthrough.Delimiters{
+			{Open: "$", Close: "$"},
+			{Open: `\(`, Close: `\)`},
+		},
+		BlockDelimiters: []passthrough.Delimiters{
+			{Open: "$$", Close: "$$"},
+			{Open: `\[`, Close: `\]`},
+		},
+	})
+
 	// create markdown parser (WithUnsafe() ensures to render potentially dangerous links like "file:///Users/...")
 	markdownParser = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, mathjax.MathJax, &TargetBlankExtension{}),
+		goldmark.WithExtensions(extension.GFM, &TargetBlankExtension{}, passthroughExt),
 		goldmark.WithRendererOptions(html.WithUnsafe()),
 	)
 
@@ -666,6 +676,18 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 		processError(unknownErr)
 	}
 
+	// extract slug (as part of the filename)
+	var slug string
+	if respErr != nil {
+		slug = "error-response"
+	} else {
+		fullText := ""
+		if len(resp.Candidates) > 0 {
+			fullText = getCandidateText(resp.Candidates[0], true)
+		}
+		_, slug = extractAndCleanSlug(fullText)
+	}
+
 	// print prompt and response to terminal
 	if progConfig.AnsiOutput {
 		printPromptResponseToTerminal()
@@ -673,7 +695,7 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 
 	// copy ansi file to history
 	if progConfig.AnsiHistory {
-		ansiDestinationFile := buildDestinationFilename(now, prompt, progConfig.HistoryFilenameExtensionAnsi)
+		ansiDestinationFile := buildDestinationFilename(now, slug, "ansi")
 		ansiDestinationPathFile := filepath.Join(progConfig.AnsiHistoryDirectory, ansiDestinationFile)
 		copyFile(progConfig.AnsiPromptResponseFile, ansiDestinationPathFile)
 	}
@@ -683,7 +705,7 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 
 	// copy markdown file to history
 	if progConfig.MarkdownHistory {
-		markdownDestinationFile := buildDestinationFilename(now, prompt, progConfig.HistoryFilenameExtensionMarkdown)
+		markdownDestinationFile := buildDestinationFilename(now, slug, "md")
 		markdownDestinationPathFile := filepath.Join(progConfig.MarkdownHistoryDirectory, markdownDestinationFile)
 		copyFile(progConfig.MarkdownPromptResponseFile, markdownDestinationPathFile)
 		commandLine = fmt.Sprintf(progConfig.MarkdownOutputApplication, "\""+markdownDestinationPathFile+"\"")
@@ -703,7 +725,7 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 
 	// copy html file to history
 	if progConfig.HTMLHistory {
-		htmlDestinationFile := buildDestinationFilename(now, prompt, progConfig.HistoryFilenameExtensionHTML)
+		htmlDestinationFile := buildDestinationFilename(now, slug, "html")
 		htmlDestinationPathFile := filepath.Join(progConfig.HTMLHistoryDirectory, htmlDestinationFile)
 		copyFile(progConfig.HTMLPromptResponseFile, htmlDestinationPathFile)
 		commandLine = fmt.Sprintf(progConfig.HTMLOutputApplication, "\""+htmlDestinationPathFile+"\"")
@@ -926,7 +948,7 @@ func handleStandaloneCacheActions() {
 }
 
 /*
-handleStandaloneStoreActions verarbeitet die neuen Store-Befehle.
+handleStandaloneStoreActions processes the new store commands.
 */
 func handleStandaloneStoreActions() {
 	if *listStores {

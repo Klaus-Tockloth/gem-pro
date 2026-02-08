@@ -116,15 +116,15 @@ func writeAssets(basepath string) {
 	}
 }
 
-//go:embed gemini-system-instruction.txt
-var geminiSystemInstructionTxtBytes []byte
+//go:embed user-system-instruction.txt
+var userSystemInstructionTxtBytes []byte
 
 /*
-writeReadme writes the embedded gemini-system-instruction.txt to the current directory.
+writeUserSystemInstruction writes the embedded user-system-instruction.txt to the current directory.
 */
-func writeGeminiSystemInstruction() {
-	filename := "gemini-system-instruction.txt"
-	err := os.WriteFile(filename, geminiSystemInstructionTxtBytes, 0600)
+func writeUserSystemInstruction() {
+	filename := "user-system-instruction.txt"
+	err := os.WriteFile(filename, userSystemInstructionTxtBytes, 0600)
 	if err != nil {
 		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}

@@ -58,10 +58,10 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	promptString.WriteString("\n***\n")
 
 	// system instructions part of prompt (not included in contents, but important)
-	if progConfig.GeminiSystemInstruction != "" {
+	if progConfig.IncludeSystemInstruction && finalSystemInstruction != "" {
 		promptString.WriteString("**System Instruction to Gemini:**\n")
 		promptString.WriteString("\n```plaintext\n")
-		promptString.WriteString(progConfig.GeminiSystemInstruction)
+		promptString.WriteString(finalSystemInstruction)
 		promptString.WriteString("\n```\n")
 		promptString.WriteString("\n***\n")
 	}
@@ -499,8 +499,11 @@ to the current request / response files in Markdown, ANSI, and HTML formats.
 func appendResponseString(responseString strings.Builder) {
 	rawMarkdown := responseString.String()
 
+	// extraxt Metadata Slug
+	cleanedContent, _ := extractAndCleanSlug(rawMarkdown)
+
 	// cleanup Markdown
-	cleanedMarkdown := cleanMarkdown(rawMarkdown)
+	cleanedMarkdown := cleanMarkdown(cleanedContent)
 
 	// 1. prepare Markdown for direct file saving (and ANSI rendering)
 	// replace HTML comment tags with pure Markdown equivalents
