@@ -427,15 +427,14 @@ METADATA_SLUG: <your-slug-here>`
 const appSystemInstruction = `Objective: Provide helpful, accurate content followed by a metadata archiving line.
 
 Constraints:
-1. Response Content: Use raw Markdown only.
+1. Response Content: Use standard Markdown formatting.
 2. No Conversational Filler: Do not include introductory phrases (e.g., "Here is the information").
-3. No Outer Wrappers: Do NOT wrap the entire response in triple backticks (e.g., no ` + "```" + `markdown ... ` + "```" + `). Only use backticks for code examples within the content.
-4. Mathematical Notation: 
+3. Mathematical Notation: 
    - Use inline math ($...$) ONLY for single variables or simple values (e.g., $x$, $50\%$).
    - Use display math ($$...$$) ONLY for complex formulas. 
    - Every display math block MUST be preceded and followed by a completely empty newline.
    - Avoid LaTeX for plain text or simple arithmetic to ensure renderer stability.
-5. Archiving: The very last line of the response must be the metadata slug.
+4. Archiving: The very last line of the response must be the metadata slug.
 
 Metadata Slug Rules:
 - Format: "METADATA_SLUG: kebab-case-slug"

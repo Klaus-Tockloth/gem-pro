@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v0.14 - 2026-02-08: corresponding to program release
+# - v0.14 - 2026-02-20: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -25,16 +25,16 @@
 GeminiAPIKey: 'env:GEMINI_API_KEY'
 
 # Gemini AI text model family (options: -lite, -flash, -pro)
-GeminiLiteAiModel: models/gemini-2.5-flash-lite-preview-09-2025
+GeminiLiteAiModel: models/gemini-flash-lite-latest
 GeminiFlashAiModel: models/gemini-3-flash-preview
-GeminiProAiModel: models/gemini-3-pro-preview
+GeminiProAiModel: models/gemini-3.1-pro-preview
 
 # Gemini AI image model family (options: -flash-image [Nano Banana], -pro-image [Nano Banana Pro])
 GeminiFlashImageAiModel: models/gemini-2.5-flash-image
 GeminiProImageAiModel: models/gemini-3-pro-image-preview
 
 # Gemini AI default model
-GeminiDefaultAiModel: models/gemini-3-pro-image-preview
+GeminiDefaultAiModel: models/gemini-3.1-pro-preview
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
 GeminiResponseModalities:

@@ -5,7 +5,8 @@
 # - Builds uploads (tar.gz or zip) for Github project repository (assets in release section).
 #
 # Releases:
-# - v1.0.0 - 2025/03/11: initial release
+# - v1.0.0 - 2025-03-11: initial release
+# - v1.1.0 - 2026-02-19: Windows ARM-32 support removed, ARM-64 added
 # ------------------------------------
 
 # set -o xtrace
@@ -37,4 +38,4 @@ tar -cvzf ./uploads/openbsd-arm64_gem-pro.tar.gz ./binaries/openbsd-arm64/gem-pr
 
 # uploads 'windows'
 zip ./uploads/windows-amd64_gem-pro.zip ./binaries/windows-amd64/gem-pro.exe
-zip ./uploads/windows-arm_gem-pro.zip ./binaries/windows-arm/gem-pro.exe
+zip ./uploads/windows-arm64_gem-pro.zip ./binaries/windows-arm64/gem-pro.exe

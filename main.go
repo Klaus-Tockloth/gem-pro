@@ -39,6 +39,7 @@ Releases:
   - v0.13.0 - 2026-01-31: libs updated, go v1.25.6, filelist file: ignore empty lines and lines starting with # or //
   - v0.14.0 - 2026-02-08: libs updated, go v1.25.7, markdown cleanup improved, file naming revised,
                           MathJax support added, Mermaid support added, default system instruction added
+  - v0.14.1 - 2026-02-20: libs updated, go v1.26.0, hard-coded system instruction modified, gemini-3.1-pro-preview
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -88,8 +89,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.14.0"
-	progDate    = "2026-02-08"
+	progVersion = "v0.14.1"
+	progDate    = "2026-02-20"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

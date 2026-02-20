@@ -10,6 +10,7 @@
 # - v1.2.0 - 2025-11-21: errexit added
 # - v1.3.0 - 2025-12-10: revised
 # - v1.4.0 - 2026-02-03: revised
+# - v1.5.0 - 2026-02-19: Windows ARM-32 support removed, ARM-64 added
 # ------------------------------------
 
 set -o errexit
@@ -44,7 +45,7 @@ env GOOS=linux GOARCH=arm64 go build -v -o binaries/linux-arm64/gem-pro
 
 # compile 'windows'
 env GOOS=windows GOARCH=amd64 go build -v -o binaries/windows-amd64/gem-pro.exe
-env GOOS=windows GOARCH=arm go build -v -o binaries/windows-arm/gem-pro.exe
+env GOOS=windows GOARCH=arm64 go build -v -o binaries/windows-arm64/gem-pro.exe
 
 # compile 'freebsd'
 env GOOS=freebsd GOARCH=amd64 go build -v -o binaries/freebsd-amd64/gem-pro

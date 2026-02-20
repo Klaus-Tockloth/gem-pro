@@ -561,6 +561,16 @@ const (
 	EnvironmentBrowser Environment = "ENVIRONMENT_BROWSER"
 )
 
+// Enum representing the Vertex embedding API to use.
+type EmbeddingAPIType string
+
+const (
+	// predict API endpoint (default)
+	EmbeddingAPITypePredict EmbeddingAPIType = "PREDICT"
+	// embedContent API Endpoint
+	EmbeddingAPITypeEmbedContent EmbeddingAPIType = "EMBED_CONTENT"
+)
+
 // Enum that controls the safety filter level for objectionable content.
 type SafetyFilterLevel string
 
@@ -4519,6 +4529,10 @@ type CreateTuningJobConfig struct {
 	SftLossWeightMultiplier *float32 `json:"sftLossWeightMultiplier,omitempty"`
 	// Optional. The Google Cloud Storage location where the tuning job outputs are written.
 	OutputURI string `json:"outputUri,omitempty"`
+	// Optional. The encryption spec of the tuning job. Customer-managed encryption key
+	// options for a TuningJob. If this is set, then all resources created by the TuningJob
+	// will be encrypted with provided encryption key.
+	EncryptionSpec *EncryptionSpec `json:"encryptionSpec,omitempty"`
 }
 
 // A long-running operation.

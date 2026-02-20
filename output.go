@@ -47,7 +47,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 		if chatNumber == 1 {
 			promptString.WriteString("**Prompt to Gemini (initial chat #1):**\n")
 		} else {
-			promptString.WriteString(fmt.Sprintf("**Prompt to Gemini (refinement chat #%d):**\n", chatNumber))
+			fmt.Fprintf(&promptString, "**Prompt to Gemini (refinement chat #%d):**\n", chatNumber)
 		}
 	} else {
 		promptString.WriteString("**Prompt to Gemini:**\n")
@@ -80,11 +80,11 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 							mimeType += fmt.Sprintf(" -> %s", replacement)
 						}
 					}
-					promptString.WriteString(fmt.Sprintf("%-5s %s (%s, %s, %s)\n",
-						fileToUpload.State, fileToUpload.Filepath, fileToUpload.LastUpdate, fileToUpload.FileSize, mimeType))
+					fmt.Fprintf(&promptString, "%-5s %s (%s, %s, %s)\n",
+						fileToUpload.State, fileToUpload.Filepath, fileToUpload.LastUpdate, fileToUpload.FileSize, mimeType)
 				} else {
-					promptString.WriteString(fmt.Sprintf("%-5s %s %s\n",
-						fileToUpload.State, fileToUpload.Filepath, fileToUpload.ErrorMessage))
+					fmt.Fprintf(&promptString, "%-5s %s %s\n",
+						fileToUpload.State, fileToUpload.Filepath, fileToUpload.ErrorMessage)
 				}
 			}
 			promptString.WriteString("```\n")
@@ -112,7 +112,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 			promptString.WriteString("**Data referenced by the Prompt (from FileSearchStores):**\n")
 			promptString.WriteString("\n```plaintext\n")
 			for _, storeID := range includeStores {
-				promptString.WriteString(fmt.Sprintf("Included Store: %s\n", storeID))
+				fmt.Fprintf(&promptString, "Included Store: %s\n", storeID)
 			}
 			promptString.WriteString("```\n")
 			promptString.WriteString("\n***\n")
@@ -183,19 +183,19 @@ func getCandidateText(candidate *genai.Candidate, includeThoughts bool) string {
 			regularContent.WriteString("\nCode Execution Result:\n")
 			regularContent.WriteString("\n```plaintext\n")
 			if part.CodeExecutionResult.Outcome != genai.OutcomeOK {
-				regularContent.WriteString(fmt.Sprintf("%s\n\n", part.CodeExecutionResult.Outcome))
+				fmt.Fprintf(&regularContent, "%s\n\n", part.CodeExecutionResult.Outcome)
 			}
 			regularContent.WriteString(strings.TrimSuffix(part.CodeExecutionResult.Output, "\n"))
 			regularContent.WriteString("\n```\n")
 		}
 		if part.ExecutableCode != nil {
-			regularContent.WriteString(fmt.Sprintf("\nExecutable %s Code:\n", part.ExecutableCode.Language))
-			regularContent.WriteString(fmt.Sprintf("\n```%s\n", part.ExecutableCode.Language))
+			fmt.Fprintf(&regularContent, "\nExecutable %s Code:\n", part.ExecutableCode.Language)
+			fmt.Fprintf(&regularContent, "\n```%s\n", part.ExecutableCode.Language)
 			regularContent.WriteString(strings.TrimSuffix(part.ExecutableCode.Code, "\n"))
 			regularContent.WriteString("\n```\n")
 		}
 		if part.FileData != nil {
-			regularContent.WriteString(fmt.Sprintf("File Data: URI=%s, MIME=%s\n", part.FileData.FileURI, part.FileData.MIMEType))
+			fmt.Fprintf(&regularContent, "File Data: URI=%s, MIME=%s\n", part.FileData.FileURI, part.FileData.MIMEType)
 		}
 		if part.FunctionCall != nil {
 			regularContent.WriteString("A predicted [FunctionCall] returned from the model.\n")
@@ -204,17 +204,17 @@ func getCandidateText(candidate *genai.Candidate, includeThoughts bool) string {
 			regularContent.WriteString("The result output of a [FunctionCall].\n")
 		}
 		if part.InlineData != nil {
-			regularContent.WriteString(fmt.Sprintf("Inline data (%.1f KiB, %s) : ", float64(len(part.InlineData.Data))/1024.0, part.InlineData.MIMEType))
+			fmt.Fprintf(&regularContent, "Inline data (%.1f KiB, %s) : ", float64(len(part.InlineData.Data))/1024.0, part.InlineData.MIMEType)
 			pathname, filename, err := writeDataToFile(part.InlineData.Data, part.InlineData.MIMEType, finishProcessing)
 			if err != nil {
-				regularContent.WriteString(fmt.Sprintf("error [%v] writing data to file\n", err))
+				fmt.Fprintf(&regularContent, "error [%v] writing data to file\n", err)
 			} else {
 				u := url.URL{
 					Scheme: "file",
 					Path:   pathname,
 				}
 				encodedURL := u.String()
-				regularContent.WriteString(fmt.Sprintf("\n![%s](%s)\n\n", filename, encodedURL))
+				fmt.Fprintf(&regularContent, "\n![%s](%s)\n\n", filename, encodedURL)
 			}
 		}
 		if part.Text != "" { // ensure that part.Text is not from Thought
@@ -254,7 +254,7 @@ func processPureResponse(resp *genai.GenerateContentResponse) {
 		// show why the model stopped generating tokens (content)
 		if candidate.FinishReason != genai.FinishReasonStop {
 			responseString.WriteString("\n***\n")
-			responseString.WriteString(fmt.Sprintf("Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason))
+			fmt.Fprintf(&responseString, "Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason)
 		}
 	}
 
@@ -272,7 +272,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	// print response candidate(s)
 	for i, candidate := range resp.Candidates {
 		if len(resp.Candidates) > 1 {
-			responseString.WriteString(fmt.Sprintf("**Response from Gemini (Candidate #%d):**\n\n", (i + 1)))
+			fmt.Fprintf(&responseString, "**Response from Gemini (Candidate #%d):**\n\n", (i + 1))
 		} else {
 			responseString.WriteString("**Response from Gemini:**\n\n")
 		}
@@ -294,9 +294,9 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		// show text citation source URIs
 		if len(citationURIs) > 0 {
 			responseString.WriteString("\n***\n")
-			responseString.WriteString(fmt.Sprintf("Text Citation %s:\n\n", pluralize(len(citationURIs), "Source")))
+			fmt.Fprintf(&responseString, "Text Citation %s:\n\n", pluralize(len(citationURIs), "Source"))
 			for _, citationURI := range citationURIs {
-				responseString.WriteString(fmt.Sprintf("* [%s](%s)\n", citationURI, citationURI))
+				fmt.Fprintf(&responseString, "* [%s](%s)\n", citationURI, citationURI)
 			}
 		}
 
@@ -313,16 +313,16 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		// show code citation licenses (needs revision, output never seen)
 		if len(citationLicenses) > 0 {
 			responseString.WriteString("\n***\n")
-			responseString.WriteString(fmt.Sprintf("Code Citation %s:\n\n", pluralize(len(citationLicenses), "License")))
+			fmt.Fprintf(&responseString, "Code Citation %s:\n\n", pluralize(len(citationLicenses), "License"))
 			for _, citationSourceLicense := range citationLicenses {
-				responseString.WriteString(fmt.Sprintf("* %s\n", citationSourceLicense))
+				fmt.Fprintf(&responseString, "* %s\n", citationSourceLicense)
 			}
 		}
 
 		// show why the model stopped generating tokens (content) (needs revision, output never seen)
 		if candidate.FinishReason != genai.FinishReasonStop {
 			responseString.WriteString("\n***\n")
-			responseString.WriteString(fmt.Sprintf("Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason))
+			fmt.Fprintf(&responseString, "Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason)
 		}
 
 		// show grounding metadata
@@ -335,11 +335,11 @@ func processResponse(resp *genai.GenerateContentResponse) {
 				for k, groundingChunk := range candidate.GroundingMetadata.GroundingChunks {
 					switch {
 					case groundingChunk.Web != nil:
-						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.Web.Title, groundingChunk.Web.URI))
+						fmt.Fprintf(&responseString, "%d. [%s](%s)\n", k+1, groundingChunk.Web.Title, groundingChunk.Web.URI)
 					case groundingChunk.Maps != nil:
-						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.Maps.Title, groundingChunk.Maps.URI))
+						fmt.Fprintf(&responseString, "%d. [%s](%s)\n", k+1, groundingChunk.Maps.Title, groundingChunk.Maps.URI)
 					case groundingChunk.RetrievedContext != nil:
-						responseString.WriteString(fmt.Sprintf("%d. [%s](%s)\n", k+1, groundingChunk.RetrievedContext.Title, groundingChunk.RetrievedContext.URI))
+						fmt.Fprintf(&responseString, "%d. [%s](%s)\n", k+1, groundingChunk.RetrievedContext.Title, groundingChunk.RetrievedContext.URI)
 					}
 				}
 			}
@@ -348,7 +348,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 				responseString.WriteString("\n***\n")
 				responseString.WriteString("**Google Search Suggestions:**\n\n")
 				for _, webSearchQuery := range candidate.GroundingMetadata.WebSearchQueries {
-					responseString.WriteString(fmt.Sprintf("* [%s](https://www.google.com/search?q=%s)\n", webSearchQuery, url.QueryEscape(webSearchQuery)))
+					fmt.Fprintf(&responseString, "* [%s](https://www.google.com/search?q=%s)\n", webSearchQuery, url.QueryEscape(webSearchQuery))
 				}
 			}
 		}
@@ -366,7 +366,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 
 	// print response metadata
 	responseString.WriteString("```plaintext\n")
-	responseString.WriteString(fmt.Sprintf("AI model   : %v (%s, %s)\n", resp.ModelVersion, temperatureInfo, toppInfo))
+	fmt.Fprintf(&responseString, "AI model   : %v (%s, %s)\n", resp.ModelVersion, temperatureInfo, toppInfo)
 
 	var activeTools []string
 	if progConfig.GeminiGroundingWithGoogleSearch {
@@ -386,14 +386,14 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	}
 
 	if len(activeTools) > 0 {
-		responseString.WriteString(fmt.Sprintf("Tools      : %s\n", strings.Join(activeTools, ", ")))
+		fmt.Fprintf(&responseString, "Tools      : %s\n", strings.Join(activeTools, ", "))
 	}
 
-	responseString.WriteString(fmt.Sprintf("Generated  : %v\n", finishProcessing.Format(time.RFC850)))
+	fmt.Fprintf(&responseString, "Generated  : %v\n", finishProcessing.Format(time.RFC850))
 
 	duration := finishProcessing.Sub(startProcessing)
-	responseString.WriteString(fmt.Sprintf("Processing : %.1f secs for %d %s\n", duration.Seconds(),
-		len(resp.Candidates), pluralize(len(resp.Candidates), "candidate")))
+	fmt.Fprintf(&responseString, "Processing : %.1f secs for %d %s\n", duration.Seconds(),
+		len(resp.Candidates), pluralize(len(resp.Candidates), "candidate"))
 
 	/*
 	   Cost Calculation Logic (Corrected for SDK v0.8.0+ / Gemini 1.5+ / Gemini 3):
@@ -407,7 +407,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		u := resp.UsageMetadata
 
 		// Output Header: Total Tokens
-		responseString.WriteString(fmt.Sprintf("Tokens     : %d (Total)\n", u.TotalTokenCount))
+		fmt.Fprintf(&responseString, "Tokens     : %d (Total)\n", u.TotalTokenCount)
 
 		// 1. Input Group
 		// Calculate absolute Input Total (Text + Tools)
@@ -431,8 +431,8 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		}
 
 		// Display Total Input and breakdown
-		responseString.WriteString(fmt.Sprintf("  Input    : %d (%s)\n",
-			totalInputCount, strings.Join(inputDetails, ", ")))
+		fmt.Fprintf(&responseString, "  Input    : %d (%s)\n",
+			totalInputCount, strings.Join(inputDetails, ", "))
 
 		// 2. Output Group
 		// We sum them up to show the real total output volume.
@@ -444,12 +444,12 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			outputDetails = append(outputDetails, fmt.Sprintf("Thoughts: %d", u.ThoughtsTokenCount))
 		}
 
-		responseString.WriteString(fmt.Sprintf("  Output   : %d (%s)\n",
-			totalOutputCount, strings.Join(outputDetails, ", ")))
+		fmt.Fprintf(&responseString, "  Output   : %d (%s)\n",
+			totalOutputCount, strings.Join(outputDetails, ", "))
 	}
 
 	if resp.PromptFeedback != nil {
-		responseString.WriteString(fmt.Sprintf("Blocked    : %v\n", resp.PromptFeedback.BlockReasonMessage))
+		fmt.Fprintf(&responseString, "Blocked    : %v\n", resp.PromptFeedback.BlockReasonMessage)
 	}
 
 	responseString.WriteString("```\n")
@@ -478,12 +478,12 @@ func processError(err error) {
 	// print response metadata
 	responseString.WriteString("```plaintext\n")
 	if err == nil {
-		responseString.WriteString(fmt.Sprintf("AI model   : %v\n", progConfig.GeminiAiModel))
+		fmt.Fprintf(&responseString, "AI model   : %v\n", progConfig.GeminiAiModel)
 	}
-	responseString.WriteString(fmt.Sprintf("Generated  : %v\n", finishProcessing.Format(time.RFC850)))
+	fmt.Fprintf(&responseString, "Generated  : %v\n", finishProcessing.Format(time.RFC850))
 
 	duration := finishProcessing.Sub(startProcessing)
-	responseString.WriteString(fmt.Sprintf("Processing : %.1f secs resulting in error\n", duration.Seconds()))
+	fmt.Fprintf(&responseString, "Processing : %.1f secs resulting in error\n", duration.Seconds())
 
 	responseString.WriteString("```\n")
 	responseString.WriteString("\n***\n")

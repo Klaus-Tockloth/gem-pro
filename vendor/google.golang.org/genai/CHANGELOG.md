@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.47.0](https://github.com/googleapis/go-genai/compare/v1.46.0...v1.47.0) (2026-02-18)
+
+
+### Features
+
+* Support multimodal embedding for Gemini Embedding 2.0 and support MaaS models in Models.embed_content() (Vertex AI API) ([ef61dd1](https://github.com/googleapis/go-genai/commit/ef61dd1f3c65e185c594d07a2cf928e14f3b04ec))
+
+## [1.46.0](https://github.com/googleapis/go-genai/compare/v1.45.0...v1.46.0) (2026-02-09)
+
+
+### Features
+
+* Support encryption_spec in tuning job creation configuration for GenAI SDK ([025a3f0](https://github.com/googleapis/go-genai/commit/025a3f0c8d88c95ebb35f884e35d389cfdd7affa))
+
+
+### Bug Fixes
+
+* round up timeout ([4150d97](https://github.com/googleapis/go-genai/commit/4150d9759ab3cd35a8bea3040991c1e906f8e787))
+
 ## [1.45.0](https://github.com/googleapis/go-genai/compare/v1.44.0...v1.45.0) (2026-02-04)
 
 
