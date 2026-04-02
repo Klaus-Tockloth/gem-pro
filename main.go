@@ -40,6 +40,7 @@ Releases:
   - v0.14.0 - 2026-02-08: libs updated, go v1.25.7, markdown cleanup improved, file naming revised,
                           MathJax support added, Mermaid support added, default system instruction added
   - v0.14.1 - 2026-02-20: libs updated, go v1.26.0, hard-coded system instruction modified, gemini-3.1-pro-preview
+  - v1.0.0 - 2026-04-02: libs updated, go v1.26.1, configuration (YAML) updated
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -56,6 +57,7 @@ Remarks:
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
 - Support batch mode.
+- Add AI model status (e.g. PREVIEW, STABLE, LEGACY, ...) to response summery.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -89,8 +91,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v0.14.1"
-	progDate    = "2026-02-20"
+	progVersion = "v1.0.0"
+	progDate    = "2026-04-02"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
