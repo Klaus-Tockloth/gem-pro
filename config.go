@@ -40,12 +40,12 @@ type ProgConfig struct {
 	GeminiGroundigWithGoogleMaps        bool     `yaml:"GeminiGroundigWithGoogleMaps"`
 	GeminiGroundingWithFileSearchStores []string `yaml:"GeminiGroundingWithFileSearchStores"`
 
-	GeminiMaxThinkingBudget    *int32 `yaml:"GeminiMaxThinkingBudget"`
 	GeminiThinkingLevel        string `yaml:"GeminiThinkingLevel"`
 	GeminiIncludeThoughts      bool   `yaml:"GeminiIncludeThoughts"`
 	GeminiCacheName            string `yaml:"GeminiCacheName"`
 	GeminiCacheTimeToLive      int    `yaml:"GeminiCacheTimeToLive"`
 	GeminiInputMediaResolution string `yaml:"GeminiInputMediaResolution"`
+	GeminiServiceTier          string `yaml:"GeminiServiceTier"`
 
 	// Markdown configuration
 	MarkdownPromptResponseFile       string `yaml:"MarkdownPromptResponseFile"`
@@ -250,13 +250,10 @@ func loadConfiguration(configFile string) error {
 	}
 
 	// thinking
-	if progConfig.GeminiMaxThinkingBudget != nil && progConfig.GeminiThinkingLevel != "" {
-		return fmt.Errorf("do not set both thinking budget and thinking level")
-	}
 	if progConfig.GeminiThinkingLevel != "" {
 		switch strings.ToLower(progConfig.GeminiThinkingLevel) {
-		case "low":
-		case "high":
+		case "minimal", "low", "medium", "high":
+			// valid
 		default:
 			return fmt.Errorf("unsupported thinking level [%s]", progConfig.GeminiThinkingLevel)
 		}
@@ -270,6 +267,16 @@ func loadConfiguration(configFile string) error {
 		case "high":
 		default:
 			return fmt.Errorf("unsupported media resolution [%s]", progConfig.GeminiInputMediaResolution)
+		}
+	}
+
+	// service tier validation
+	if progConfig.GeminiServiceTier != "" {
+		switch strings.ToLower(progConfig.GeminiServiceTier) {
+		case "standard", "flex", "priority":
+			// valid
+		default:
+			return fmt.Errorf("unsupported service tier [%s]", progConfig.GeminiServiceTier)
 		}
 	}
 
@@ -482,6 +489,10 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		// AudioTimestamp bool
 		// ThinkingConfig *ThinkingConfig
 		// ImageConfig *ImageConfig
+		//	EnableEnhancedCivicAnswers *bool
+		// ModelArmorConfig *ModelArmorConfig
+		// ServiceTier ServiceTier
+
 	}
 	// configure AI model parameters
 	if progConfig.GeminiCandidateCount != nil {
@@ -544,28 +555,20 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		generateContentConfig.CachedContent = cacheName
 	}
 
-	var thinkingBudget *int32
-	thinkingBudget = progConfig.GeminiMaxThinkingBudget
-
 	var thinkingLevel genai.ThinkingLevel
 	switch strings.ToLower(progConfig.GeminiThinkingLevel) {
 	case "minimal":
 		thinkingLevel = genai.ThinkingLevelMinimal
-		thinkingBudget = nil
 	case "low":
 		thinkingLevel = genai.ThinkingLevelLow
-		thinkingBudget = nil
 	case "medium":
 		thinkingLevel = genai.ThinkingLevelMedium
-		thinkingBudget = nil
 	case "high":
 		thinkingLevel = genai.ThinkingLevelHigh
-		thinkingBudget = nil
 	}
 
 	generateContentConfig.ThinkingConfig = &genai.ThinkingConfig{
 		IncludeThoughts: progConfig.GeminiIncludeThoughts,
-		ThinkingBudget:  thinkingBudget,
 		ThinkingLevel:   thinkingLevel,
 	}
 
@@ -576,6 +579,17 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		generateContentConfig.MediaResolution = genai.MediaResolutionMedium
 	case "high":
 		generateContentConfig.MediaResolution = genai.MediaResolutionHigh
+	}
+
+	if progConfig.GeminiServiceTier != "" {
+		switch strings.ToLower(progConfig.GeminiServiceTier) {
+		case "standard":
+			generateContentConfig.ServiceTier = genai.ServiceTierStandard
+		case "flex":
+			generateContentConfig.ServiceTier = genai.ServiceTierFlex
+		case "priority":
+			generateContentConfig.ServiceTier = genai.ServiceTierPriority
+		}
 	}
 
 	/*
@@ -642,7 +656,6 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 				fmt.Printf("  Tool              : CodeExecution\n")
 			}
 			if tool.FileSearch != nil {
-				// TODO: formatting (separate lines for each store?)
 				fmt.Printf("  Tool              : FileSearchStores: %s\n",
 					strings.Join(tool.FileSearch.FileSearchStoreNames, ", "))
 			}
@@ -654,14 +667,14 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if geminiModelConfig.CachedContent != "" {
 		fmt.Printf("  CachedContent     : %v\n", geminiModelConfig.CachedContent)
 	}
-	if progConfig.GeminiMaxThinkingBudget != nil {
-		fmt.Printf("  ThinkingBudget    : %d\n", *progConfig.GeminiMaxThinkingBudget)
-	}
 	if progConfig.GeminiThinkingLevel != "" {
 		fmt.Printf("  ThinkingLevel     : %s\n", progConfig.GeminiThinkingLevel)
 	}
 	if progConfig.GeminiInputMediaResolution != "" {
 		fmt.Printf("  MediaResolution   : %s\n", progConfig.GeminiInputMediaResolution)
+	}
+	if geminiModelConfig.ServiceTier != "" {
+		fmt.Printf("  ServiceTier       : %v\n", geminiModelConfig.ServiceTier)
 	}
 	if geminiModelConfig.ImageConfig != nil {
 		if geminiModelConfig.ImageConfig.AspectRatio != "" {
@@ -694,6 +707,9 @@ func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.Generat
 	}
 	if progConfig.GeminiInputMediaResolution != "" {
 		configParts = append(configParts, "MediaResolution: "+progConfig.GeminiInputMediaResolution)
+	}
+	if progConfig.GeminiServiceTier != "" {
+		configParts = append(configParts, "ServiceTier: "+progConfig.GeminiServiceTier)
 	}
 	fmt.Printf("Config : %s\n", strings.Join(configParts, ", "))
 

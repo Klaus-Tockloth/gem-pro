@@ -48,7 +48,7 @@ func printUsage() {
 		flags []string
 	}{
 		{"Model Selection", []string{"lite", "flash", "pro", "flash-image", "pro-image", "default", "list-models"}},
-		{"Generation Parameters", []string{"candidates", "pure-response"}},
+		{"Generation Parameters", []string{"candidates", "pure-response", "servicetier", "thinkinglevel"}},
 		{"Grounding & Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
 		{"Chat & Interaction", []string{"chatmode", "verbose", "config", "filelist"}},
 		{"Output Control", []string{"out"}},

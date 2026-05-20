@@ -41,6 +41,13 @@ Releases:
                           MathJax support added, Mermaid support added, default system instruction added
   - v0.14.1 - 2026-02-20: libs updated, go v1.26.0, hard-coded system instruction modified, gemini-3.1-pro-preview
   - v1.0.0 - 2026-04-02: libs updated, go v1.26.1, configuration (YAML) updated
+  - v1.1.0 - 2026-06-20: libs updated, go v1.26.3,
+                         configuration (YAML) modified:
+						 - GeminiMaxThinkingBudget removed
+						 - GeminiServiceTier added
+						 - default model gemini-flash-latest
+                         binary generation for freebsd, openbsd and netbsd removed
+						 cli flags servicetier and thinkinglevel added
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -56,8 +63,11 @@ Remarks:
 
 ToDos:
 - Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support batch mode.
+- Support batch mode (not planned yet, requires different API).
 - Add AI model status (e.g. PREVIEW, STABLE, LEGACY, ...) to response summery.
+- Only one system prompt left.
+- Collapsible boxes for user prompt, system prompt, and files.
+- Add slug to (response) statistics.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -193,6 +203,8 @@ var (
 	outputBase       = flag.String("out", "", "Specifies the base filename for the output files.\n E.g. 'response-1' -> 'response-1.md', 'response-1.html', 'response-1.ansi'.")
 	pureResponse     = flag.Bool("pure-response", false, "Pure response without any boilerplate.")
 	verbose          = flag.Bool("verbose", false, "Detailed output of configuration and model information.")
+	serviceTier      = flag.String("servicetier", "", "Specifies the service tier to use (standard, flex, priority).")
+	thinkinglevel    = flag.String("thinkinglevel", "", "Specifies the thinking level to use (minimal, low, medium, high).")
 )
 var fileLists stringArray
 var includeStores stringArray
@@ -369,6 +381,25 @@ func main() {
 
 	// overwrite YAML config values with cli parameters
 	overwriteConfigValues(setFlags)
+
+	if progConfig.GeminiServiceTier != "" {
+		switch strings.ToLower(progConfig.GeminiServiceTier) {
+		case "standard", "flex", "priority":
+			// valid
+		default:
+			fmt.Printf("error: unsupported service tier [%s]\n", progConfig.GeminiServiceTier)
+			os.Exit(1)
+		}
+	}
+	if progConfig.GeminiThinkingLevel != "" {
+		switch strings.ToLower(progConfig.GeminiThinkingLevel) {
+		case "minimal", "low", "medium", "high":
+			// valid
+		default:
+			fmt.Printf("error: unsupported thinking level [%s]\n", progConfig.GeminiThinkingLevel)
+			os.Exit(1)
+		}
+	}
 
 	// configure Markdown Passthrough Extension
 	passthroughExt := passthrough.New(passthrough.Config{
@@ -654,6 +685,12 @@ func overwriteConfigValues(setFlags map[string]bool) {
 	}
 	if setFlags["pure-response"] {
 		progConfig.GeminiPureResponse = *pureResponse
+	}
+	if setFlags["servicetier"] {
+		progConfig.GeminiServiceTier = *serviceTier
+	}
+	if setFlags["thinkinglevel"] {
+		progConfig.GeminiThinkingLevel = *thinkinglevel
 	}
 }
 

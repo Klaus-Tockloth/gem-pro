@@ -355,18 +355,34 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		responseString.WriteString("\n***\n")
 	}
 
-	temperatureInfo := "Temperature: default"
+	var modelParams []string
 	if progConfig.GeminiTemperature != nil {
-		temperatureInfo = fmt.Sprintf("Temperature: %.2f", *progConfig.GeminiTemperature)
+		modelParams = append(modelParams, fmt.Sprintf("Temperature: %.2f", *progConfig.GeminiTemperature))
 	}
-	toppInfo := "TopP: default"
 	if progConfig.GeminiTopP != nil {
-		toppInfo = fmt.Sprintf("TopP: %.2f", *progConfig.GeminiTopP)
+		modelParams = append(modelParams, fmt.Sprintf("TopP: %.2f", *progConfig.GeminiTopP))
+	}
+	if progConfig.GeminiTopK != nil {
+		modelParams = append(modelParams, fmt.Sprintf("TopK: %.2f", *progConfig.GeminiTopK))
+	}
+	if progConfig.GeminiThinkingLevel != "" {
+		modelParams = append(modelParams, fmt.Sprintf("ThinkingLevel: %s", progConfig.GeminiThinkingLevel))
+	}
+
+	serviceTierInfo := "default"
+	if progConfig.GeminiServiceTier != "" {
+		serviceTierInfo = progConfig.GeminiServiceTier
+	}
+	modelParams = append(modelParams, fmt.Sprintf("ServiceTier: %s", serviceTierInfo))
+
+	paramsStr := ""
+	if len(modelParams) > 0 {
+		paramsStr = " (" + strings.Join(modelParams, ", ") + ")"
 	}
 
 	// print response metadata
 	responseString.WriteString("```plaintext\n")
-	fmt.Fprintf(&responseString, "AI model   : %v (%s, %s)\n", resp.ModelVersion, temperatureInfo, toppInfo)
+	fmt.Fprintf(&responseString, "AI model   : %v%s\n", resp.ModelVersion, paramsStr)
 
 	var activeTools []string
 	if progConfig.GeminiGroundingWithGoogleSearch {

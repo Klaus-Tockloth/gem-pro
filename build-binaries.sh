@@ -11,6 +11,7 @@
 # - v1.3.0 - 2025-12-10: revised
 # - v1.4.0 - 2026-02-03: revised
 # - v1.5.0 - 2026-02-19: Windows ARM-32 support removed, ARM-64 added
+# - v1.6.0 - 2026-05-20: freebsd, openbsd and netbsd support removed
 # ------------------------------------
 
 set -o errexit
@@ -46,16 +47,4 @@ env GOOS=linux GOARCH=arm64 go build -v -o binaries/linux-arm64/gem-pro
 # compile 'windows'
 env GOOS=windows GOARCH=amd64 go build -v -o binaries/windows-amd64/gem-pro.exe
 env GOOS=windows GOARCH=arm64 go build -v -o binaries/windows-arm64/gem-pro.exe
-
-# compile 'freebsd'
-env GOOS=freebsd GOARCH=amd64 go build -v -o binaries/freebsd-amd64/gem-pro
-env GOOS=freebsd GOARCH=arm64 go build -v -o binaries/freebsd-arm64/gem-pro
-
-# compile 'openbsd'
-env GOOS=openbsd GOARCH=amd64 go build -v -o binaries/openbsd-amd64/gem-pro
-env GOOS=openbsd GOARCH=arm64 go build -v -o binaries/openbsd-arm64/gem-pro
-
-# compile 'netbsd'
-env GOOS=netbsd GOARCH=amd64 go build -v -o binaries/netbsd-amd64/gem-pro
-env GOOS=netbsd GOARCH=arm64 go build -v -o binaries/netbsd-arm64/gem-pro
 
