@@ -2,8 +2,8 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -18,18 +18,20 @@ var gemProImageYaml []byte
 writeConfig writes the embedded default configurations (gemProYaml, gemProImageYaml)
 to files named 'gem-pro.yaml' and 'gem-pro-image.yaml".
 */
-func writeConfig() {
+func writeConfig() error {
 	filename := "gem-pro.yaml"
 	err := os.WriteFile(filename, gemProYaml, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
 
 	filename = "gem-pro-image.yaml"
 	err = os.WriteFile(filename, gemProImageYaml, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
+
+	return nil
 }
 
 //go:embed prompt-input.html
@@ -40,12 +42,13 @@ writePromptInput writes the embedded HTML content for prompt input (geminiPrompt
 embeds the HTML for prompt input from 'geminiPromptInputHTML' and writes it to 'prompt-input.html' in the
 current directory, providing a default HTML input page.
 */
-func writePromptInput() {
+func writePromptInput() error {
 	filename := "prompt-input.html"
 	err := os.WriteFile(filename, geminiPromptInputHTML, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
+	return nil
 }
 
 //go:embed README.md
@@ -54,12 +57,13 @@ var readmeBytes []byte
 /*
 writeReadme writes the embedded README.md to the current directory.
 */
-func writeReadme() {
+func writeReadme() error {
 	filename := "README.md"
 	err := os.WriteFile(filename, readmeBytes, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
+	return nil
 }
 
 //go:embed gem-pro.png
@@ -68,12 +72,13 @@ var gemProPngBytes []byte
 /*
 writeGemProPng writes the embedded gem-pro.png to the current directory.
 */
-func writeGemProPng() {
+func writeGemProPng() error {
 	filename := "gem-pro.png"
 	err := os.WriteFile(filename, gemProPngBytes, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
+	return nil
 }
 
 //go:embed assets
@@ -84,7 +89,7 @@ writeAssets writes all embedded files from the 'assets/' directory
 to the provided base path. It iterates over the embedded filesystem
 and creates directories and files accordingly.
 */
-func writeAssets(basepath string) {
+func writeAssets(basepath string) error {
 	err := fs.WalkDir(assetsFS, "assets", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -112,20 +117,22 @@ func writeAssets(basepath string) {
 	})
 
 	if err != nil {
-		log.Fatalf("embed: error [%v] at writeAssets() exploring assetsFS", err)
+		return fmt.Errorf("embed: error [%v] at writeAssets() exploring assetsFS", err)
 	}
+	return nil
 }
 
-//go:embed user-system-instruction.txt
-var userSystemInstructionTxtBytes []byte
+//go:embed system-instruction.txt
+var systemInstructionTxtBytes []byte
 
 /*
-writeUserSystemInstruction writes the embedded user-system-instruction.txt to the current directory.
+writeSystemInstruction writes the embedded system-instruction.txt to the current directory.
 */
-func writeUserSystemInstruction() {
-	filename := "user-system-instruction.txt"
-	err := os.WriteFile(filename, userSystemInstructionTxtBytes, 0600)
+func writeSystemInstruction() error {
+	filename := "system-instruction.txt"
+	err := os.WriteFile(filename, systemInstructionTxtBytes, 0600)
 	if err != nil {
-		log.Fatalf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
+		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
+	return nil
 }

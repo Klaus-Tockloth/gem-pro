@@ -42,94 +42,114 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	var promptString strings.Builder
 
 	// text part of prompt (also included in contents)
-	promptString.WriteString("***\n")
 	if chatmode {
 		if chatNumber == 1 {
-			promptString.WriteString("**Prompt to Gemini (initial chat #1):**\n")
+			promptString.WriteString("**Prompt to Gemini (initial chat #1):**\n\n")
 		} else {
-			fmt.Fprintf(&promptString, "**Prompt to Gemini (refinement chat #%d):**\n", chatNumber)
+			fmt.Fprintf(&promptString, "**Prompt to Gemini (refinement chat #%d):**\n\n", chatNumber)
 		}
 	} else {
-		promptString.WriteString("**Prompt to Gemini:**\n")
+		promptString.WriteString("**Prompt to Gemini:**\n\n")
 	}
-	promptString.WriteString("\n```plaintext\n")
+	promptString.WriteString("<!-- PROMPT_USER_START -->\n")
+	promptString.WriteString("```plaintext\n")
 	promptString.WriteString(prompt)
 	promptString.WriteString("\n```\n")
-	promptString.WriteString("\n***\n")
+	promptString.WriteString("<!-- PROMPT_USER_END -->\n")
 
 	// system instructions part of prompt (not included in contents, but important)
-	if progConfig.IncludeSystemInstruction && finalSystemInstruction != "" {
-		promptString.WriteString("**System Instruction to Gemini:**\n")
-		promptString.WriteString("\n```plaintext\n")
+	if finalSystemInstruction != "" {
+		promptString.WriteString("\n<!-- PROMPT_SYSTEM_START -->\n")
+		promptString.WriteString("```plaintext\n")
 		promptString.WriteString(finalSystemInstruction)
 		promptString.WriteString("\n```\n")
-		promptString.WriteString("\n***\n")
+		promptString.WriteString("<!-- PROMPT_SYSTEM_END -->\n")
 	}
 
 	if (chatmode && chatNumber == 1) || !chatmode {
-		if len(filesToHandle) > 0 {
-			promptString.WriteString("**Data referenced by the Prompt (from commandline):**\n")
-			promptString.WriteString("\n```plaintext\n")
-			for _, fileToUpload := range filesToHandle {
-				if fileToUpload.State != "error" {
-					// add replacement MIME type (e.g. 'text/x-perl -> text/plain')
-					mimeType := fileToUpload.MimeType
-					if ReplacementMIMETypeMap != nil {
-						replacement, ok := ReplacementMIMETypeMap[fileToUpload.MimeType]
-						if ok {
-							mimeType += fmt.Sprintf(" -> %s", replacement)
+		hasFiles := len(filesToHandle) > 0 || *includeFiles || *includeCache || len(includeStores) > 0
+		if hasFiles {
+			promptString.WriteString("\n<!-- PROMPT_RESOURCES_START -->\n")
+
+			// 1. local files as Markdown table
+			if len(filesToHandle) > 0 {
+				promptString.WriteString("**Local files from commandline**\n\n")
+				promptString.WriteString("| State | Path | Size | MIME | Modified |\n")
+				promptString.WriteString("| :--- | :--- | :--- | :--- | :--- |\n")
+				for _, fileToUpload := range filesToHandle {
+					if fileToUpload.State != "error" {
+						mimeType := fileToUpload.MimeType
+						if ReplacementMIMETypeMap != nil {
+							replacement, ok := ReplacementMIMETypeMap[fileToUpload.MimeType]
+							if ok {
+								mimeType += fmt.Sprintf(" → %s", replacement)
+							}
 						}
+						fmt.Fprintf(&promptString, "| %s | %s | %s | %s | %s |\n",
+							fileToUpload.State, fileToUpload.Filepath, fileToUpload.FileSize, mimeType, fileToUpload.LastUpdate)
+					} else {
+						fmt.Fprintf(&promptString, "| <span style=\"color:red\">%s</span> | %s | - | - | %s |\n",
+							fileToUpload.State, fileToUpload.Filepath, fileToUpload.ErrorMessage)
 					}
-					fmt.Fprintf(&promptString, "%-5s %s (%s, %s, %s)\n",
-						fileToUpload.State, fileToUpload.Filepath, fileToUpload.LastUpdate, fileToUpload.FileSize, mimeType)
-				} else {
-					fmt.Fprintf(&promptString, "%-5s %s %s\n",
-						fileToUpload.State, fileToUpload.Filepath, fileToUpload.ErrorMessage)
 				}
+				promptString.WriteString("\n")
 			}
-			promptString.WriteString("```\n")
-			promptString.WriteString("\n***\n")
-		}
 
-		if *includeFiles {
-			promptString.WriteString("**Data referenced by the Prompt (from Google file store):**\n")
-			promptString.WriteString("\n```plaintext\n")
-			promptString.WriteString(listFilesUploadedToGemini(""))
-			promptString.WriteString("```\n")
-			promptString.WriteString("\n***\n")
-		}
-
-		if *includeCache {
-			promptString.WriteString("**Data referenced by the Prompt (from AI model cache):**\n")
-			promptString.WriteString("\n```plaintext\n")
-			_, cacheDetails := listAIModelSpecificCache("")
-			promptString.WriteString(cacheDetails)
-			promptString.WriteString("```\n")
-			promptString.WriteString("\n***\n")
-		}
-
-		if len(includeStores) > 0 {
-			promptString.WriteString("**Data referenced by the Prompt (from FileSearchStores):**\n")
-			promptString.WriteString("\n```plaintext\n")
-			for _, storeID := range includeStores {
-				fmt.Fprintf(&promptString, "Included Store: %s\n", storeID)
+			// 2. Google File Store as list
+			if *includeFiles {
+				promptString.WriteString("#### Google File Store (remote files)\n\n")
+				promptString.WriteString("```plaintext\n")
+				promptString.WriteString(listFilesUploadedToGemini(""))
+				promptString.WriteString("```\n\n")
 			}
-			promptString.WriteString("```\n")
-			promptString.WriteString("\n***\n")
+
+			// 3. AI Model Cache Details as list
+			if *includeCache {
+				promptString.WriteString("### AI model cache details\n\n")
+				promptString.WriteString("```plaintext\n")
+				_, cacheDetails := listAIModelSpecificCache("")
+				promptString.WriteString(cacheDetails)
+				promptString.WriteString("```\n\n")
+			}
+
+			// 4. FileSearchStores (RAG) as list
+			if len(includeStores) > 0 {
+				promptString.WriteString("### FileSearchStores (RAG knowledge database)\n\n")
+				for _, storeID := range includeStores {
+					fmt.Fprintf(&promptString, "* Active FileSearchStore: `%s`\n", storeID)
+				}
+				promptString.WriteString("\n")
+			}
+
+			promptString.WriteString("<!-- PROMPT_RESOURCES_END -->\n")
 		}
 	}
+	promptString.WriteString("\n***\n")
+
+	rawPrompt := promptString.String()
+
+	// 1. prepare Markdown for direct file saving (and ANSI rendering)
+	markdownForFileAndAnsi := rawPrompt
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_USER_START -->", "**User Prompt:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_USER_END -->", "")
+
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_START -->", "**System Prompt:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_END -->", "")
+
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_RESOURCES_START -->", "**Resources:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_RESOURCES_END -->", "")
 
 	// write prompt to current markdown request/response file
-	err := os.WriteFile(progConfig.MarkdownPromptResponseFile, []byte(promptString.String()), 0600)
+	err := os.WriteFile(progConfig.MarkdownPromptResponseFile, []byte(markdownForFileAndAnsi), 0600)
 	if err != nil {
 		fmt.Printf("error [%v] at os.WriteFile()\n", err)
 		return
 	}
 
 	// render prompt as ansi
-	ansiData := promptString.String()
+	ansiData := markdownForFileAndAnsi
 	if progConfig.AnsiRendering {
-		ansiData = renderMarkdown2Ansi(promptString.String())
+		ansiData = renderMarkdown2Ansi(markdownForFileAndAnsi)
 	}
 
 	// write prompt to current ansi request/response file
@@ -140,9 +160,9 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	}
 
 	// render prompt as html
-	htmlData := promptString.String()
+	htmlData := rawPrompt
 	if progConfig.HTMLRendering {
-		htmlData = renderMarkdown2HTML(promptString.String())
+		htmlData = renderMarkdown2HTML(rawPrompt)
 	}
 
 	// write prompt to current html request/response file
@@ -155,21 +175,19 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 
 /*
 getCandidateText extracts the text content from a candidate.
-If includeThoughts is true, it wraps thoughts in the specific HTML/Markdown block used by this application.
-If includeThoughts is false, thoughts are skipped.
+It returns two strings: the thoughts (if available) and the regular content.
 */
-func getCandidateText(candidate *genai.Candidate, includeThoughts bool) string {
+func getCandidateText(candidate *genai.Candidate) (string, string) {
 	if candidate.Content == nil {
-		return "No content available in this candidate.\n"
+		return "", "No content available in this candidate.\n"
 	}
 
-	var sb strings.Builder
 	var aggregatedThoughts strings.Builder
 	var regularContent strings.Builder
 
 	for _, part := range candidate.Content.Parts {
 		if part.Thought {
-			if includeThoughts && part.Text != "" {
+			if part.Text != "" {
 				aggregatedThoughts.WriteString(strings.TrimSpace(part.Text) + "\n\n")
 			}
 			continue
@@ -223,20 +241,7 @@ func getCandidateText(candidate *genai.Candidate, includeThoughts bool) string {
 		}
 	}
 
-	// append thoughts block if requested and available
-	if includeThoughts && aggregatedThoughts.Len() > 0 {
-		sb.WriteString("<!-- AI_THOUGHT_SUMMARY_START -->")
-		sb.WriteString("<!-- AI_THOUGHT_SUMMARY_END -->\n")
-		sb.WriteString("<!-- AI_THOUGHT_CONTENT_START -->\n")
-		sb.WriteString(strings.TrimSpace(aggregatedThoughts.String()) + "\n")
-		sb.WriteString("<!-- AI_THOUGHT_CONTENT_END -->\n\n")
-	}
-
-	// append regular content
-	sb.WriteString(regularContent.String())
-	sb.WriteString("\n")
-
-	return sb.String()
+	return strings.TrimSpace(aggregatedThoughts.String()), regularContent.String()
 }
 
 /*
@@ -246,10 +251,13 @@ It extracts content from candidates without adding boilerplate metadata.
 func processPureResponse(resp *genai.GenerateContentResponse) {
 	var responseString strings.Builder
 
+	responseString.WriteString("\n")
+
 	// print response candidate(s)
 	for _, candidate := range resp.Candidates {
 		// Get text content, explicitly excluding thoughts
-		responseString.WriteString(getCandidateText(candidate, false))
+		_, content := getCandidateText(candidate)
+		responseString.WriteString(content)
 
 		// show why the model stopped generating tokens (content)
 		if candidate.FinishReason != genai.FinishReasonStop {
@@ -257,6 +265,8 @@ func processPureResponse(resp *genai.GenerateContentResponse) {
 			fmt.Fprintf(&responseString, "Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason)
 		}
 	}
+
+	responseString.WriteString("\n")
 
 	// append response string to request/response files
 	appendResponseString(responseString)
@@ -277,9 +287,19 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			responseString.WriteString("**Response from Gemini:**\n\n")
 		}
 
-		// Get text content, including thoughts based on config (Thoughts are part of the 'text' logic in getCandidateText)
-		// Note: progConfig.GeminiIncludeThoughts ensures we receive them from API, passing 'true' here formats them.
-		responseString.WriteString(getCandidateText(candidate, true))
+		thoughts, content := getCandidateText(candidate)
+
+		if thoughts != "" && progConfig.GeminiIncludeThoughts {
+			responseString.WriteString("<!-- THOUGHTS_START -->\n")
+			responseString.WriteString(thoughts + "\n")
+			responseString.WriteString("<!-- THOUGHTS_END -->\n")
+		}
+
+		responseString.WriteString("\n")
+
+		responseString.WriteString("<!-- RESPONSE_START -->\n")
+
+		responseString.WriteString(content)
 
 		// build list of text citation source URIs
 		citationURIs := []string{}
@@ -310,7 +330,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			}
 		}
 
-		// show code citation licenses (needs revision, output never seen)
+		// show code citation licenses
 		if len(citationLicenses) > 0 {
 			responseString.WriteString("\n***\n")
 			fmt.Fprintf(&responseString, "Code Citation %s:\n\n", pluralize(len(citationLicenses), "License"))
@@ -319,7 +339,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			}
 		}
 
-		// show why the model stopped generating tokens (content) (needs revision, output never seen)
+		// show why the model stopped generating tokens (content)
 		if candidate.FinishReason != genai.FinishReasonStop {
 			responseString.WriteString("\n***\n")
 			fmt.Fprintf(&responseString, "Model stopped generating tokens (content) with reason [%s].\n", candidate.FinishReason)
@@ -331,7 +351,6 @@ func processResponse(resp *genai.GenerateContentResponse) {
 			if candidate.GroundingMetadata.GroundingChunks != nil {
 				responseString.WriteString("\n***\n")
 				responseString.WriteString("**Online Search Sources Used:**\n\n")
-				// numbered list because response can contain references (e.g. [2] or [1,3,15])
 				for k, groundingChunk := range candidate.GroundingMetadata.GroundingChunks {
 					switch {
 					case groundingChunk.Web != nil:
@@ -352,7 +371,12 @@ func processResponse(resp *genai.GenerateContentResponse) {
 				}
 			}
 		}
-		responseString.WriteString("\n***\n")
+
+		responseString.WriteString("<!-- RESPONSE_END -->\n")
+
+		if i < len(resp.Candidates)-1 {
+			responseString.WriteString("\n***\n")
+		}
 	}
 
 	var modelParams []string
@@ -381,6 +405,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	}
 
 	// print response metadata
+	responseString.WriteString("<!-- STATS_START -->\n")
 	responseString.WriteString("```plaintext\n")
 	fmt.Fprintf(&responseString, "AI model   : %v%s\n", resp.ModelVersion, paramsStr)
 
@@ -394,7 +419,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	if progConfig.GeminiGroundingWithCodeExecution {
 		activeTools = append(activeTools, "Code Execution")
 	}
-	if progConfig.GeminiGroundigWithGoogleMaps {
+	if progConfig.GeminiGroundingWithGoogleMaps {
 		activeTools = append(activeTools, "Google Maps")
 	}
 	if len(includeStores) > 0 {
@@ -405,61 +430,47 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		fmt.Fprintf(&responseString, "Tools      : %s\n", strings.Join(activeTools, ", "))
 	}
 
+	// slug extraction
+	slug := "unknown-content"
+	if len(resp.Candidates) > 0 {
+		thoughts, content := getCandidateText(resp.Candidates[0])
+		_, extractedSlug := extractAndCleanSlug(thoughts + "\n" + content)
+		if extractedSlug != "" {
+			slug = extractedSlug
+		}
+	}
+	fmt.Fprintf(&responseString, "Slug       : %v\n", slug)
+
 	fmt.Fprintf(&responseString, "Generated  : %v\n", finishProcessing.Format(time.RFC850))
 
 	duration := finishProcessing.Sub(startProcessing)
 	fmt.Fprintf(&responseString, "Processing : %.1f secs for %d %s\n", duration.Seconds(),
 		len(resp.Candidates), pluralize(len(resp.Candidates), "candidate"))
 
-	/*
-	   Cost Calculation Logic (Corrected for SDK v0.8.0+ / Gemini 1.5+ / Gemini 3):
-	   Total Tokens = Prompt + Tools + Candidates + Thoughts
-	   1. Input Total: PromptTokenCount + ToolUsePromptTokenCount
-	   2. Net Prompt : PromptTokenCount - CachedContentTokenCount
-	   3. Tools      : ToolUsePromptTokenCount
-	   4. Output     : CandidatesTokenCount + ThoughtsTokenCount
-	*/
 	if resp.UsageMetadata != nil {
 		u := resp.UsageMetadata
-
-		// Output Header: Total Tokens
 		fmt.Fprintf(&responseString, "Tokens     : %d (Total)\n", u.TotalTokenCount)
-
-		// 1. Input Group
-		// Calculate absolute Input Total (Text + Tools)
 		totalInputCount := u.PromptTokenCount + u.ToolUsePromptTokenCount
-
-		// Calculate "Net" Prompt (New/Uncached Text)
-		// Assumption: Cached content is a subset of the standard PromptTokenCount.
 		netPromptCount := u.PromptTokenCount - u.CachedContentTokenCount
 		if netPromptCount < 0 {
-			netPromptCount = 0 // Safety fallback
+			netPromptCount = 0
 		}
 
 		inputDetails := []string{fmt.Sprintf("Prompt: %d", netPromptCount)}
-
-		// Only show Tools/Cached if they are actually used
 		if u.ToolUsePromptTokenCount > 0 {
 			inputDetails = append(inputDetails, fmt.Sprintf("Tools: %d", u.ToolUsePromptTokenCount))
 		}
 		if u.CachedContentTokenCount > 0 {
 			inputDetails = append(inputDetails, fmt.Sprintf("Cached: %d", u.CachedContentTokenCount))
 		}
-
-		// Display Total Input and breakdown
 		fmt.Fprintf(&responseString, "  Input    : %d (%s)\n",
 			totalInputCount, strings.Join(inputDetails, ", "))
 
-		// 2. Output Group
-		// We sum them up to show the real total output volume.
 		totalOutputCount := u.CandidatesTokenCount + u.ThoughtsTokenCount
-
 		outputDetails := []string{fmt.Sprintf("Candidates: %d", u.CandidatesTokenCount)}
-
 		if u.ThoughtsTokenCount > 0 {
 			outputDetails = append(outputDetails, fmt.Sprintf("Thoughts: %d", u.ThoughtsTokenCount))
 		}
-
 		fmt.Fprintf(&responseString, "  Output   : %d (%s)\n",
 			totalOutputCount, strings.Join(outputDetails, ", "))
 	}
@@ -469,7 +480,7 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	}
 
 	responseString.WriteString("```\n")
-	responseString.WriteString("\n***\n")
+	responseString.WriteString("<!-- STATS_END -->\n")
 
 	// append response string to request/response files
 	appendResponseString(responseString)
@@ -489,20 +500,23 @@ func processError(err error) {
 	responseString.WriteString("\n")
 
 	responseString.WriteString("```\n")
-	responseString.WriteString("\n***\n")
 
 	// print response metadata
+	responseString.WriteString("<!-- STATS_START -->\n")
 	responseString.WriteString("```plaintext\n")
 	if err == nil {
 		fmt.Fprintf(&responseString, "AI model   : %v\n", progConfig.GeminiAiModel)
 	}
+
+	fmt.Fprintf(&responseString, "Slug       : error-response\n")
+
 	fmt.Fprintf(&responseString, "Generated  : %v\n", finishProcessing.Format(time.RFC850))
 
 	duration := finishProcessing.Sub(startProcessing)
 	fmt.Fprintf(&responseString, "Processing : %.1f secs resulting in error\n", duration.Seconds())
 
 	responseString.WriteString("```\n")
-	responseString.WriteString("\n***\n")
+	responseString.WriteString("<!-- STATS_END -->\n")
 
 	// append response string to request/response files
 	appendResponseString(responseString)
@@ -524,10 +538,12 @@ func appendResponseString(responseString strings.Builder) {
 	// 1. prepare Markdown for direct file saving (and ANSI rendering)
 	// replace HTML comment tags with pure Markdown equivalents
 	markdownForFileAndAnsi := cleanedMarkdown
-	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_SUMMARY_START -->", "**Thoughts - Considerations for answering the prompt:**\n\n")
-	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_SUMMARY_END -->", "")
-	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_CONTENT_START -->", "")
-	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- AI_THOUGHT_CONTENT_END -->", "")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- THOUGHTS_START -->", "**Thoughts:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- THOUGHTS_END -->", "")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- STATS_START -->", "**Statistics:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- STATS_END -->", "")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- RESPONSE_START -->", "**Response:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- RESPONSE_END -->", "")
 
 	// append response string to current markdown request/response file
 	currentFileMarkdown, err := os.OpenFile(progConfig.MarkdownPromptResponseFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

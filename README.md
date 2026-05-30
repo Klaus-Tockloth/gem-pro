@@ -4,7 +4,7 @@ English version below ...
 
 Dieses Programm ermöglicht die Interaktion mit Google Gemini AI, um Prompts zu senden und Antworten in verschiedenen Formaten (Markdown, ANSI, HTML) zu empfangen. Das Ziel ist die nahtlose Integration von KI-Funktionen in den Arbeitsablauf des Benutzers durch die Unterstützung verschiedener Eingabe- und Ausgabekanäle sowie einer Historienverwaltung.
 
-Das Programm ist für BSD, Linux, macOS und Windows verfügbar.
+Das Programm ist für Linux, macOS und Windows verfügbar.
 
 ### Google Gemini KI
 
@@ -106,6 +106,11 @@ Für die Nutzung ist ein persönlicher Gemini API-Key von Google erforderlich. K
   * Windows: ```setx GEMINI_API_KEY Your-API-Key``` (erfordert Neustart des Terminals)
 
 * **Erweiterte Modell-Konfiguration:** In der Datei `gem-pro.yaml` können für aktuelle Modelle (z.B. Gemini 3) das **Thinking Level** (Intensität der Denkprozesse, z.B. `high`) sowie die **Input Media Resolution** (Auflösung für PDF-, Bild- oder Video-Input) angepasst werden.
+
+* **Service Tier (Dienstgüteklasse):** Über die Konfiguration `GeminiServiceTier` (in der YAML-Datei) oder das CLI-Flag `-servicetier` lässt sich die Priorisierungs- und Abrechnungsstufe festlegen:
+  * `standard`: Standard-Verarbeitung und normale Abrechnung.
+  * `flex`: Nutzen Sie ungenutzte Off-Peak-Kapazitäten für unkritische oder sequentielle Aufgaben. Dies ist kostengünstiger, kann jedoch zu längeren Antwortzeiten führen.
+  * `priority`: Premium-Routing für zeitkritische Anfragen mit garantiert schnellen Antwortzeiten (erhöhte Kosten).
 
 ### Umgang mit Dateien
 
@@ -264,7 +269,7 @@ Programmfehler bitte in 'Issues' melden, Diskussionen und Fragen in 'Discussions
 
 This program enables interaction with a Google Gemini AI model to send prompts and receive responses in various formats (Markdown, ANSI, HTML). It aims to seamlessly integrate AI capabilities into the user's workflow by supporting various input and output channels along with a history feature.
 
-The program is available for BSD, Linux, macOS, and Windows.
+The program is available for Linux, macOS, and Windows.
 
 ### Google Gemini AI
 
@@ -366,6 +371,11 @@ A personal Gemini API key from Google is required for use. Configure the API key
   * Windows: ```setx GEMINI_API_KEY Your-API-Key``` (requires terminal restart)
 
 * **Advanced Model Configuration:** In the `gem-pro.yaml` file, you can adjust the **Thinking Level** (intensity of reasoning processes, e.g., `high`) and **Input Media Resolution** (resolution for pdf, image or video input) for current models (e.g., Gemini 3).
+
+* **Service Tier:** Via the `GeminiServiceTier` configuration (in the YAML file) or the `-servicetier` CLI flag, you can define the billing and routing priority:
+  * `standard`: Default processing and standard billing.
+  * `flex`: Utilize off-peak capacities for non-urgent tasks. Highly cost-effective but may result in longer response times.
+  * `priority`: Premium routing for time-sensitive tasks to ensure minimal latency (higher costs apply).
 
 ### File Handling
 

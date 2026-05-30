@@ -41,13 +41,14 @@ Releases:
                           MathJax support added, Mermaid support added, default system instruction added
   - v0.14.1 - 2026-02-20: libs updated, go v1.26.0, hard-coded system instruction modified, gemini-3.1-pro-preview
   - v1.0.0 - 2026-04-02: libs updated, go v1.26.1, configuration (YAML) updated
-  - v1.1.0 - 2026-06-20: libs updated, go v1.26.3,
-                         configuration (YAML) modified:
-						 - GeminiMaxThinkingBudget removed
-						 - GeminiServiceTier added
-						 - default model gemini-flash-latest
+  - v1.1.0 - 2026-05-30: libs updated, go v1.26.3,
+                         configurationmodified: GeminiMaxThinkingBudget removed, GeminiServiceTier added, default gemini-flash-latest
                          binary generation for freebsd, openbsd and netbsd removed
 						 cli flags servicetier and thinkinglevel added
+						 slug added to response summery
+						 system prompt (instruction) handling revised
+                         collapsible boxes for all input and output objects
+						 Markdown to HTML parsing strategy improved
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -61,13 +62,9 @@ Contact:
 Remarks:
 - none
 
-ToDos:
-- Support grounding references in response (e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support batch mode (not planned yet, requires different API).
-- Add AI model status (e.g. PREVIEW, STABLE, LEGACY, ...) to response summery.
-- Only one system prompt left.
-- Collapsible boxes for user prompt, system prompt, and files.
-- Add slug to (response) statistics.
+ToDos (high complexity, not planned yet):
+- Support grounding references in response, e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
+- Support batch mode. Requires integration of different API.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -101,8 +98,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.0.0"
-	progDate    = "2026-04-02"
+	progVersion = "v1.1.0"
+	progDate    = "2026-05-21"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -205,6 +202,7 @@ var (
 	verbose          = flag.Bool("verbose", false, "Detailed output of configuration and model information.")
 	serviceTier      = flag.String("servicetier", "", "Specifies the service tier to use (standard, flex, priority).")
 	thinkinglevel    = flag.String("thinkinglevel", "", "Specifies the thinking level to use (minimal, low, medium, high).")
+	sysprompt        = flag.String("sysprompt", "", "Specifies the system instruction file (overrides config).")
 )
 var fileLists stringArray
 var includeStores stringArray
@@ -239,16 +237,32 @@ func main() {
 	}
 
 	if !fileExists(*config) {
-		writeConfig()
+		err := writeConfig()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 	if !fileExists("README.md") {
-		writeReadme()
+		err := writeReadme()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 	if !fileExists("gem-pro.png") {
-		writeGemProPng()
+		err := writeGemProPng()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
-	if !fileExists("user-system-instruction.txt") {
-		writeUserSystemInstruction()
+	if !fileExists("system-instruction.txt") {
+		err := writeSystemInstruction()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	// 'assets' in current directory (to render current HTML file in current directory)
@@ -259,11 +273,19 @@ func main() {
 			fmt.Printf("error [%v] at os.Mkdir()\n", err)
 			os.Exit(1)
 		}
-		writeAssets(".")
+		err := writeAssets(".")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	if !fileExists("./prompt-input.html") {
-		writePromptInput()
+		err := writePromptInput()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	err = loadConfiguration(*config)
@@ -377,7 +399,11 @@ func main() {
 	}
 
 	// initialize this program
-	initializeProgram()
+	err = initializeProgram()
+	if err != nil {
+		fmt.Printf("initialization error: %v\n", err)
+		os.Exit(1)
+	}
 
 	// overwrite YAML config values with cli parameters
 	overwriteConfigValues(setFlags)
@@ -681,7 +707,7 @@ func overwriteConfigValues(setFlags map[string]bool) {
 		progConfig.GeminiGroundingWithURLContext = *urlContext
 	}
 	if setFlags["google-maps"] {
-		progConfig.GeminiGroundigWithGoogleMaps = *googleMaps
+		progConfig.GeminiGroundingWithGoogleMaps = *googleMaps
 	}
 	if setFlags["pure-response"] {
 		progConfig.GeminiPureResponse = *pureResponse
@@ -691,6 +717,9 @@ func overwriteConfigValues(setFlags map[string]bool) {
 	}
 	if setFlags["thinkinglevel"] {
 		progConfig.GeminiThinkingLevel = *thinkinglevel
+	}
+	if setFlags["sysprompt"] {
+		progConfig.SystemInstructionFile = *sysprompt
 	}
 }
 
@@ -723,7 +752,8 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 	} else {
 		fullText := ""
 		if len(resp.Candidates) > 0 {
-			fullText = getCandidateText(resp.Candidates[0], true)
+			thoughts, content := getCandidateText(resp.Candidates[0])
+			fullText = thoughts + "\n" + content
 		}
 		_, slug = extractAndCleanSlug(fullText)
 	}

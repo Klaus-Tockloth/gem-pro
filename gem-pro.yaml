@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v1.1 - 2026-05-20: corresponding to program release
+# - v1.1 - 2026-05-21: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -103,7 +103,7 @@ GeminiGroundingWithGoogleSearch: true
 GeminiGroundingWithURLContext: true
 
 # ground responses with Google Maps (not supported by all AI models, affects other settings)
-GeminiGroundigWithGoogleMaps: false
+GeminiGroundingWithGoogleMaps: false
 
 # ground responses with user defined FileSearchStores (RAG, Retrieval-Augmented Generation)
 GeminiGroundingWithFileSearchStores:
@@ -116,7 +116,7 @@ GeminiGroundingWithFileSearchStores:
 GeminiThinkingLevel: medium
 
 # include thoughts in the response (true, false) (AI model must support this setting)
-GeminiIncludeThoughts: false
+GeminiIncludeThoughts: true
 
 # (logical) name of cache handled by this application (note: only one cache can be added to a prompt)
 # This logical cache name is used for all cache operations (create, list, delete, include).
@@ -230,7 +230,6 @@ HTMLFooter: |
   <!-- add 'copy to clipboard' button to all '<pre><code>' block elements -->
   <script src="assets/copy-to-clipboard.js"></script>
   <!-- mathjax: adds both block math and inline math support -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <script>
     window.MathJax = {
@@ -319,26 +318,8 @@ MIMETypeReplacements:
 
 # System instruction section
 # --------------------------
-# System Instruction (also known as "System Prompt") is a more forceful prompt to the model.
-# The model will adhere the instructions more strongly than if they appeared in a user prompt.
-# The final "System Prompt" consists of two components:
-# - Application System Prompt
-# - User System Prompt
-# The Application System Prompt is immutable (fixed).
-# The User System Prompt can be freely defined.
-# The application combines both System Prompts.
-
-# Typical usage: Optional tone and style instructions for the model.
-# Examples:
-# - Use the technical terms common in the subject area.
-# - All questions should be answered comprehensively with details.
-# - Answer as concisely as possible.
-# - Don't use technical terms in your response.
 # System instructions let you steer the behavior of a model based on your specific needs and use cases.
 # By giving the model system instructions, you provide the model additional context to understand the
-# task, generate more customized responses, and adhere to specific guidelines over the full user interaction 
-# with the model. System instructions are provided via text file (e.g. user-system-instruction.txt).
-UserSystemInstruction:
-
-# include final system instruction in the response (true, false)
-IncludeSystemInstruction: false
+# task, generate more customized responses, and adhere to specific guidelines.
+# The system instruction is read from the specified text file.
+SystemInstructionFile: system-instruction.txt

@@ -8,9 +8,10 @@ Releases:
   - v0.3.0 - 2025-05-24: minor improvements
   - v0.4.0 - 2025-07-12: minor improvements
   - v0.5.0 - 2025-12-18: minor improvements
+  - v0.6.0 - 2026-05-30: minor improvements
 
 Copyright:
-- © 2025 | Klaus Tockloth
+- © 2025-2026 | Klaus Tockloth
 
 License:
 - MIT License
@@ -179,7 +180,7 @@ code {
 }
 
 pre {
-  max-height: 50em;
+  max-height: 75em;
   overflow-y: auto;
   border-radius: 3px;
   border: 1px solid #e7e7e7;
@@ -250,6 +251,10 @@ details {
   padding: 0.2em 0.4em;
   border: 1px solid #e7e7e7;
   border-radius: 3px;
+}
+
+details + details {
+  margin-top: 1em;
 }
 
 summary {

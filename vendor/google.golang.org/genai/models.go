@@ -151,6 +151,26 @@ func citationMetadataFromMldev(fromObject map[string]any, parentObject map[strin
 	return toObject, nil
 }
 
+func codeExecutionResultToVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromOutcome := InternalGetValueByPath(fromObject, []string{"outcome"})
+	if fromOutcome != nil {
+		InternalSetValueByPath(toObject, []string{"outcome"}, fromOutcome)
+	}
+
+	fromOutput := InternalGetValueByPath(fromObject, []string{"output"})
+	if fromOutput != nil {
+		InternalSetValueByPath(toObject, []string{"output"}, fromOutput)
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"id"}) != nil {
+		return nil, fmt.Errorf("id parameter is only supported in Gemini Developer API mode, not in Gemini Enterprise Agent Platform mode.")
+	}
+
+	return toObject, nil
+}
+
 func computeTokensParametersToVertex(ac *InternalAPIClient, fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -193,6 +213,26 @@ func computeTokensResponseFromVertex(fromObject map[string]any, parentObject map
 	fromTokensInfo := InternalGetValueByPath(fromObject, []string{"tokensInfo"})
 	if fromTokensInfo != nil {
 		InternalSetValueByPath(toObject, []string{"tokensInfo"}, fromTokensInfo)
+	}
+
+	return toObject, nil
+}
+
+func computerUseToVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromEnvironment := InternalGetValueByPath(fromObject, []string{"environment"})
+	if fromEnvironment != nil {
+		InternalSetValueByPath(toObject, []string{"environment"}, fromEnvironment)
+	}
+
+	fromExcludedPredefinedFunctions := InternalGetValueByPath(fromObject, []string{"excludedPredefinedFunctions"})
+	if fromExcludedPredefinedFunctions != nil {
+		InternalSetValueByPath(toObject, []string{"excludedPredefinedFunctions"}, fromExcludedPredefinedFunctions)
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"enablePromptInjectionDetection"}) != nil {
+		return nil, fmt.Errorf("enablePromptInjectionDetection parameter is only supported in Gemini Developer API mode, not in Gemini Enterprise Agent Platform mode.")
 	}
 
 	return toObject, nil
@@ -999,6 +1039,26 @@ func endpointFromVertex(fromObject map[string]any, parentObject map[string]any, 
 	fromDeployedModelId := InternalGetValueByPath(fromObject, []string{"deployedModelId"})
 	if fromDeployedModelId != nil {
 		InternalSetValueByPath(toObject, []string{"deployedModelId"}, fromDeployedModelId)
+	}
+
+	return toObject, nil
+}
+
+func executableCodeToVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromCode := InternalGetValueByPath(fromObject, []string{"code"})
+	if fromCode != nil {
+		InternalSetValueByPath(toObject, []string{"code"}, fromCode)
+	}
+
+	fromLanguage := InternalGetValueByPath(fromObject, []string{"language"})
+	if fromLanguage != nil {
+		InternalSetValueByPath(toObject, []string{"language"}, fromLanguage)
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"id"}) != nil {
+		return nil, fmt.Errorf("id parameter is only supported in Gemini Developer API mode, not in Gemini Enterprise Agent Platform mode.")
 	}
 
 	return toObject, nil
@@ -3372,11 +3432,21 @@ func partToVertex(fromObject map[string]any, parentObject map[string]any, rootOb
 
 	fromCodeExecutionResult := InternalGetValueByPath(fromObject, []string{"codeExecutionResult"})
 	if fromCodeExecutionResult != nil {
+		fromCodeExecutionResult, err = codeExecutionResultToVertex(fromCodeExecutionResult.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"codeExecutionResult"}, fromCodeExecutionResult)
 	}
 
 	fromExecutableCode := InternalGetValueByPath(fromObject, []string{"executableCode"})
 	if fromExecutableCode != nil {
+		fromExecutableCode, err = executableCodeToVertex(fromExecutableCode.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"executableCode"}, fromExecutableCode)
 	}
 
@@ -3968,6 +4038,11 @@ func toolToVertex(fromObject map[string]any, parentObject map[string]any, rootOb
 
 	fromComputerUse := InternalGetValueByPath(fromObject, []string{"computerUse"})
 	if fromComputerUse != nil {
+		fromComputerUse, err = computerUseToVertex(fromComputerUse.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"computerUse"}, fromComputerUse)
 	}
 

@@ -87,7 +87,7 @@ func (rac *replayAPIClient) LoadReplay(replayFilePath string) {
 	}
 	var replayFile replayFile
 	if err := readFileForReplayTest(fullReplaysPath, &replayFile, true); err != nil {
-		rac.t.Errorf("error loading replay file, %v", err)
+		rac.t.Fatalf("error loading replay file, %v", err)
 	}
 	rac.ReplayFile = &replayFile
 }
@@ -133,7 +133,7 @@ func (rac *replayAPIClient) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	for i := 0; i < len(interaction.Response.BodySegments); i++ {
 		responseBodySegment, err := json.Marshal(interaction.Response.BodySegments[i])
 		if err != nil {
-			rac.t.Errorf("error marshalling responseBodySegment [%s], err: %+v", rac.ReplayFile.ReplayID, err)
+			rac.t.Fatalf("error marshalling responseBodySegment [%s], err: %+v", rac.ReplayFile.ReplayID, err)
 		}
 		bodySegments = append(bodySegments, string(responseBodySegment))
 	}
@@ -144,7 +144,7 @@ func (rac *replayAPIClient) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 	_, err := w.Write([]byte(strings.Join(bodySegments, "\n")))
 	if err != nil {
-		rac.t.Errorf("error writing response, err: %+v", err)
+		rac.t.Fatalf("error writing response, err: %+v", err)
 	}
 }
 
@@ -258,12 +258,12 @@ func (rac *replayAPIClient) assertRequest(sdkRequest *http.Request, replayReques
 	rac.t.Helper()
 	sdkRequestBody, err := io.ReadAll(sdkRequest.Body)
 	if err != nil {
-		rac.t.Errorf("Error reading request body, err: %+v", err)
+		rac.t.Fatalf("Error reading request body, err: %+v", err)
 	}
 	bodySegment := make(map[string]any)
 	if len(sdkRequestBody) > 0 {
 		if err := json.Unmarshal(sdkRequestBody, &bodySegment); err != nil {
-			rac.t.Errorf("Error unmarshalling body, err: %+v", err)
+			rac.t.Fatalf("Error unmarshalling body, err: %+v", err)
 		}
 	}
 	bodySegment = redactRequestBody(bodySegment)

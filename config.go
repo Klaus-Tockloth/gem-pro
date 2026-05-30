@@ -37,7 +37,7 @@ type ProgConfig struct {
 	GeminiGroundingWithCodeExecution    bool     `yaml:"GeminiGroundingWithCodeExecution"`
 	GeminiGroundingWithGoogleSearch     bool     `yaml:"GeminiGroundingWithGoogleSearch"`
 	GeminiGroundingWithURLContext       bool     `yaml:"GeminiGroundingWithURLContext"`
-	GeminiGroundigWithGoogleMaps        bool     `yaml:"GeminiGroundigWithGoogleMaps"`
+	GeminiGroundingWithGoogleMaps       bool     `yaml:"GeminiGroundingWithGoogleMaps"`
 	GeminiGroundingWithFileSearchStores []string `yaml:"GeminiGroundingWithFileSearchStores"`
 
 	GeminiThinkingLevel        string `yaml:"GeminiThinkingLevel"`
@@ -109,8 +109,7 @@ type ProgConfig struct {
 	MIMETypeReplacements []string `yaml:"MIMETypeReplacements"`
 
 	// System instruction
-	UserSystemInstruction    string `yaml:"UserSystemInstruction"`
-	IncludeSystemInstruction bool   `yaml:"IncludeSystemInstruction"`
+	SystemInstructionFile string `yaml:"SystemInstructionFile"`
 }
 
 // progConfig contains program configuration
@@ -362,7 +361,7 @@ func showConfiguration() {
 initializeProgram performs program initialization tasks. It sets up the program environment, including
 creating necessary directories and writing assets for HTML output.
 */
-func initializeProgram() {
+func initializeProgram() error {
 	var err error
 
 	// create history directories
@@ -395,62 +394,15 @@ func initializeProgram() {
 				fmt.Printf("error [%v] at os.Mkdir()\n", err)
 				os.Exit(1)
 			}
-			writeAssets(progConfig.HTMLHistoryDirectory)
+			err := writeAssets(progConfig.HTMLHistoryDirectory)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
-
-/*
-// application-specific, static part of "System-Prompt"
-const appSystemInstruction = `You are a CLI backend processor for 'gem-pro'.
-Your goal: Provide helpful content first, then generate a strict archiving slug.
-
-### FORMATTING RULES
-- Provide raw markdown only.
-- No conversational filler (e.g., "Sure, I can help with that").
-- Do not wrap the entire response in triple backticks (code blocks).
-- Ensure LaTeX math blocks ($$) are always placed on their own new lines.
-
-### METADATA & ARCHIVING
-- You must generate a metadata line at the very end of your response.
-- Create a filename slug based on your generated content.
-- Length: 3-6 words.
-- Format: Lowercase, ASCII only, hyphens for spaces (kebab-case).
-- Language Rules:
-  - Keep main language of response if Latin script used.
-  - Transliteration: ä->ae, ö->oe, ü->ue, ß->ss, ñ->n, etc.
-  - Translation: If content is Non-Latin (Cyrillic, CJK, Arabic, etc.), translate the slug to ENGLISH.
-  - Remove all emojis/symbols.
-
-### OUTPUT FORMAT
-[Actual Content Here]
-...
-[End of Content]
-
-METADATA_SLUG: <your-slug-here>`
-*/
-
-// application-specific, static part of "System-Prompt"
-const appSystemInstruction = `Objective: Provide helpful, accurate content followed by a metadata archiving line.
-
-Constraints:
-1. Response Content: Use standard Markdown formatting.
-2. No Conversational Filler: Do not include introductory phrases (e.g., "Here is the information").
-3. Mathematical Notation: 
-   - Use inline math ($...$) ONLY for single variables or simple values (e.g., $x$, $50\%$).
-   - Use display math ($$...$$) ONLY for complex formulas. 
-   - Every display math block MUST be preceded and followed by a completely empty newline.
-   - Avoid LaTeX for plain text or simple arithmetic to ensure renderer stability.
-4. Archiving: The very last line of the response must be the metadata slug.
-
-Metadata Slug Rules:
-- Format: "METADATA_SLUG: kebab-case-slug"
-- Content: 3-6 descriptive words.
-- Characters: Lowercase ASCII, hyphens only (no symbols/emojis).
-- Localization: Transliterate special characters (ä->ae, etc.). Translate non-Latin content to English for the slug.
-
-Output Structure:
-<Content>`
 
 /*
 generateGeminiModelConfig generates a configuration object for the Gemini AI model. It creates a
@@ -514,21 +466,21 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		generateContentConfig.MaxOutputTokens = *progConfig.GeminiMaxOutputTokens
 	}
 
-	// system prompt composition (application part + optional user part)
-	finalSystemInstruction = appSystemInstruction
-	if progConfig.UserSystemInstruction != "" {
-		userInstructionBytes, err := os.ReadFile(progConfig.UserSystemInstruction)
+	// system prompt
+	if progConfig.SystemInstructionFile != "" {
+		sysInstructionBytes, err := os.ReadFile(progConfig.SystemInstructionFile)
 		if err != nil {
-			fmt.Printf("error [%v] reading user system instruction file\n", err)
+			fmt.Printf("error [%v] reading system instruction file [%s]\n", err, progConfig.SystemInstructionFile)
 			os.Exit(1)
 		}
-
-		// Combine: App Prompt + Header + User Prompt
-		if len(userInstructionBytes) > 0 {
-			finalSystemInstruction += "\n\nUser Context:\n" + string(userInstructionBytes)
-		}
+		finalSystemInstruction = string(sysInstructionBytes)
+	} else {
+		finalSystemInstruction = ""
 	}
-	generateContentConfig.SystemInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
+
+	if finalSystemInstruction != "" {
+		generateContentConfig.SystemInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
+	}
 
 	generateContentConfig.Tools = []*genai.Tool{}
 	if progConfig.GeminiGroundingWithCodeExecution {
@@ -540,7 +492,7 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 	if progConfig.GeminiGroundingWithURLContext {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{URLContext: &genai.URLContext{}})
 	}
-	if progConfig.GeminiGroundigWithGoogleMaps {
+	if progConfig.GeminiGroundingWithGoogleMaps {
 		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
 	}
 	if len(storeNames) > 0 {
@@ -724,7 +676,7 @@ func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.Generat
 	if progConfig.GeminiGroundingWithCodeExecution {
 		activeTools = append(activeTools, "CodeExecution")
 	}
-	if progConfig.GeminiGroundigWithGoogleMaps {
+	if progConfig.GeminiGroundingWithGoogleMaps {
 		activeTools = append(activeTools, "GoogleMaps")
 	}
 	if len(activeTools) > 0 {

@@ -445,6 +445,255 @@ func createTuningJobParametersPrivateToVertex(fromObject map[string]any, parentO
 	return toObject, nil
 }
 
+func distillationHyperParametersFromVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromAdapterSize := InternalGetValueByPath(fromObject, []string{"adapterSize"})
+	if fromAdapterSize != nil {
+		InternalSetValueByPath(toObject, []string{"adapterSize"}, fromAdapterSize)
+	}
+
+	fromEpochCount := InternalGetValueByPath(fromObject, []string{"epochCount"})
+	if fromEpochCount != nil {
+		InternalSetValueByPath(toObject, []string{"epochCount"}, fromEpochCount)
+	}
+
+	fromLearningRateMultiplier := InternalGetValueByPath(fromObject, []string{"learningRateMultiplier"})
+	if fromLearningRateMultiplier != nil {
+		InternalSetValueByPath(toObject, []string{"learningRateMultiplier"}, fromLearningRateMultiplier)
+	}
+
+	fromGenerationConfig := InternalGetValueByPath(fromObject, []string{"generationConfig"})
+	if fromGenerationConfig != nil {
+		fromGenerationConfig, err = generationConfigFromVertex(fromGenerationConfig.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"generationConfig"}, fromGenerationConfig)
+	}
+
+	fromLearningRate := InternalGetValueByPath(fromObject, []string{"learningRate"})
+	if fromLearningRate != nil {
+		InternalSetValueByPath(toObject, []string{"learningRate"}, fromLearningRate)
+	}
+
+	fromBatchSize := InternalGetValueByPath(fromObject, []string{"batchSize"})
+	if fromBatchSize != nil {
+		InternalSetValueByPath(toObject, []string{"batchSize"}, fromBatchSize)
+	}
+
+	return toObject, nil
+}
+
+func distillationSamplingSpecFromVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromBaseTeacherModel := InternalGetValueByPath(fromObject, []string{"baseTeacherModel"})
+	if fromBaseTeacherModel != nil {
+		InternalSetValueByPath(toObject, []string{"baseTeacherModel"}, fromBaseTeacherModel)
+	}
+
+	fromTunedTeacherModelSource := InternalGetValueByPath(fromObject, []string{"tunedTeacherModelSource"})
+	if fromTunedTeacherModelSource != nil {
+		InternalSetValueByPath(toObject, []string{"tunedTeacherModelSource"}, fromTunedTeacherModelSource)
+	}
+
+	fromValidationDatasetUri := InternalGetValueByPath(fromObject, []string{"validationDatasetUri"})
+	if fromValidationDatasetUri != nil {
+		InternalSetValueByPath(toObject, []string{"validationDatasetUri"}, fromValidationDatasetUri)
+	}
+
+	fromPromptDatasetUri := InternalGetValueByPath(fromObject, []string{"promptDatasetUri"})
+	if fromPromptDatasetUri != nil {
+		InternalSetValueByPath(toObject, []string{"promptDatasetUri"}, fromPromptDatasetUri)
+	}
+
+	fromHyperparameters := InternalGetValueByPath(fromObject, []string{"hyperparameters"})
+	if fromHyperparameters != nil {
+		fromHyperparameters, err = distillationHyperParametersFromVertex(fromHyperparameters.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"hyperparameters"}, fromHyperparameters)
+	}
+
+	return toObject, nil
+}
+
+func distillationSpecFromVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromPromptDatasetUri := InternalGetValueByPath(fromObject, []string{"promptDatasetUri"})
+	if fromPromptDatasetUri != nil {
+		InternalSetValueByPath(toObject, []string{"promptDatasetUri"}, fromPromptDatasetUri)
+	}
+
+	fromBaseTeacherModel := InternalGetValueByPath(fromObject, []string{"baseTeacherModel"})
+	if fromBaseTeacherModel != nil {
+		InternalSetValueByPath(toObject, []string{"baseTeacherModel"}, fromBaseTeacherModel)
+	}
+
+	fromHyperParameters := InternalGetValueByPath(fromObject, []string{"hyperParameters"})
+	if fromHyperParameters != nil {
+		fromHyperParameters, err = distillationHyperParametersFromVertex(fromHyperParameters.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"hyperParameters"}, fromHyperParameters)
+	}
+
+	fromPipelineRootDirectory := InternalGetValueByPath(fromObject, []string{"pipelineRootDirectory"})
+	if fromPipelineRootDirectory != nil {
+		InternalSetValueByPath(toObject, []string{"pipelineRootDirectory"}, fromPipelineRootDirectory)
+	}
+
+	fromStudentModel := InternalGetValueByPath(fromObject, []string{"studentModel"})
+	if fromStudentModel != nil {
+		InternalSetValueByPath(toObject, []string{"studentModel"}, fromStudentModel)
+	}
+
+	fromTrainingDatasetUri := InternalGetValueByPath(fromObject, []string{"trainingDatasetUri"})
+	if fromTrainingDatasetUri != nil {
+		InternalSetValueByPath(toObject, []string{"trainingDatasetUri"}, fromTrainingDatasetUri)
+	}
+
+	fromTunedTeacherModelSource := InternalGetValueByPath(fromObject, []string{"tunedTeacherModelSource"})
+	if fromTunedTeacherModelSource != nil {
+		InternalSetValueByPath(toObject, []string{"tunedTeacherModelSource"}, fromTunedTeacherModelSource)
+	}
+
+	fromValidationDatasetUri := InternalGetValueByPath(fromObject, []string{"validationDatasetUri"})
+	if fromValidationDatasetUri != nil {
+		InternalSetValueByPath(toObject, []string{"validationDatasetUri"}, fromValidationDatasetUri)
+	}
+
+	fromTuningMode := InternalGetValueByPath(fromObject, []string{"tuningMode"})
+	if fromTuningMode != nil {
+		InternalSetValueByPath(toObject, []string{"tuningMode"}, fromTuningMode)
+	}
+
+	return toObject, nil
+}
+
+func generationConfigFromVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromModelSelectionConfig := InternalGetValueByPath(fromObject, []string{"modelConfig"})
+	if fromModelSelectionConfig != nil {
+		InternalSetValueByPath(toObject, []string{"modelSelectionConfig"}, fromModelSelectionConfig)
+	}
+
+	fromResponseJsonSchema := InternalGetValueByPath(fromObject, []string{"responseJsonSchema"})
+	if fromResponseJsonSchema != nil {
+		InternalSetValueByPath(toObject, []string{"responseJsonSchema"}, fromResponseJsonSchema)
+	}
+
+	fromAudioTimestamp := InternalGetValueByPath(fromObject, []string{"audioTimestamp"})
+	if fromAudioTimestamp != nil {
+		InternalSetValueByPath(toObject, []string{"audioTimestamp"}, fromAudioTimestamp)
+	}
+
+	fromCandidateCount := InternalGetValueByPath(fromObject, []string{"candidateCount"})
+	if fromCandidateCount != nil {
+		InternalSetValueByPath(toObject, []string{"candidateCount"}, fromCandidateCount)
+	}
+
+	fromEnableAffectiveDialog := InternalGetValueByPath(fromObject, []string{"enableAffectiveDialog"})
+	if fromEnableAffectiveDialog != nil {
+		InternalSetValueByPath(toObject, []string{"enableAffectiveDialog"}, fromEnableAffectiveDialog)
+	}
+
+	fromFrequencyPenalty := InternalGetValueByPath(fromObject, []string{"frequencyPenalty"})
+	if fromFrequencyPenalty != nil {
+		InternalSetValueByPath(toObject, []string{"frequencyPenalty"}, fromFrequencyPenalty)
+	}
+
+	fromLogprobs := InternalGetValueByPath(fromObject, []string{"logprobs"})
+	if fromLogprobs != nil {
+		InternalSetValueByPath(toObject, []string{"logprobs"}, fromLogprobs)
+	}
+
+	fromMaxOutputTokens := InternalGetValueByPath(fromObject, []string{"maxOutputTokens"})
+	if fromMaxOutputTokens != nil {
+		InternalSetValueByPath(toObject, []string{"maxOutputTokens"}, fromMaxOutputTokens)
+	}
+
+	fromMediaResolution := InternalGetValueByPath(fromObject, []string{"mediaResolution"})
+	if fromMediaResolution != nil {
+		InternalSetValueByPath(toObject, []string{"mediaResolution"}, fromMediaResolution)
+	}
+
+	fromPresencePenalty := InternalGetValueByPath(fromObject, []string{"presencePenalty"})
+	if fromPresencePenalty != nil {
+		InternalSetValueByPath(toObject, []string{"presencePenalty"}, fromPresencePenalty)
+	}
+
+	fromResponseLogprobs := InternalGetValueByPath(fromObject, []string{"responseLogprobs"})
+	if fromResponseLogprobs != nil {
+		InternalSetValueByPath(toObject, []string{"responseLogprobs"}, fromResponseLogprobs)
+	}
+
+	fromResponseMimeType := InternalGetValueByPath(fromObject, []string{"responseMimeType"})
+	if fromResponseMimeType != nil {
+		InternalSetValueByPath(toObject, []string{"responseMimeType"}, fromResponseMimeType)
+	}
+
+	fromResponseModalities := InternalGetValueByPath(fromObject, []string{"responseModalities"})
+	if fromResponseModalities != nil {
+		InternalSetValueByPath(toObject, []string{"responseModalities"}, fromResponseModalities)
+	}
+
+	fromResponseSchema := InternalGetValueByPath(fromObject, []string{"responseSchema"})
+	if fromResponseSchema != nil {
+		InternalSetValueByPath(toObject, []string{"responseSchema"}, fromResponseSchema)
+	}
+
+	fromRoutingConfig := InternalGetValueByPath(fromObject, []string{"routingConfig"})
+	if fromRoutingConfig != nil {
+		InternalSetValueByPath(toObject, []string{"routingConfig"}, fromRoutingConfig)
+	}
+
+	fromSeed := InternalGetValueByPath(fromObject, []string{"seed"})
+	if fromSeed != nil {
+		InternalSetValueByPath(toObject, []string{"seed"}, fromSeed)
+	}
+
+	fromSpeechConfig := InternalGetValueByPath(fromObject, []string{"speechConfig"})
+	if fromSpeechConfig != nil {
+		InternalSetValueByPath(toObject, []string{"speechConfig"}, fromSpeechConfig)
+	}
+
+	fromStopSequences := InternalGetValueByPath(fromObject, []string{"stopSequences"})
+	if fromStopSequences != nil {
+		InternalSetValueByPath(toObject, []string{"stopSequences"}, fromStopSequences)
+	}
+
+	fromTemperature := InternalGetValueByPath(fromObject, []string{"temperature"})
+	if fromTemperature != nil {
+		InternalSetValueByPath(toObject, []string{"temperature"}, fromTemperature)
+	}
+
+	fromThinkingConfig := InternalGetValueByPath(fromObject, []string{"thinkingConfig"})
+	if fromThinkingConfig != nil {
+		InternalSetValueByPath(toObject, []string{"thinkingConfig"}, fromThinkingConfig)
+	}
+
+	fromTopK := InternalGetValueByPath(fromObject, []string{"topK"})
+	if fromTopK != nil {
+		InternalSetValueByPath(toObject, []string{"topK"}, fromTopK)
+	}
+
+	fromTopP := InternalGetValueByPath(fromObject, []string{"topP"})
+	if fromTopP != nil {
+		InternalSetValueByPath(toObject, []string{"topP"}, fromTopP)
+	}
+
+	return toObject, nil
+}
+
 func getTuningJobParametersToMldev(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -760,6 +1009,11 @@ func tuningJobFromVertex(fromObject map[string]any, parentObject map[string]any,
 
 	fromDistillationSpec := InternalGetValueByPath(fromObject, []string{"distillationSpec"})
 	if fromDistillationSpec != nil {
+		fromDistillationSpec, err = distillationSpecFromVertex(fromDistillationSpec.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"distillationSpec"}, fromDistillationSpec)
 	}
 
@@ -833,14 +1087,24 @@ func tuningJobFromVertex(fromObject map[string]any, parentObject map[string]any,
 		InternalSetValueByPath(toObject, []string{"veoTuningSpec"}, fromVeoTuningSpec)
 	}
 
-	fromDistillationSamplingSpec := InternalGetValueByPath(fromObject, []string{"distillationSamplingSpec"})
-	if fromDistillationSamplingSpec != nil {
-		InternalSetValueByPath(toObject, []string{"distillationSamplingSpec"}, fromDistillationSamplingSpec)
-	}
-
 	fromTuningJobMetadata := InternalGetValueByPath(fromObject, []string{"tuningJobMetadata"})
 	if fromTuningJobMetadata != nil {
 		InternalSetValueByPath(toObject, []string{"tuningJobMetadata"}, fromTuningJobMetadata)
+	}
+
+	fromVeoLoraTuningSpec := InternalGetValueByPath(fromObject, []string{"veoLoraTuningSpec"})
+	if fromVeoLoraTuningSpec != nil {
+		InternalSetValueByPath(toObject, []string{"veoLoraTuningSpec"}, fromVeoLoraTuningSpec)
+	}
+
+	fromDistillationSamplingSpec := InternalGetValueByPath(fromObject, []string{"distillationSamplingSpec"})
+	if fromDistillationSamplingSpec != nil {
+		fromDistillationSamplingSpec, err = distillationSamplingSpecFromVertex(fromDistillationSamplingSpec.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"distillationSamplingSpec"}, fromDistillationSamplingSpec)
 	}
 
 	return toObject, nil
