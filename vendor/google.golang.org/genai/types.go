@@ -52,7 +52,8 @@ const (
 	LanguagePython Language = "PYTHON"
 )
 
-// Specifies how the response should be scheduled in the conversation.
+// Specifies how the response should be scheduled in the conversation. Only applicable
+// to NON_BLOCKING function calls, is ignored otherwise. Defaults to WHEN_IDLE.
 type FunctionResponseScheduling string
 
 const (
@@ -201,29 +202,6 @@ const (
 	DynamicRetrievalConfigModeDynamic DynamicRetrievalConfigMode = "MODE_DYNAMIC"
 )
 
-// Function calling mode.
-type FunctionCallingConfigMode string
-
-const (
-	// Unspecified function calling mode. This value should not be used.
-	FunctionCallingConfigModeUnspecified FunctionCallingConfigMode = "MODE_UNSPECIFIED"
-	// Default model behavior, model decides to predict either function calls or natural
-	// language response.
-	FunctionCallingConfigModeAuto FunctionCallingConfigMode = "AUTO"
-	// Model is constrained to always predicting function calls only. If "allowed_function_names"
-	// are set, the predicted function calls will be limited to any one of "allowed_function_names",
-	// else the predicted function calls will be any one of the provided "function_declarations".
-	FunctionCallingConfigModeAny FunctionCallingConfigMode = "ANY"
-	// Model will not predict any function calls. Model behavior is same as when not passing
-	// any function declarations.
-	FunctionCallingConfigModeNone FunctionCallingConfigMode = "NONE"
-	// Model is constrained to predict either function calls or natural language response.
-	// If "allowed_function_names" are set, the predicted function calls will be limited
-	// to any one of "allowed_function_names", else the predicted function calls will be
-	// any one of the provided "function_declarations".
-	FunctionCallingConfigModeValidated FunctionCallingConfigMode = "VALIDATED"
-)
-
 // The number of thoughts tokens that the model should generate.
 type ThinkingLevel string
 
@@ -331,6 +309,29 @@ const (
 	HarmBlockThresholdBlockNone HarmBlockThreshold = "BLOCK_NONE"
 	// Turn off the safety filter entirely.
 	HarmBlockThresholdOff HarmBlockThreshold = "OFF"
+)
+
+// Function calling mode.
+type FunctionCallingConfigMode string
+
+const (
+	// Unspecified function calling mode. This value should not be used.
+	FunctionCallingConfigModeUnspecified FunctionCallingConfigMode = "MODE_UNSPECIFIED"
+	// Default model behavior, model decides to predict either function calls or natural
+	// language response.
+	FunctionCallingConfigModeAuto FunctionCallingConfigMode = "AUTO"
+	// Model is constrained to always predicting function calls only. If "allowed_function_names"
+	// are set, the predicted function calls will be limited to any one of "allowed_function_names",
+	// else the predicted function calls will be any one of the provided "function_declarations".
+	FunctionCallingConfigModeAny FunctionCallingConfigMode = "ANY"
+	// Model will not predict any function calls. Model behavior is same as when not passing
+	// any function declarations.
+	FunctionCallingConfigModeNone FunctionCallingConfigMode = "NONE"
+	// Model is constrained to predict either function calls or natural language response.
+	// If "allowed_function_names" are set, the predicted function calls will be limited
+	// to any one of "allowed_function_names", else the predicted function calls will be
+	// any one of the provided "function_declarations".
+	FunctionCallingConfigModeValidated FunctionCallingConfigMode = "VALIDATED"
 )
 
 // The reason why the model stopped generating tokens.
@@ -467,20 +468,22 @@ const (
 	TrafficTypeProvisionedThroughput TrafficType = "PROVISIONED_THROUGHPUT"
 )
 
-// Server content modalities.
-type Modality string
+// The modality that this token count applies to.
+type MediaModality string
 
 const (
-	// The modality is unspecified.
-	ModalityUnspecified Modality = "MODALITY_UNSPECIFIED"
-	// Indicates the model should return text
-	ModalityText Modality = "TEXT"
-	// Indicates the model should return images.
-	ModalityImage Modality = "IMAGE"
-	// Indicates the model should return audio.
-	ModalityAudio Modality = "AUDIO"
-	// Indicates the model should return video.
-	ModalityVideo Modality = "VIDEO"
+	// When a modality is not specified, it is treated as `TEXT`.
+	MediaModalityUnspecified MediaModality = "MODALITY_UNSPECIFIED"
+	// The `Part` contains plain text.
+	MediaModalityText MediaModality = "TEXT"
+	// The `Part` contains an image.
+	MediaModalityImage MediaModality = "IMAGE"
+	// The `Part` contains a video.
+	MediaModalityVideo MediaModality = "VIDEO"
+	// The `Part` contains audio.
+	MediaModalityAudio MediaModality = "AUDIO"
+	// The `Part` contains a document, such as a PDF.
+	MediaModalityDocument MediaModality = "DOCUMENT"
 )
 
 // The stage of the underlying model. This enum is not supported in Vertex AI.
@@ -518,6 +521,22 @@ const (
 	MediaResolutionMedium MediaResolution = "MEDIA_RESOLUTION_MEDIUM"
 	// Media resolution set to high (zoomed reframing with 256 tokens).
 	MediaResolutionHigh MediaResolution = "MEDIA_RESOLUTION_HIGH"
+)
+
+// Server content modalities.
+type Modality string
+
+const (
+	// The modality is unspecified.
+	ModalityUnspecified Modality = "MODALITY_UNSPECIFIED"
+	// Indicates the model should return text
+	ModalityText Modality = "TEXT"
+	// Indicates the model should return images.
+	ModalityImage Modality = "IMAGE"
+	// Indicates the model should return audio.
+	ModalityAudio Modality = "AUDIO"
+	// Indicates the model should return video.
+	ModalityVideo Modality = "VIDEO"
 )
 
 // Tuning mode. This enum is not supported in Gemini API.
@@ -699,6 +718,20 @@ const (
 	DocumentStateFailed DocumentState = "STATE_FAILED"
 )
 
+// Pricing and performance service tier.
+type ServiceTier string
+
+const (
+	// Default service tier, which is standard.
+	ServiceTierUnspecified ServiceTier = "unspecified"
+	// Flex service tier.
+	ServiceTierFlex ServiceTier = "flex"
+	// Standard service tier.
+	ServiceTierStandard ServiceTier = "standard"
+	// Priority service tier.
+	ServiceTierPriority ServiceTier = "priority"
+)
+
 // The tokenization quality used for given media.
 type PartMediaResolutionLevel string
 
@@ -743,20 +776,6 @@ const (
 	// then the resource name for a Model would be
 	// "https://aiplatform.googleapis.com/publishers/google/models/gemini-3-pro-preview
 	ResourceScopeCollection ResourceScope = "COLLECTION"
-)
-
-// Pricing and performance service tier.
-type ServiceTier string
-
-const (
-	// Default service tier, which is standard.
-	ServiceTierUnspecified ServiceTier = "unspecified"
-	// Flex service tier.
-	ServiceTierFlex ServiceTier = "flex"
-	// Standard service tier.
-	ServiceTierStandard ServiceTier = "standard"
-	// Priority service tier.
-	ServiceTierPriority ServiceTier = "priority"
 )
 
 // Options for feature selection preference.
@@ -925,6 +944,44 @@ const (
 	ImageResizeModePad ImageResizeMode = "PAD"
 )
 
+// Defines how to parse sample response.
+type ResponseParseType string
+
+const (
+	// Default value. This value is unused.
+	ResponseParseTypeUnspecified ResponseParseType = "RESPONSE_PARSE_TYPE_UNSPECIFIED"
+	// Use the sample response as is.
+	ResponseParseTypeIdentity ResponseParseType = "IDENTITY"
+	// Use regex to extract the important part of sample response.
+	ResponseParseTypeRegexExtract ResponseParseType = "REGEX_EXTRACT"
+)
+
+// Match operation to use for evaluation.
+type MatchOperation string
+
+const (
+	// Default value. This value is unused.
+	MatchOperationUnspecified MatchOperation = "MATCH_OPERATION_UNSPECIFIED"
+	// Equivalent to GoogleSQL `REGEX_CONTAINS(target, expression)`.
+	MatchOperationRegexContains MatchOperation = "REGEX_CONTAINS"
+	// `expression` is a substring of target.
+	MatchOperationPartialMatch MatchOperation = "PARTIAL_MATCH"
+	// `expression` is an exact match of target.
+	MatchOperationExactMatch MatchOperation = "EXACT_MATCH"
+)
+
+// Represents how much to think for the tuning job.
+type ReinforcementTuningThinkingLevel string
+
+const (
+	// Unspecified thinking level.
+	ReinforcementTuningThinkingLevelUnspecified ReinforcementTuningThinkingLevel = "REINFORCEMENT_TUNING_THINKING_LEVEL_UNSPECIFIED"
+	// Little to no thinking.
+	ReinforcementTuningThinkingLevelMinimal ReinforcementTuningThinkingLevel = "MINIMAL"
+	// High thinking level.
+	ReinforcementTuningThinkingLevelHigh ReinforcementTuningThinkingLevel = "HIGH"
+)
+
 // Enum representing the tuning method.
 type TuningMethod string
 
@@ -935,6 +992,8 @@ const (
 	TuningMethodPreferenceTuning TuningMethod = "PREFERENCE_TUNING"
 	// Distillation tuning.
 	TuningMethodDistillation TuningMethod = "DISTILLATION"
+	// Reinforcement tuning.
+	TuningMethodReinforcementTuning TuningMethod = "REINFORCEMENT_TUNING"
 )
 
 // State for the lifecycle of a File.
@@ -1017,24 +1076,6 @@ const (
 	TurnCompleteReasonGeneratedOther TurnCompleteReason = "GENERATED_OTHER"
 	// Max regeneration attempts reached.
 	TurnCompleteReasonMaxRegenerationReached TurnCompleteReason = "MAX_REGENERATION_REACHED"
-)
-
-// Server content modalities.
-type MediaModality string
-
-const (
-	// The modality is unspecified.
-	MediaModalityUnspecified MediaModality = "MODALITY_UNSPECIFIED"
-	// Plain text.
-	MediaModalityText MediaModality = "TEXT"
-	// Images.
-	MediaModalityImage MediaModality = "IMAGE"
-	// Video.
-	MediaModalityVideo MediaModality = "VIDEO"
-	// Audio.
-	MediaModalityAudio MediaModality = "AUDIO"
-	// Document, e.g. PDF.
-	MediaModalityDocument MediaModality = "DOCUMENT"
 )
 
 // The type of the VAD signal.
@@ -1216,11 +1257,12 @@ type PartialArg struct {
 	WillContinue *bool `json:"willContinue,omitempty"`
 }
 
-// A function call.
+// A predicted FunctionCall returned from the model that contains a string representing
+// the FunctionDeclaration.name and a structured JSON object containing the parameters
+// and their values.
 type FunctionCall struct {
 	// Optional. The unique ID of the function call. If populated, the client to execute
-	// the
-	// `function_call` and return the response with the matching `id`.
+	// the `function_call` and return the response with the matching `id`.
 	ID string `json:"id,omitempty"`
 	// Optional. The function parameters and values in JSON object format. See FunctionDeclaration.parameters
 	// for parameter details.
@@ -1237,41 +1279,43 @@ type FunctionCall struct {
 	WillContinue *bool `json:"willContinue,omitempty"`
 }
 
-// Raw media bytes for function response.
-// Text should not be sent as raw bytes, use the FunctionResponse.response
-// field.
+// Raw media bytes for function response. Text should not be sent as raw bytes, use
+// the 'text' field.
 type FunctionResponseBlob struct {
 	// Required. The IANA standard MIME type of the source data.
 	MIMEType string `json:"mimeType,omitempty"`
-	// Required. Inline media bytes.
+	// Required. Raw bytes.
 	Data []byte `json:"data,omitempty"`
-	// Optional. Display name of the blob.
-	// Used to provide a label or filename to distinguish blobs.
+	// Optional. Display name of the blob. Used to provide a label or filename to distinguish
+	// blobs. This field is only returned in PromptMessage for prompt management. It is
+	// currently used in the Gemini GenerateContent calls only when server side tools (code_execution,
+	// google_search, and url_context) are enabled. This field is not supported in Gemini
+	// API.
 	DisplayName string `json:"displayName,omitempty"`
 }
 
-// URI based data for function response.
+// URI based data for function response. This data type is not supported in Gemini API.
 type FunctionResponseFileData struct {
 	// Required. URI.
 	FileURI string `json:"fileUri,omitempty"`
 	// Required. The IANA standard MIME type of the source data.
 	MIMEType string `json:"mimeType,omitempty"`
-	// Optional. Display name of the file.
-	// Used to provide a label or filename to distinguish files.
+	// Optional. Display name of the file data. Used to provide a label or filename to distinguish
+	// file datas. This field is only returned in PromptMessage for prompt management. It
+	// is currently used in the Gemini GenerateContent calls only when server side tools
+	// (code_execution, google_search, and url_context) are enabled.
 	DisplayName string `json:"displayName,omitempty"`
 }
 
-// A datatype containing media that is part of a `FunctionResponse` message.
-// A `FunctionResponsePart` consists of data which has an associated datatype. A
-// `FunctionResponsePart` can only contain one of the accepted types in
-// `FunctionResponsePart.data`.
-// A `FunctionResponsePart` must have a fixed IANA MIME type identifying the
-// type and subtype of the media if the `inline_data` field is filled with raw
-// bytes.
+// A datatype containing media that is part of a `FunctionResponse` message. A `FunctionResponsePart`
+// consists of data which has an associated datatype. A `FunctionResponsePart` can only
+// contain one of the accepted types in `FunctionResponsePart.data`. A `FunctionResponsePart`
+// must have a fixed IANA MIME type identifying the type and subtype of the media if
+// the `inline_data` field is filled with raw bytes.
 type FunctionResponsePart struct {
-	// Optional. Inline media bytes.
+	// Inline media bytes.
 	InlineData *FunctionResponseBlob `json:"inlineData,omitempty"`
-	// Optional. URI based data.
+	// URI based data. This field is not supported in Gemini API.
 	FileData *FunctionResponseFileData `json:"fileData,omitempty"`
 }
 
@@ -1295,21 +1339,24 @@ func NewFunctionResponsePartFromBytes(data []byte, mimeType string) *FunctionRes
 	}
 }
 
-// A function response.
+// The result output from a FunctionCall that contains a string representing the FunctionDeclaration.name
+// and a structured JSON object containing any output from the function is used as context
+// to the model. This should contain the result of a `FunctionCall` made based on model
+// prediction.
 type FunctionResponse struct {
 	// Optional. Signals that function call continues, and more responses will be returned,
 	// turning the function call into a generator. Is only applicable to NON_BLOCKING function
-	// calls (see FunctionDeclaration.behavior for details), ignored otherwise. If false,
-	// the default, future responses will not be considered. Is only applicable to NON_BLOCKING
-	// function calls, is ignored otherwise. If set to false, future responses will not
-	// be considered. It is allowed to return empty `response` with `will_continue=False`
-	// to signal that the function call is finished.
+	// calls, is ignored otherwise. If set to false, future responses will not be considered.
+	// It is allowed to return empty `response` with `will_continue=False` to signal that
+	// the function call is finished. This may still trigger the model generation. To avoid
+	// triggering the generation and finish the function call, additionally set `scheduling`
+	// to `SILENT`. This field is not supported in Vertex AI.
 	WillContinue *bool `json:"willContinue,omitempty"`
 	// Optional. Specifies how the response should be scheduled in the conversation. Only
 	// applicable to NON_BLOCKING function calls, is ignored otherwise. Defaults to WHEN_IDLE.
 	Scheduling FunctionResponseScheduling `json:"scheduling,omitempty"`
-	// Optional. List of parts that constitute a function response. Each part may
-	// have a different IANA MIME type.
+	// Optional. Ordered `Parts` that constitute a function response. Parts may have different
+	// IANA MIME types.
 	Parts []*FunctionResponsePart `json:"parts,omitempty"`
 	// Optional. The ID of the function call this response is for. Populated by the client
 	// to match the corresponding function call `id`.
@@ -1880,9 +1927,10 @@ type GoogleMaps struct {
 	// Optional. The authentication config to access the API. Only API key is supported.
 	// This field is not supported in Gemini API.
 	AuthConfig *AuthConfig `json:"authConfig,omitempty"`
-	// Optional. Whether to return a widget context token in the GroundingMetadata of the
-	// response. Developers can use the widget context token to render a Google Maps widget
-	// with geospatial context related to the places that the model references in the response.
+	// Optional. Deprecated. The Google Maps contextual widget behavior in Grounding with
+	// Google Maps is being deprecated; this field is planned for removal and no longer
+	// has any effect once removed. Optional. Whether to return a widget context token in
+	// the GroundingMetadata of the response.
 	EnableWidget *bool `json:"enableWidget,omitempty"`
 }
 
@@ -2381,52 +2429,6 @@ type Tool struct {
 	MCPServers []*MCPServer `json:"mcpServers,omitempty"`
 }
 
-// An object that represents a latitude/longitude pair.
-// This is expressed as a pair of doubles to represent degrees latitude and
-// degrees longitude. Unless specified otherwise, this object must conform to the
-// <a href="https://en.wikipedia.org/wiki/World_Geodetic_System#1984_version">
-// WGS84 standard</a>. Values must be within normalized ranges.
-type LatLng struct {
-	// Optional. The latitude in degrees. It must be in the range [-90.0, +90.0].
-	Latitude *float64 `json:"latitude,omitempty"`
-	// Optional. The longitude in degrees. It must be in the range [-180.0, +180.0]
-	Longitude *float64 `json:"longitude,omitempty"`
-}
-
-// Retrieval config.
-type RetrievalConfig struct {
-	// Optional. The location of the user.
-	LatLng *LatLng `json:"latLng,omitempty"`
-	// The language code of the user.
-	LanguageCode string `json:"languageCode,omitempty"`
-}
-
-// Function calling config.
-type FunctionCallingConfig struct {
-	// Optional. Function names to call. Only set when the Mode is ANY. Function names should
-	// match [FunctionDeclaration.Name]. With mode set to ANY, model will predict a function
-	// call from the set of function names provided.
-	AllowedFunctionNames []string `json:"allowedFunctionNames,omitempty"`
-	// Optional. Function calling mode.
-	Mode FunctionCallingConfigMode `json:"mode,omitempty"`
-	// Optional. When set to true, arguments of a single function call will be streamed
-	// out in multiple parts/contents/responses. Partial parameter results will be returned
-	// in the `FunctionCall.partial_args` field. This field is not supported in Gemini API.
-	StreamFunctionCallArguments *bool `json:"streamFunctionCallArguments,omitempty"`
-}
-
-// Tool config.
-// This config is shared for all tools provided in the request.
-type ToolConfig struct {
-	// Optional. Retrieval config.
-	RetrievalConfig *RetrievalConfig `json:"retrievalConfig,omitempty"`
-	// Optional. Function calling config.
-	FunctionCallingConfig *FunctionCallingConfig `json:"functionCallingConfig,omitempty"`
-	// Optional. If true, the API response will include the server-side tool calls and responses
-	// within the `Content` message. This allows clients to observe the server's tool invocations.
-	IncludeServerSideToolInvocations *bool `json:"includeServerSideToolInvocations,omitempty"`
-}
-
 // The configuration for the replicated voice to use.
 type ReplicatedVoiceConfig struct {
 	// Optional. The mimetype of the voice sample. The only currently supported
@@ -2566,6 +2568,51 @@ type SafetySetting struct {
 	// Required. The threshold for blocking content. If the harm probability exceeds this
 	// threshold, the content will be blocked.
 	Threshold HarmBlockThreshold `json:"threshold,omitempty"`
+}
+
+// An object that represents a latitude/longitude pair. This is expressed as a pair
+// of doubles to represent degrees latitude and degrees longitude. Unless specified
+// otherwise, this object must conform to the WGS84 standard. Values must be within
+// normalized ranges.
+type LatLng struct {
+	// The latitude in degrees. It must be in the range [-90.0, +90.0].
+	Latitude *float64 `json:"latitude,omitempty"`
+	// The longitude in degrees. It must be in the range [-180.0, +180.0].
+	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+// Retrieval config.
+type RetrievalConfig struct {
+	// The location of the user.
+	LatLng *LatLng `json:"latLng,omitempty"`
+	// The language code of the user.
+	LanguageCode string `json:"languageCode,omitempty"`
+}
+
+// Function calling config.
+type FunctionCallingConfig struct {
+	// Optional. Function names to call. Only set when the Mode is ANY. Function names should
+	// match [FunctionDeclaration.Name]. With mode set to ANY, model will predict a function
+	// call from the set of function names provided.
+	AllowedFunctionNames []string `json:"allowedFunctionNames,omitempty"`
+	// Optional. Function calling mode.
+	Mode FunctionCallingConfigMode `json:"mode,omitempty"`
+	// Optional. When set to true, arguments of a single function call will be streamed
+	// out in multiple parts/contents/responses. Partial parameter results will be returned
+	// in the `FunctionCall.partial_args` field. This field is not supported in Gemini API.
+	StreamFunctionCallArguments *bool `json:"streamFunctionCallArguments,omitempty"`
+}
+
+// Tool config. This config is shared for all tools provided in the request.
+type ToolConfig struct {
+	// Optional. Retrieval config.
+	RetrievalConfig *RetrievalConfig `json:"retrievalConfig,omitempty"`
+	// Optional. Function calling config.
+	FunctionCallingConfig *FunctionCallingConfig `json:"functionCallingConfig,omitempty"`
+	// Optional. If true, the API response will include the server-side tool calls and responses
+	// within the `Content` message. This allows clients to observe the server's tool interactions.
+	// This field is not supported in Vertex AI.
+	IncludeServerSideToolInvocations *bool `json:"includeServerSideToolInvocations,omitempty"`
 }
 
 // Configuration for Model Armor. Model Armor is a Google Cloud service that provides
@@ -3283,9 +3330,13 @@ type GenerateContentResponsePromptFeedback struct {
 	SafetyRatings []*SafetyRating `json:"safetyRatings,omitempty"`
 }
 
-// Represents token counting info for a single modality.
+// Represents a breakdown of token usage by modality. This message is used in CountTokensResponse
+// and GenerateContentResponse.UsageMetadata to provide a detailed view of how many
+// tokens are used by each modality (e.g., text, image, video) in a request. This is
+// particularly useful for multimodal models, allowing you to track and manage token
+// consumption for billing and quota purposes.
 type ModalityTokenCount struct {
-	// Optional. The modality associated with this token count.
+	// The modality that this token count applies to.
 	Modality MediaModality `json:"modality,omitempty"`
 	// The number of tokens counted for this modality.
 	TokenCount int32 `json:"tokenCount,omitempty"`
@@ -4786,6 +4837,195 @@ type DistillationSpec struct {
 	TuningMode TuningMode `json:"tuningMode,omitempty"`
 }
 
+// Autorater config used for evaluation.
+type AutoraterConfig struct {
+	// Optional. Number of samples for each instance in the dataset.
+	// If not specified, the default is 4. Minimum value is 1, maximum value
+	// is 32.
+	SamplingCount *int32 `json:"samplingCount,omitempty"`
+	// Optional. Default is true. Whether to flip the candidate and baseline
+	// responses. This is only applicable to the pairwise metric. If enabled, also
+	// provide PairwiseMetricSpec.candidate_response_field_name and
+	// PairwiseMetricSpec.baseline_response_field_name. When rendering
+	// PairwiseMetricSpec.metric_prompt_template, the candidate and baseline
+	// fields will be flipped for half of the samples to reduce bias.
+	FlipEnabled *bool `json:"flipEnabled,omitempty"`
+	// Optional. The fully qualified name of the publisher model or tuned autorater
+	// endpoint to use.
+	// Publisher model format:
+	// `projects/{project}/locations/{location}/publishers/{publisher}/models/{model}`
+	// Tuned model endpoint format:
+	// `projects/{project}/locations/{location}/endpoints/{endpoint}`
+	AutoraterModel string `json:"autoraterModel,omitempty"`
+	// Optional. Configuration options for model generation and outputs.
+	GenerationConfig *GenerationConfig `json:"generationConfig,omitempty"`
+}
+
+// Defines how to parse sample response for reinforcement tuning.
+type ReinforcementTuningParseResponseConfig struct {
+	// Optional. Defines how to parse sample response.
+	ParseType ResponseParseType `json:"parseType,omitempty"`
+	// Optional. Defines the regex to extract the important part of sample response. This
+	// field is only used when `parse_type` is `REGEX_EXTRACT`.
+	RegexExtractExpression string `json:"regexExtractExpression,omitempty"`
+}
+
+// Scores responses by directly converting parsed autorater response to float reward
+// (reward is clipped to be within [-1, 1]).
+type ReinforcementTuningAutoraterScorerParsedResponseConversionScorer struct {
+}
+
+// Scores autorater responses by using exact string match reward scorer.
+type ReinforcementTuningAutoraterScorerExactMatchScorer struct {
+	// Optional. Assigns this reward score if parsed response string equals the expression.
+	CorrectAnswerReward *float32 `json:"correctAnswerReward,omitempty"`
+	// Optional. Assigns this reward score if parsed reward value does not equal the expression.
+	WrongAnswerReward *float32 `json:"wrongAnswerReward,omitempty"`
+	// Optional. The string expression to match against. Supports substitution in the format
+	// of `references.reference` (wrapped in double curly braces) before matching. No regex
+	// support.
+	Expression string `json:"expression,omitempty"`
+}
+
+// Reinforcement tuning autorater scorer.
+type ReinforcementTuningAutoraterScorer struct {
+	// Optional. Autorater config for evaluation.
+	AutoraterConfig *AutoraterConfig `json:"autoraterConfig,omitempty"`
+	// Optional. Allows substituting `prompt`, `response`, `system_instruction` and `references.reference`
+	// (each wrapped in double curly braces) into the autorater prompt.
+	AutoraterPrompt string `json:"autoraterPrompt,omitempty"`
+	// Optional. Parses autorater returned response.
+	AutoraterResponseParseConfig *ReinforcementTuningParseResponseConfig `json:"autoraterResponseParseConfig,omitempty"`
+	// Optional. Scores autorater responses by directly converting parsed autorater response
+	// to float reward.
+	ParsedResponseConversionScorer *ReinforcementTuningAutoraterScorerParsedResponseConversionScorer `json:"parsedResponseConversionScorer,omitempty"`
+	// Optional. Scores autorater responses by using exact string match reward scorer.
+	ExactMatchScorer *ReinforcementTuningAutoraterScorerExactMatchScorer `json:"exactMatchScorer,omitempty"`
+}
+
+// Scores parsed responses for code execution use cases.
+type ReinforcementTuningCodeExecutionRewardScorer struct {
+	// Optional. Example python code snippet which assigns reward of 1 to answer matching
+	// user provided reference answer in per prompt references map.
+	PythonCodeSnippet string `json:"pythonCodeSnippet,omitempty"`
+}
+
+// Evaluates parsed response using match type against expression.
+type ReinforcementTuningStringMatchRewardScorerStringMatchExpression struct {
+	// Optional. Match operation to use for evaluation.
+	MatchOperation MatchOperation `json:"matchOperation,omitempty"`
+	// Optional. String or regular expression to match against. Customer can also provide
+	// a references map (key/value pairs) whose value will be substituted into the expression
+	// by referencing `references.key_name` (wrapped in double curly braces).
+	Expression string `json:"expression,omitempty"`
+}
+
+// Converts parsed responses to JSON format, finds the first-level matching key, then
+// performs StringMatchExpression on the value.
+type ReinforcementTuningStringMatchRewardScorerJsonMatchExpression struct {
+	// Optional. Json key name to find the value to match against.
+	KeyName string `json:"keyName,omitempty"`
+	// Optional. String match expression to match against the value of json key.
+	ValueStringMatchExpression *ReinforcementTuningStringMatchRewardScorerStringMatchExpression `json:"valueStringMatchExpression,omitempty"`
+}
+
+// Scores parsed responses for string matching use cases.
+type ReinforcementTuningStringMatchRewardScorer struct {
+	// Optional. Wrong answer reward is returned if evaluator evaluates to `false`. All
+	// wrong answers get the same reward.
+	WrongAnswerReward *float32 `json:"wrongAnswerReward,omitempty"`
+	// Optional. Correct answer reward is returned if evaluator evaluates to `true`. All
+	// correct answers get the same reward.
+	CorrectAnswerReward *float32 `json:"correctAnswerReward,omitempty"`
+	// Optional. Uses string match expression to evaluate parsed response.
+	StringMatchExpression *ReinforcementTuningStringMatchRewardScorerStringMatchExpression `json:"stringMatchExpression,omitempty"`
+	// Optional. Uses json match expression to evaluate parsed response.
+	JsonMatchExpression *ReinforcementTuningStringMatchRewardScorerJsonMatchExpression `json:"jsonMatchExpression,omitempty"`
+}
+
+// Scores parsed responses by calling a Cloud Run service.
+type ReinforcementTuningCloudRunRewardScorer struct {
+	// Optional. URI of the Cloud Run service that will be used to compute the reward. The
+	// Vertex AI Secure Fine Tuning Service Agent (`service-PROJECT_NUMBER@gcp-sa-vertex-tune.iam.gserviceaccount.com`,
+	// where `PROJECT_NUMBER` is the numeric project number) must be granted the permission
+	// (e.g. by granting `roles/run.invoker` in IAM) to invoke the Cloud Run service.
+	CloudRunURI string `json:"cloudRunUri,omitempty"`
+}
+
+// Single reinforcement tuning reward config.
+type SingleReinforcementTuningRewardConfig struct {
+	// Scores parsed responses for autorater use cases by using a model to compute the reward.
+	AutoraterScorer *ReinforcementTuningAutoraterScorer `json:"autoraterScorer,omitempty"`
+	// Optional. A unique reward name used to identify each single reinforcement tuning
+	// reward.
+	RewardName string `json:"rewardName,omitempty"`
+	// Optional. Defines how to parse sample response.
+	ParseResponseConfig *ReinforcementTuningParseResponseConfig `json:"parseResponseConfig,omitempty"`
+	// Optional. Scores parsed responses for code execution use cases.
+	CodeExecutionRewardScorer *ReinforcementTuningCodeExecutionRewardScorer `json:"codeExecutionRewardScorer,omitempty"`
+	// Optional. Scores parsed responses for simple string matching use cases against reference
+	// answer without writing python code.
+	StringMatchRewardScorer *ReinforcementTuningStringMatchRewardScorer `json:"stringMatchRewardScorer,omitempty"`
+	// Optional. Scores parsed responses by calling a Cloud Run service.
+	CloudRunRewardScorer *ReinforcementTuningCloudRunRewardScorer `json:"cloudRunRewardScorer,omitempty"`
+}
+
+// Composite reinforcement tuning reward config weighted reward config.
+type CompositeReinforcementTuningRewardConfigWeightedRewardConfig struct {
+	RewardConfig *SingleReinforcementTuningRewardConfig `json:"rewardConfig,omitempty"`
+	// Optional. How much this single reward contributes to the total overall reward.
+	Weight *float32 `json:"weight,omitempty"`
+}
+
+// Composite reinforcement tuning reward config.
+type CompositeReinforcementTuningRewardConfig struct {
+	WeightedRewardConfigs []*CompositeReinforcementTuningRewardConfigWeightedRewardConfig `json:"weightedRewardConfigs,omitempty"`
+}
+
+// Hyperparameters for Reinforcement Tuning.
+type ReinforcementTuningHyperParameters struct {
+	// Optional. Number of training epochs for the tuning job.
+	EpochCount int64 `json:"epochCount,omitempty,string"`
+	// Optional. Learning rate multiplier for Reinforcement Learning.
+	LearningRateMultiplier float32 `json:"learningRateMultiplier,omitempty"`
+	// Optional. Adapter size for Reinforcement Tuning.
+	AdapterSize AdapterSize `json:"adapterSize,omitempty"`
+	// Optional. Number of different responses to generate per prompt during tuning.
+	SamplesPerPrompt int32 `json:"samplesPerPrompt,omitempty"`
+	// Optional. Batch size for the tuning job. How many prompts to process at a train step.
+	// If not set, the batch size will be determined automatically.
+	BatchSize int32 `json:"batchSize,omitempty"`
+	// Optional. How often (in steps) to evaluate the tuning job during training. If not
+	// set, evaluation will run per epoch.
+	EvaluateInterval int32 `json:"evaluateInterval,omitempty"`
+	// Optional. How often (in steps) to save checkpoints during training. If not set, one
+	// checkpoint per epoch will be saved.
+	CheckpointInterval int32 `json:"checkpointInterval,omitempty"`
+	// Optional. The maximum number of tokens to generate per prompt. If not set, defaults
+	// to 32768.
+	MaxOutputTokens int32 `json:"maxOutputTokens,omitempty"`
+	// Optional. Indicates the maximum thinking depth. Use with earlier models shall result
+	// in error.
+	ThinkingLevel ReinforcementTuningThinkingLevel `json:"thinkingLevel,omitempty"`
+}
+
+// Reinforcement tuning spec for tuning.
+type ReinforcementTuningSpec struct {
+	CompositeRewardConfig *CompositeReinforcementTuningRewardConfig `json:"compositeRewardConfig,omitempty"`
+	// Optional. Cloud Storage path to file containing training dataset for tuning. The
+	// dataset must be formatted as a JSONL file.
+	TrainingDatasetURI string `json:"trainingDatasetUri,omitempty"`
+	// Optional. Cloud Storage path to file containing validation dataset for tuning. The
+	// dataset must be formatted as a JSONL file. If no validation dataset is provided,
+	// by default the API splits 25% of the training dataset or 50 examples, whichever is
+	// larger, as the validation dataset.
+	ValidationDatasetURI string `json:"validationDatasetUri,omitempty"`
+	// Optional. Additional hyper-parameters to use during tuning.
+	HyperParameters *ReinforcementTuningHyperParameters `json:"hyperParameters,omitempty"`
+	// Optional. Single reward function configuration for reinforcement tuning.
+	SingleRewardConfig *SingleReinforcementTuningRewardConfig `json:"singleRewardConfig,omitempty"`
+}
+
 // The `Status` type defines a logical error model that is suitable for different programming
 // environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc).
 // Each `Status` message contains three pieces of data: error code, error message, and
@@ -5384,6 +5624,8 @@ type TuningJob struct {
 	PreferenceOptimizationSpec *PreferenceOptimizationSpec `json:"preferenceOptimizationSpec,omitempty"`
 	// Tuning Spec for Distillation.
 	DistillationSpec *DistillationSpec `json:"distillationSpec,omitempty"`
+
+	ReinforcementTuningSpec *ReinforcementTuningSpec `json:"reinforcementTuningSpec,omitempty"`
 	// Output only. The tuning data statistics associated with this TuningJob.
 	TuningDataStats *TuningDataStats `json:"tuningDataStats,omitempty"`
 	// Customer-managed encryption key options for a TuningJob. If this is set, then all
@@ -5576,8 +5818,8 @@ type TuningValidationDataset struct {
 type CreateTuningJobConfig struct {
 	// Optional. Used to override HTTP request options.
 	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
-	// The method to use for tuning (SUPERVISED_FINE_TUNING or PREFERENCE_TUNING or DISTILLATION).
-	// If not set, the default method (SFT) will be used.
+	// The method to use for tuning (SUPERVISED_FINE_TUNING or PREFERENCE_TUNING or DISTILLATION
+	// or REINFORCEMENT_TUNING). If not set, the default method (SFT) will be used.
 	Method TuningMethod `json:"method,omitempty"`
 	// Optional. Validation dataset for tuning. The dataset must be formatted as a JSONL
 	// file.
@@ -5633,6 +5875,32 @@ type CreateTuningJobConfig struct {
 	// options for a TuningJob. If this is set, then all resources created by the TuningJob
 	// will be encrypted with provided encryption key.
 	EncryptionSpec *EncryptionSpec `json:"encryptionSpec,omitempty"`
+	// Optional. Reward function configuration for reinforcement tuning. Reinforcement tuning
+	// only.
+	RewardConfig *SingleReinforcementTuningRewardConfig `json:"rewardConfig,omitempty"`
+	// Optional. Composite reward function configuration for reinforcement tuning. Reinforcement
+	// tuning only.
+	CompositeRewardConfig *CompositeReinforcementTuningRewardConfig `json:"compositeRewardConfig,omitempty"`
+	// Optional. Number of different responses to generate per prompt during tuning. Reinforcement
+	// tuning only.
+	SamplesPerPrompt *int32 `json:"samplesPerPrompt,omitempty"`
+	// Optional. How often at steps to evaluate the tuning job during training. Reinforcement
+	// tuning only.
+	EvaluateInterval *int32 `json:"evaluateInterval,omitempty"`
+	// Optional. How often at steps to save checkpoints during training. Reinforcement tuning
+	// only.
+	CheckpointInterval *int32 `json:"checkpointInterval,omitempty"`
+	// Optional. The maximum number of tokens to generate per prompt. Reinforcement tuning
+	// only. If empty, API will use a default value. The default value varies by model.
+	MaxOutputTokens int32 `json:"maxOutputTokens,omitempty"`
+	// Optional. Indicates the maximum thinking depth. Use with earlier models shall result
+	// in error. Reinforcement tuning only.
+	ThinkingLevel ReinforcementTuningThinkingLevel `json:"thinkingLevel,omitempty"`
+	// Optional. Cloud Storage path to file containing validation dataset for tuning. The
+	// dataset must be formatted as a JSONL file. If no validation dataset is provided,
+	// by default the API splits 25% of the training dataset or 50 examples, whichever is
+	// larger, as the validation dataset. Reinforcement tuning only.
+	ValidationDatasetURI string `json:"validationDatasetUri,omitempty"`
 }
 
 // A long-running operation.
@@ -5653,6 +5921,48 @@ type TuningOperation struct {
 	Done bool `json:"done,omitempty"`
 	// Optional. The error result of the operation in case of failure or cancellation.
 	Error map[string]any `json:"error,omitempty"`
+}
+
+// User-facing format for Gemini Reinforcement Tuning examples on Vertex.
+type ReinforcementTuningExample struct {
+	// Optional. Multi-turn contents that represents the Prompt.
+	Contents []*Content `json:"contents,omitempty"`
+	// Optional. References for the given prompt. The key is the name of the reference,
+	// and the value is the reference itself.
+	References map[string]string `json:"references,omitempty"`
+	// Optional. Corresponds to `system_instruction` in user-facing GenerateContentRequest.
+	SystemInstruction *Content `json:"systemInstruction,omitempty"`
+}
+
+// Optional parameters for tunings.validate_reward.
+type ValidateRewardConfig struct {
+	// Optional. Used to override HTTP request options.
+	HTTPOptions *HTTPOptions `json:"httpOptions,omitempty"`
+}
+
+// The reward info for a reward function.
+type ReinforcementTuningRewardInfo struct {
+	// Optional. Output only. The calculated reward for the reward function.
+	Reward float32 `json:"reward,omitempty"`
+	// Optional. Output only. The user-requested auxiliary info for the reward function.
+	UserRequestedAuxInfo string `json:"userRequestedAuxInfo,omitempty"`
+}
+
+// Response for the validate_reward method.
+// Contains the computed reward for a reinforcement tuning reward
+// configuration.
+type ValidateRewardResponse struct {
+	// Optional. Used to retain the full HTTP response.
+	SDKHTTPResponse *HTTPResponse `json:"sdkHttpResponse,omitempty"`
+	// Optional. Output only. The overall weighted reward. For a `CompositeReinforcementTuningRewardConfig`,
+	// this is the weighted average of all rewards. For a `SingleReinforcementTuningRewardConfig`,
+	// this will be the value of the single reward.
+	OverallReward float32 `json:"overallReward,omitempty"`
+	// Optional. Output only. In case of an error, this field will be populated with a detailed
+	// error message to help with debugging.
+	Error string `json:"error,omitempty"`
+	// Optional. A map from reward name to reward info.
+	RewardInfoDetails map[string]*ReinforcementTuningRewardInfo `json:"rewardInfoDetails,omitempty"`
 }
 
 // Optional configuration for cached content creation.
@@ -7131,6 +7441,8 @@ type Transcription struct {
 	Text string `json:"text,omitempty"`
 	// Optional. The bool indicates the end of the transcription.
 	Finished bool `json:"finished,omitempty"`
+	// The BCP-47 language code of the transcription.
+	LanguageCode string `json:"languageCode,omitempty"`
 }
 
 // Incremental server update generated by the model in response to client messages.
@@ -7196,32 +7508,38 @@ type LiveServerToolCallCancellation struct {
 
 // Usage metadata about response(s).
 type UsageMetadata struct {
-	// Optional. Number of tokens in the prompt. When `cached_content` is set, this is still
-	// the total effective prompt size meaning this includes the number of tokens in the
-	// cached content.
+	// The total number of tokens in the prompt. This includes any text, images, or other
+	// media provided in the request. When `cached_content` is set, this also includes the
+	// number of tokens in the cached content.
 	PromptTokenCount int32 `json:"promptTokenCount,omitempty"`
-	// Optional. Number of tokens in the cached part of the prompt (the cached content).
+	// Output only. The number of tokens in the cached content that was used for this request.
 	CachedContentTokenCount int32 `json:"cachedContentTokenCount,omitempty"`
 	// Optional. Total number of tokens across all the generated response candidates.
 	ResponseTokenCount int32 `json:"responseTokenCount,omitempty"`
-	// Optional. Number of tokens present in tool-use prompt(s).
+	// Output only. The number of tokens in the results from tool executions, which are
+	// provided back to the model as input, if applicable.
 	ToolUsePromptTokenCount int32 `json:"toolUsePromptTokenCount,omitempty"`
-	// Optional. Number of tokens of thoughts for thinking models.
+	// Output only. The number of tokens that were part of the model's generated "thoughts"
+	// output, if applicable.
 	ThoughtsTokenCount int32 `json:"thoughtsTokenCount,omitempty"`
-	// Optional. Total token count for prompt, response candidates, and tool-use prompts(if
-	// present).
+	// The total number of tokens for the entire request. This is the sum of `prompt_token_count`,
+	// `candidates_token_count`, `tool_use_prompt_token_count`, and `thoughts_token_count`.
 	TotalTokenCount int32 `json:"totalTokenCount,omitempty"`
-	// Optional. List of modalities that were processed in the request input.
+	// Output only. A detailed breakdown of the token count for each modality in the prompt.
 	PromptTokensDetails []*ModalityTokenCount `json:"promptTokensDetails,omitempty"`
-	// Optional. List of modalities that were processed in the cache input.
+	// Output only. A detailed breakdown of the token count for each modality in the cached
+	// content.
 	CacheTokensDetails []*ModalityTokenCount `json:"cacheTokensDetails,omitempty"`
 	// Optional. List of modalities that were returned in the response.
 	ResponseTokensDetails []*ModalityTokenCount `json:"responseTokensDetails,omitempty"`
-	// Optional. List of modalities that were processed in the tool-use prompt.
+	// Output only. A detailed breakdown by modality of the token counts from the results
+	// of tool executions, which are provided back to the model as input.
 	ToolUsePromptTokensDetails []*ModalityTokenCount `json:"toolUsePromptTokensDetails,omitempty"`
-	// Optional. Traffic type. This shows whether a request consumes Pay-As-You-Go
-	// or Provisioned Throughput quota.
+	// Output only. The traffic type for this request. This field is not supported in Gemini
+	// API.
 	TrafficType TrafficType `json:"trafficType,omitempty"`
+	// Output only. Service tier of the request. This field is not supported in Vertex AI.
+	ServiceTier ServiceTier `json:"serviceTier,omitempty"`
 }
 
 // Server will not be able to service client soon.
@@ -7553,7 +7871,7 @@ type LiveClientMessage struct {
 }
 
 // Config for stream translation.
-type StreamTranslationConfig struct {
+type TranslationConfig struct {
 	// Optional. If true, the model will generate audio when the target language is
 	// spoken, essentially it will parrot the input. If false, we will not produce
 	// audio for the target language.
@@ -7637,8 +7955,8 @@ type LiveConnectConfig struct {
 	// Optional. Safety settings in the request to block unsafe content in the
 	// response.
 	SafetySettings []*SafetySetting `json:"safetySettings,omitempty"`
-	// Optional. Config for stream translation.
-	StreamTranslationConfig *StreamTranslationConfig `json:"streamTranslationConfig,omitempty"`
+	// Optional. Config for translation.
+	TranslationConfig *TranslationConfig `json:"translationConfig,omitempty"`
 }
 
 // Parameters for sending client content to the live API.

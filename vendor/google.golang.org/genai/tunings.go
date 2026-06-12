@@ -154,6 +154,38 @@ func createTuningJobConfigToMldev(fromObject map[string]any, parentObject map[st
 		return nil, fmt.Errorf("encryptionSpec parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
 	}
 
+	if InternalGetValueByPath(fromObject, []string{"rewardConfig"}) != nil {
+		return nil, fmt.Errorf("rewardConfig parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"compositeRewardConfig"}) != nil {
+		return nil, fmt.Errorf("compositeRewardConfig parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"samplesPerPrompt"}) != nil {
+		return nil, fmt.Errorf("samplesPerPrompt parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"evaluateInterval"}) != nil {
+		return nil, fmt.Errorf("evaluateInterval parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"checkpointInterval"}) != nil {
+		return nil, fmt.Errorf("checkpointInterval parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"maxOutputTokens"}) != nil {
+		return nil, fmt.Errorf("maxOutputTokens parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"thinkingLevel"}) != nil {
+		return nil, fmt.Errorf("thinkingLevel parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"validationDatasetUri"}) != nil {
+		return nil, fmt.Errorf("validationDatasetUri parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
+	}
+
 	return toObject, nil
 }
 
@@ -194,6 +226,16 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 
 			InternalSetValueByPath(parentObject, []string{"distillationSpec"}, fromValidationDataset)
 		}
+	} else if discriminatorValidationDataset.(string) == "REINFORCEMENT_TUNING" {
+		fromValidationDataset := InternalGetValueByPath(fromObject, []string{"validationDataset"})
+		if fromValidationDataset != nil {
+			fromValidationDataset, err = tuningValidationDatasetToVertex(fromValidationDataset.(map[string]any), toObject, rootObject)
+			if err != nil {
+				return nil, err
+			}
+
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec"}, fromValidationDataset)
+		}
 	}
 
 	fromTunedModelDisplayName := InternalGetValueByPath(fromObject, []string{"tunedModelDisplayName"})
@@ -225,6 +267,11 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 		if fromEpochCount != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "hyperParameters", "epochCount"}, fromEpochCount)
 		}
+	} else if discriminatorEpochCount.(string) == "REINFORCEMENT_TUNING" {
+		fromEpochCount := InternalGetValueByPath(fromObject, []string{"epochCount"})
+		if fromEpochCount != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "epochCount"}, fromEpochCount)
+		}
 	}
 
 	var discriminatorLearningRateMultiplier any = InternalGetValueByPath(rootObject, []string{"config", "method"})
@@ -245,6 +292,11 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 		fromLearningRateMultiplier := InternalGetValueByPath(fromObject, []string{"learningRateMultiplier"})
 		if fromLearningRateMultiplier != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "hyperParameters", "learningRateMultiplier"}, fromLearningRateMultiplier)
+		}
+	} else if discriminatorLearningRateMultiplier.(string) == "REINFORCEMENT_TUNING" {
+		fromLearningRateMultiplier := InternalGetValueByPath(fromObject, []string{"learningRateMultiplier"})
+		if fromLearningRateMultiplier != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "learningRateMultiplier"}, fromLearningRateMultiplier)
 		}
 	}
 
@@ -288,6 +340,11 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 		if fromAdapterSize != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "hyperParameters", "adapterSize"}, fromAdapterSize)
 		}
+	} else if discriminatorAdapterSize.(string) == "REINFORCEMENT_TUNING" {
+		fromAdapterSize := InternalGetValueByPath(fromObject, []string{"adapterSize"})
+		if fromAdapterSize != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "adapterSize"}, fromAdapterSize)
+		}
 	}
 
 	var discriminatorTuningMode any = InternalGetValueByPath(rootObject, []string{"config", "method"})
@@ -324,6 +381,11 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 		fromBatchSize := InternalGetValueByPath(fromObject, []string{"batchSize"})
 		if fromBatchSize != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "hyperParameters", "batchSize"}, fromBatchSize)
+		}
+	} else if discriminatorBatchSize.(string) == "REINFORCEMENT_TUNING" {
+		fromBatchSize := InternalGetValueByPath(fromObject, []string{"batchSize"})
+		if fromBatchSize != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "batchSize"}, fromBatchSize)
 		}
 	}
 
@@ -376,6 +438,46 @@ func createTuningJobConfigToVertex(fromObject map[string]any, parentObject map[s
 	fromEncryptionSpec := InternalGetValueByPath(fromObject, []string{"encryptionSpec"})
 	if fromEncryptionSpec != nil {
 		InternalSetValueByPath(parentObject, []string{"encryptionSpec"}, fromEncryptionSpec)
+	}
+
+	fromRewardConfig := InternalGetValueByPath(fromObject, []string{"rewardConfig"})
+	if fromRewardConfig != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "singleRewardConfig"}, fromRewardConfig)
+	}
+
+	fromCompositeRewardConfig := InternalGetValueByPath(fromObject, []string{"compositeRewardConfig"})
+	if fromCompositeRewardConfig != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "compositeRewardConfig"}, fromCompositeRewardConfig)
+	}
+
+	fromSamplesPerPrompt := InternalGetValueByPath(fromObject, []string{"samplesPerPrompt"})
+	if fromSamplesPerPrompt != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "samplesPerPrompt"}, fromSamplesPerPrompt)
+	}
+
+	fromEvaluateInterval := InternalGetValueByPath(fromObject, []string{"evaluateInterval"})
+	if fromEvaluateInterval != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "evaluateInterval"}, fromEvaluateInterval)
+	}
+
+	fromCheckpointInterval := InternalGetValueByPath(fromObject, []string{"checkpointInterval"})
+	if fromCheckpointInterval != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "checkpointInterval"}, fromCheckpointInterval)
+	}
+
+	fromMaxOutputTokens := InternalGetValueByPath(fromObject, []string{"maxOutputTokens"})
+	if fromMaxOutputTokens != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "maxOutputTokens"}, fromMaxOutputTokens)
+	}
+
+	fromThinkingLevel := InternalGetValueByPath(fromObject, []string{"thinkingLevel"})
+	if fromThinkingLevel != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "hyperParameters", "thinkingLevel"}, fromThinkingLevel)
+	}
+
+	fromValidationDatasetUri := InternalGetValueByPath(fromObject, []string{"validationDatasetUri"})
+	if fromValidationDatasetUri != nil {
+		InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "validationDatasetUri"}, fromValidationDatasetUri)
 	}
 
 	return toObject, nil
@@ -777,6 +879,37 @@ func listTuningJobsResponseFromVertex(fromObject map[string]any, parentObject ma
 	return toObject, nil
 }
 
+func reinforcementTuningExampleToVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromContents := InternalGetValueByPath(fromObject, []string{"contents"})
+	if fromContents != nil {
+		fromContents, err = InternalApplyConverterToSliceWithRoot(fromContents.([]any), contentToVertex, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"contents"}, fromContents)
+	}
+
+	fromReferences := InternalGetValueByPath(fromObject, []string{"references"})
+	if fromReferences != nil {
+		InternalSetValueByPath(toObject, []string{"references"}, fromReferences)
+	}
+
+	fromSystemInstruction := InternalGetValueByPath(fromObject, []string{"systemInstruction"})
+	if fromSystemInstruction != nil {
+		fromSystemInstruction, err = contentToVertex(fromSystemInstruction.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"systemInstruction"}, fromSystemInstruction)
+	}
+
+	return toObject, nil
+}
+
 func tunedModelFromMldev(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
 	toObject = make(map[string]any)
 
@@ -833,6 +966,11 @@ func tuningDatasetToVertex(fromObject map[string]any, parentObject map[string]an
 		if fromGcsUri != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "promptDatasetUri"}, fromGcsUri)
 		}
+	} else if discriminatorGcsUri.(string) == "REINFORCEMENT_TUNING" {
+		fromGcsUri := InternalGetValueByPath(fromObject, []string{"gcsUri"})
+		if fromGcsUri != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "trainingDatasetUri"}, fromGcsUri)
+		}
 	}
 
 	var discriminatorVertexDatasetResource any = InternalGetValueByPath(rootObject, []string{"config", "method"})
@@ -853,6 +991,11 @@ func tuningDatasetToVertex(fromObject map[string]any, parentObject map[string]an
 		fromVertexDatasetResource := InternalGetValueByPath(fromObject, []string{"vertexDatasetResource"})
 		if fromVertexDatasetResource != nil {
 			InternalSetValueByPath(parentObject, []string{"distillationSpec", "promptDatasetUri"}, fromVertexDatasetResource)
+		}
+	} else if discriminatorVertexDatasetResource.(string) == "REINFORCEMENT_TUNING" {
+		fromVertexDatasetResource := InternalGetValueByPath(fromObject, []string{"vertexDatasetResource"})
+		if fromVertexDatasetResource != nil {
+			InternalSetValueByPath(parentObject, []string{"reinforcementTuningSpec", "trainingDatasetUri"}, fromVertexDatasetResource)
 		}
 	}
 
@@ -1017,6 +1160,11 @@ func tuningJobFromVertex(fromObject map[string]any, parentObject map[string]any,
 		InternalSetValueByPath(toObject, []string{"distillationSpec"}, fromDistillationSpec)
 	}
 
+	fromReinforcementTuningSpec := InternalGetValueByPath(fromObject, []string{"reinforcementTuningSpec"})
+	if fromReinforcementTuningSpec != nil {
+		InternalSetValueByPath(toObject, []string{"reinforcementTuningSpec"}, fromReinforcementTuningSpec)
+	}
+
 	fromTuningDataStats := InternalGetValueByPath(fromObject, []string{"tuningDataStats"})
 	if fromTuningDataStats != nil {
 		InternalSetValueByPath(toObject, []string{"tuningDataStats"}, fromTuningDataStats)
@@ -1152,6 +1300,73 @@ func tuningValidationDatasetToVertex(fromObject map[string]any, parentObject map
 	fromVertexDatasetResource := InternalGetValueByPath(fromObject, []string{"vertexDatasetResource"})
 	if fromVertexDatasetResource != nil {
 		InternalSetValueByPath(toObject, []string{"validationDatasetUri"}, fromVertexDatasetResource)
+	}
+
+	return toObject, nil
+}
+
+func validateRewardParametersToVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromParent := InternalGetValueByPath(fromObject, []string{"parent"})
+	if fromParent != nil {
+		InternalSetValueByPath(toObject, []string{"_url", "parent"}, fromParent)
+	}
+
+	fromSampleResponse := InternalGetValueByPath(fromObject, []string{"sampleResponse"})
+	if fromSampleResponse != nil {
+		fromSampleResponse, err = contentToVertex(fromSampleResponse.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"sampleResponse"}, fromSampleResponse)
+	}
+
+	fromExample := InternalGetValueByPath(fromObject, []string{"example"})
+	if fromExample != nil {
+		fromExample, err = reinforcementTuningExampleToVertex(fromExample.(map[string]any), toObject, rootObject)
+		if err != nil {
+			return nil, err
+		}
+
+		InternalSetValueByPath(toObject, []string{"example"}, fromExample)
+	}
+
+	fromSingleRewardConfig := InternalGetValueByPath(fromObject, []string{"singleRewardConfig"})
+	if fromSingleRewardConfig != nil {
+		InternalSetValueByPath(toObject, []string{"singleRewardConfig"}, fromSingleRewardConfig)
+	}
+
+	fromCompositeRewardConfig := InternalGetValueByPath(fromObject, []string{"compositeRewardConfig"})
+	if fromCompositeRewardConfig != nil {
+		InternalSetValueByPath(toObject, []string{"compositeRewardConfig"}, fromCompositeRewardConfig)
+	}
+
+	return toObject, nil
+}
+
+func validateRewardResponseFromVertex(fromObject map[string]any, parentObject map[string]any, rootObject map[string]any) (toObject map[string]any, err error) {
+	toObject = make(map[string]any)
+
+	fromSdkHttpResponse := InternalGetValueByPath(fromObject, []string{"sdkHttpResponse"})
+	if fromSdkHttpResponse != nil {
+		InternalSetValueByPath(toObject, []string{"sdkHttpResponse"}, fromSdkHttpResponse)
+	}
+
+	fromOverallReward := InternalGetValueByPath(fromObject, []string{"overallReward"})
+	if fromOverallReward != nil {
+		InternalSetValueByPath(toObject, []string{"overallReward"}, fromOverallReward)
+	}
+
+	fromError := InternalGetValueByPath(fromObject, []string{"error"})
+	if fromError != nil {
+		InternalSetValueByPath(toObject, []string{"error"}, fromError)
+	}
+
+	fromRewardInfoDetails := InternalGetValueByPath(fromObject, []string{"rewardInfoDetails"})
+	if fromRewardInfoDetails != nil {
+		InternalSetValueByPath(toObject, []string{"rewardInfoDetails"}, fromRewardInfoDetails)
 	}
 
 	return toObject, nil
@@ -1487,6 +1702,79 @@ func (m Tunings) tuneMldev(ctx context.Context, baseModel *string, preTunedModel
 		path, err = InternalFormatMap("None", urlParams)
 	} else {
 		path, err = InternalFormatMap("tunedModels", urlParams)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid url params: %#v.\n%w", urlParams, err)
+	}
+	if _, ok := body["_query"]; ok {
+		query, err := InternalCreateURLQuery(body["_query"].(map[string]any))
+		if err != nil {
+			return nil, err
+		}
+		path += "?" + query
+		delete(body, "_query")
+	}
+	responseMap, err = sendRequest(ctx, m.apiClient, path, http.MethodPost, body, httpOptions)
+	if err != nil {
+		return nil, err
+	}
+	if fromConverter != nil {
+		responseMap, err = fromConverter(responseMap, nil, parameterMap)
+	}
+	if err != nil {
+		return nil, err
+	}
+	err = InternalMapToStruct(responseMap, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (m Tunings) ValidateReward(ctx context.Context, parent string, sampleResponse *Content, example *ReinforcementTuningExample, singleRewardConfig *SingleReinforcementTuningRewardConfig, compositeRewardConfig *CompositeReinforcementTuningRewardConfig, config *ValidateRewardConfig) (*ValidateRewardResponse, error) {
+	parameterMap := make(map[string]any)
+
+	kwargs := map[string]any{"parent": parent, "sampleResponse": sampleResponse, "example": example, "singleRewardConfig": singleRewardConfig, "compositeRewardConfig": compositeRewardConfig, "config": config}
+	InternalDeepMarshal(kwargs, &parameterMap)
+
+	var httpOptions *HTTPOptions
+	if config == nil || config.HTTPOptions == nil {
+		httpOptions = &HTTPOptions{}
+	} else {
+		httpOptions = config.HTTPOptions
+	}
+	if httpOptions.Headers == nil {
+		httpOptions.Headers = http.Header{}
+	}
+	var response = new(ValidateRewardResponse)
+	var responseMap map[string]any
+	var fromConverter func(map[string]any, map[string]any, map[string]any) (map[string]any, error)
+	var toConverter func(map[string]any, map[string]any, map[string]any) (map[string]any, error)
+	if m.apiClient.ClientConfig().Backend == BackendVertexAI {
+		toConverter = validateRewardParametersToVertex
+		fromConverter = validateRewardResponseFromVertex
+	} else {
+
+		return nil, fmt.Errorf("method ValidateReward is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode. You can choose to use Gemini Enterprise Agent Platform by setting ClientConfig.Backend to BackendEnterprise.")
+
+	}
+
+	body, err := toConverter(parameterMap, nil, parameterMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var path string
+	var urlParams map[string]any
+	if _, ok := body["_url"]; ok {
+		urlParams = body["_url"].(map[string]any)
+		delete(body, "_url")
+	}
+	if m.apiClient.ClientConfig().Backend == BackendVertexAI {
+		path, err = InternalFormatMap("{parent}/tuningJobs:validateReinforcementTuningReward", urlParams)
+	} else {
+		path, err = InternalFormatMap("None", urlParams)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("invalid url params: %#v.\n%w", urlParams, err)

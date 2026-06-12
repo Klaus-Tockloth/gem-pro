@@ -113,14 +113,14 @@ buildHTMLPage constructs a complete HTML page by combining a header, body, and f
 from a source file, combines it with header and footer content from configuration, and writes the complete
 HTML page to a destination file.
 */
-func buildHTMLPage(prompt, source, destination string) error {
+func buildHTMLPage(title, source, destination string) error {
 	htmlBody, err := os.ReadFile(source)
 	if err != nil {
 		fmt.Printf("error [%v] at os.ReadFile()", err)
 		return err
 	}
 
-	title := strings.ReplaceAll(prompt, "\r\n", " ")
+	title = strings.ReplaceAll(title, "\r\n", " ")
 	title = strings.ReplaceAll(title, "\n", " ")
 	title = strings.ReplaceAll(title, "\t", " ")
 

@@ -49,6 +49,7 @@ Releases:
 						 system prompt (instruction) handling revised
                          collapsible boxes for all input and output objects
 						 Markdown to HTML parsing strategy improved
+  - v1.2.0 - 2026-06-12: libs updated, go v1.26.4, slug as browser window/tab name
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -98,8 +99,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.1.0"
-	progDate    = "2026-05-21"
+	progVersion = "v1.2.0"
+	progDate    = "2026-06-12"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -671,7 +672,7 @@ func main() {
 		}
 
 		// handle response
-		handleResponse(resp, respErr, prompt)
+		handleResponse(resp, respErr)
 
 		// If input was piped, we are in "One-Shot" mod: process one prompt, get one response, and exit.
 		if isPiped {
@@ -728,7 +729,7 @@ handleResponse processes the response received from the Gemini AI model. It mana
 error handling, output formatting, saving history, and triggering output applications for different formats
 like Markdown and HTML.
 */
-func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt string) {
+func handleResponse(resp *genai.GenerateContentResponse, respErr error) {
 	now := finishProcessing
 	fmt.Printf("%02d:%02d:%02d: Processing response ...\n", now.Hour(), now.Minute(), now.Second())
 	switch {
@@ -791,7 +792,11 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error, prompt s
 
 	// build prompt and response html page
 	commandLine = fmt.Sprintf(progConfig.HTMLOutputApplication, progConfig.HTMLPromptResponseFile)
-	_ = buildHTMLPage(prompt, progConfig.HTMLPromptResponseFile, progConfig.HTMLPromptResponseFile)
+	htmlTitle := slug
+	if htmlTitle == "" {
+		htmlTitle = "unknown-content"
+	}
+	_ = buildHTMLPage(htmlTitle, progConfig.HTMLPromptResponseFile, progConfig.HTMLPromptResponseFile)
 
 	// copy html file to history
 	if progConfig.HTMLHistory {
