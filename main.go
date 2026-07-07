@@ -49,7 +49,9 @@ Releases:
 						 system prompt (instruction) handling revised
                          collapsible boxes for all input and output objects
 						 Markdown to HTML parsing strategy improved
-  - v1.2.0 - 2026-06-12: libs updated, go v1.26.4, slug as browser window/tab name
+  - v1.2.0 - 2026-07-07: libs updated, go v1.26.4, slug as browser window/tab name, configuration updated,
+                         option -lite-image added, separate image configuration removed, CLI option "-candidates <int>" removed,
+                         default system instruction optimized, GeminiResponseMIMEType added to configuration
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -65,7 +67,11 @@ Remarks:
 
 ToDos (high complexity, not planned yet):
 - Support grounding references in response, e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
-- Support batch mode. Requires integration of different API.
+- Support batch mode (use case missing).
+- Support predefined structured output (JSON).
+
+ToDos (breaking change):
+- Focus on text generation, remove image generation.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -100,7 +106,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v1.2.0"
-	progDate    = "2026-06-12"
+	progDate    = "2026-07-07"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -172,10 +178,10 @@ var (
 	liteModel       = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
 	flashModel      = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
 	proModel        = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
-	flashImageModel = flag.Bool("flash-image", false, "Specifies the Gemini AI flash image generation model (Nano Banana).")
+	liteImageModel  = flag.Bool("lite-image", false, "Specifies the Gemini AI lite image generation model (Nano Banana 2 Lite).")
+	flashImageModel = flag.Bool("flash-image", false, "Specifies the Gemini AI flash image generation model (Nano Banana 2).")
 	proImageModel   = flag.Bool("pro-image", false, "Specifies the Gemini AI pro image generation model (Nano Banana Pro).")
 	defaultModel    = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	candidates      = flag.Int("candidates", 0, "Specifies the number of candidate responses the AI should generate.")
 	config          = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
 	// special handling for option 'filelist'
 	listModels       = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
@@ -317,6 +323,9 @@ func main() {
 		progConfig.GeminiAiModel = progConfig.GeminiFlashAiModel
 	case *proModel:
 		progConfig.GeminiAiModel = progConfig.GeminiProAiModel
+	case *liteImageModel:
+		progConfig.GeminiAiModel = progConfig.GeminiLiteImageAiModel
+		isImageRequest = true
 	case *flashImageModel:
 		progConfig.GeminiAiModel = progConfig.GeminiFlashImageAiModel
 		isImageRequest = true
@@ -694,10 +703,6 @@ It updates the `progConfig` struct with values from command-line flags, allowing
 the YAML configuration file.
 */
 func overwriteConfigValues(setFlags map[string]bool) {
-	if setFlags["candidates"] {
-		val := int32(*candidates)
-		progConfig.GeminiCandidateCount = &val
-	}
 	if setFlags["code-execution"] {
 		progConfig.GeminiGroundingWithCodeExecution = *codeExecution
 	}

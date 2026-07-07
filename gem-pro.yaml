@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v1.1 - 2026-05-21: corresponding to program release
+# - v1.3 - 2026-07-06: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -29,19 +29,27 @@ GeminiLiteAiModel: models/gemini-flash-lite-latest
 GeminiFlashAiModel: models/gemini-flash-latest
 GeminiProAiModel: models/gemini-pro-latest
 
-# Gemini AI image model family (options: -flash-image [Nano Banana], -pro-image [Nano Banana Pro])
-GeminiFlashImageAiModel: models/gemini-3.1-flash-image-preview
-GeminiProImageAiModel: models/gemini-3-pro-image-preview
+# Gemini AI image model family (options: -lite-image [Nano Banana 2 Lite], -flash-image [Nano Banana 2], -pro-image [Nano Banana Pro])
+GeminiLiteImageAiModel: models/gemini-3.1-flash-lite-image
+GeminiFlashImageAiModel: models/gemini-3.1-flash-image
+GeminiProImageAiModel: models/gemini-3-pro-image
 
 # Gemini AI default model
 GeminiDefaultAiModel: models/gemini-flash-latest
 
 # list of supported response modalities (e.g. TEXT and IMAGE)
+# Note: If not set, the Gemini model defaults are used. 
 GeminiResponseModalities:
 - TEXT
 # - IMAGE
 
+# defines MIME type of model response (e.g. "text/plain" or "application/json")
+# Note: If not set, the Gemini model defaults are used. 
+GeminiResponseMIMEType: text/plain
+
 # number of generated responses to return (int)
+# Note: Newer Gemini models (e.g., Gemini 3 and later) only support a candidate count of 1.
+# Setting this to a value greater than 1 is deprecated and will cause API errors.
 GeminiCandidateCount: 1
 
 # pure response without any boilerplate
@@ -69,7 +77,7 @@ GeminiImageAspectRatio: "4:3"
 # 1K (Standard / Low usage): Rapid prototyping, testing prompts, or thumbnail creation.
 # 2K (High Definition): General purpose web use, digital art portfolios, and standard screen viewing.
 # 4K (Ultra High Definition): Printing, desktop wallpapers, professional post-production, or highly detailed illustrations.
-GeminiImageResolution: "2K"
+GeminiImageResolution: "1K"
 
 # control the randomness of the output (varies by model, float)
 # Values can range over [0.0, MaxTemperature], inclusive. A higher value will produce responses that
@@ -129,7 +137,8 @@ GeminiCacheTimeToLive: 1
 
 # input media resolution (low, medium, high) affects images, videos and pdfs
 # recommended settings: image=high, video=low/medium, pdf=medium
-# Note: Affects only INPUT files. 
+# Note: Affects only INPUT files.
+# Note: Avoid this parameter if the Gemini model does not support INPUT media.
 GeminiInputMediaResolution: high
 
 # Service tier configuration (options: standard, flex, priority)

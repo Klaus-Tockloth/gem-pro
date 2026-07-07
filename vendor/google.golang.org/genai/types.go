@@ -91,20 +91,6 @@ const (
 	TypeNULL Type = "NULL"
 )
 
-// The environment being operated.
-type Environment string
-
-const (
-	// Defaults to browser.
-	EnvironmentUnspecified Environment = "ENVIRONMENT_UNSPECIFIED"
-	// Operates in a web browser.
-	EnvironmentBrowser Environment = "ENVIRONMENT_BROWSER"
-	// Operates in a mobile environment.
-	EnvironmentMobile Environment = "ENVIRONMENT_MOBILE"
-	// Operates in a desktop environment.
-	EnvironmentDesktop Environment = "ENVIRONMENT_DESKTOP"
-)
-
 // Type of auth scheme. This enum is not supported in Gemini API.
 type AuthType string
 
@@ -152,6 +138,42 @@ const (
 	APISpecSimpleSearch APISpec = "SIMPLE_SEARCH"
 	// Elastic search API spec.
 	APISpecElasticSearch APISpec = "ELASTIC_SEARCH"
+)
+
+// The environment being operated.
+type Environment string
+
+const (
+	// Defaults to browser.
+	EnvironmentUnspecified Environment = "ENVIRONMENT_UNSPECIFIED"
+	// Operates in a web browser.
+	EnvironmentBrowser Environment = "ENVIRONMENT_BROWSER"
+	// Operates in a mobile environment.
+	EnvironmentMobile Environment = "ENVIRONMENT_MOBILE"
+	// Operates in a desktop environment.
+	EnvironmentDesktop Environment = "ENVIRONMENT_DESKTOP"
+)
+
+// SafetyPolicy
+type SafetyPolicy string
+
+const (
+	// Unspecified safety policy.
+	SafetyPolicyUnspecified SafetyPolicy = "SAFETY_POLICY_UNSPECIFIED"
+	// Safety policy for financial transactions.
+	SafetyPolicyFinancialTransactions SafetyPolicy = "FINANCIAL_TRANSACTIONS"
+	// Safety policy for sensitive data modification.
+	SafetyPolicySensitiveDataModification SafetyPolicy = "SENSITIVE_DATA_MODIFICATION"
+	// Safety policy for communication tools (e.g. Gmail, Chat, Meet).
+	SafetyPolicyCommunicationTool SafetyPolicy = "COMMUNICATION_TOOL"
+	// Safety policy for account creation.
+	SafetyPolicyAccountCreation SafetyPolicy = "ACCOUNT_CREATION"
+	// Safety policy for data modification.
+	SafetyPolicyDataModification SafetyPolicy = "DATA_MODIFICATION"
+	// Safety policy for user consent management.
+	SafetyPolicyUserConsentManagement SafetyPolicy = "USER_CONSENT_MANAGEMENT"
+	// Safety policy for legal terms and agreements.
+	SafetyPolicyLegalTermsAndAgreements SafetyPolicy = "LEGAL_TERMS_AND_AGREEMENTS"
 )
 
 // Sites with confidence level chosen & above this value will be blocked from the search
@@ -1106,7 +1128,8 @@ const (
 type StartSensitivity string
 
 const (
-	// The default is START_SENSITIVITY_LOW.
+	// The default is START_SENSITIVITY_LOW for Gemini Enterprise Agent Platform and START_SENSITIVITY_HIGH
+	// for Gemini Live.
 	StartSensitivityUnspecified StartSensitivity = "START_SENSITIVITY_UNSPECIFIED"
 	// Automatic detection will detect the start of speech more often.
 	StartSensitivityHigh StartSensitivity = "START_SENSITIVITY_HIGH"
@@ -1118,7 +1141,8 @@ const (
 type EndSensitivity string
 
 const (
-	// The default is END_SENSITIVITY_LOW.
+	// The default is END_SENSITIVITY_LOW for Gemini Enterprise Agent Platform and END_SENSITIVITY_HIGH
+	// for Gemini Live.
 	EndSensitivityUnspecified EndSensitivity = "END_SENSITIVITY_UNSPECIFIED"
 	// Automatic detection ends speech more often.
 	EndSensitivityHigh EndSensitivity = "END_SENSITIVITY_HIGH"
@@ -1823,20 +1847,6 @@ type ModelSelectionConfig struct {
 	FeatureSelectionPreference FeatureSelectionPreference `json:"featureSelectionPreference,omitempty"`
 }
 
-// Tool to support computer use.
-type ComputerUse struct {
-	// Optional. Required. The environment being operated.
-	Environment Environment `json:"environment,omitempty"`
-	// Optional. By default, predefined functions are included in the final model call.
-	// Some of them can be explicitly excluded from being automatically included.
-	// This can serve two purposes:
-	// 1. Using a more restricted / different action space.
-	// 2. Improving the definitions / instructions of predefined functions.
-	ExcludedPredefinedFunctions []string `json:"excludedPredefinedFunctions,omitempty"`
-	// Optional. Whether enable the prompt injection detection check on computer-use request.
-	EnablePromptInjectionDetection *bool `json:"enablePromptInjectionDetection,omitempty"`
-}
-
 // Config for authentication with API key. This data type is not supported in Gemini
 // API.
 type APIKeyConfig struct {
@@ -2110,6 +2120,23 @@ type Retrieval struct {
 	// Set to use data source powered by Vertex RAG store. User data is uploaded via the
 	// VertexRAGDataService.
 	VertexRAGStore *VertexRAGStore `json:"vertexRagStore,omitempty"`
+}
+
+// Tool to support computer use.
+type ComputerUse struct {
+	// Required. The environment being operated.
+	Environment Environment `json:"environment,omitempty"`
+	// Optional. By default, [predefined functions](https://cloud.google.com/vertex-ai/generative-ai/docs/computer-use#supported-actions)
+	// are included in the final model call. Some of them can be explicitly excluded from
+	// being automatically included. This can serve two purposes: 1. Using a more restricted
+	// / different action space. 2. Improving the definitions / instructions of predefined
+	// functions.
+	ExcludedPredefinedFunctions []string `json:"excludedPredefinedFunctions,omitempty"`
+	// Optional. Enables the prompt injection detection check on computer-use request.
+	EnablePromptInjectionDetection *bool `json:"enablePromptInjectionDetection,omitempty"`
+	// Optional. Disabled safety policies for computer use. This field is not supported
+	// in Vertex AI.
+	DisabledSafetyPolicies []SafetyPolicy `json:"disabledSafetyPolicies,omitempty"`
 }
 
 // The FileSearch tool that retrieves knowledge from Semantic Retrieval corpora. Files
@@ -2392,9 +2419,8 @@ type Tool struct {
 	// tool(s) to get external knowledge to answer the prompt. Retrieval results are presented
 	// to the model for generation. This field is not supported in Gemini API.
 	Retrieval *Retrieval `json:"retrieval,omitempty"`
-	// Optional. Tool to support the model interacting directly with the
-	// computer. If enabled, it automatically populates computer-use specific
-	// Function Declarations.
+	// Optional. Tool to support the model interacting directly with the computer. If enabled,
+	// it automatically populates computer-use specific Function Declarations.
 	ComputerUse *ComputerUse `json:"computerUse,omitempty"`
 	// Optional. FileSearch tool type. Tool to retrieve knowledge from Semantic Retrieval
 	// corpora. This field is not supported in Vertex AI.
@@ -6869,7 +6895,7 @@ type InlinedEmbedContentResponse struct {
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
-// Config for `des` parameter.
+// Config for `dest` parameter.
 type BatchJobDestination struct {
 	// Storage format of the output files. Must be one of:
 	// 'jsonl', 'bigquery', 'vertex-dataset'.
@@ -7435,7 +7461,7 @@ type LiveServerSetupComplete struct {
 	SessionID string `json:"sessionId,omitempty"`
 }
 
-// Audio transcription in Server Conent.
+// Audio transcription in Server Content.
 type Transcription struct {
 	// Optional. Transcription text.
 	Text string `json:"text,omitempty"`
@@ -7487,6 +7513,8 @@ type LiveServerContent struct {
 	// it is waiting for more input from the user, e.g. because it expects the
 	// user to continue talking.
 	WaitingForInput bool `json:"waitingForInput,omitempty"`
+	// Optional. Low latency transcription updated while the user is speaking.
+	InterimInputTranscription *Transcription `json:"interimInputTranscription,omitempty"`
 }
 
 // Request for the client to execute the `function_calls` and return the responses with
@@ -7603,10 +7631,10 @@ type LiveServerSessionResumptionUpdate struct {
 	// Presence of this index allows users to transparently reconnect and avoid issue of
 	// losing some part of realtime audio input/video. If client wishes to temporarily disconnect
 	// (for example as result of receiving GoAway) they can do it without losing state by
-	// buffering messages sent since last `SessionResmumptionTokenUpdate`. This field will
+	// buffering messages sent since last `SessionResumptionTokenUpdate`. This field will
 	// enable them to limit buffering (avoid keeping all requests in RAM).
 	// Note: This should not be used for when resuming a session at some time later -- in
-	// those cases partial audio and video frames arelikely not needed.
+	// those cases partial audio and video frames are likely not needed.
 	LastConsumedClientMessageIndex int64 `json:"lastConsumedClientMessageIndex,omitempty,string"`
 }
 
@@ -7619,6 +7647,45 @@ type VoiceActivityDetectionSignal struct {
 type VoiceActivity struct {
 	// Optional. The type of the voice activity signal.
 	VoiceActivityType VoiceActivityType `json:"voiceActivityType,omitempty"`
+	// Optional. The time voice activity detected in audio time, relative to the start of
+	// the audio stream.
+	AudioOffset time.Duration `json:"audioOffset,omitempty"`
+}
+
+func (v *VoiceActivity) UnmarshalJSON(data []byte) error {
+	type Alias VoiceActivity
+	aux := &struct {
+		AudioOffset *InternalDurationJSON `json:"audioOffset,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(v),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if !reflect.ValueOf(aux.AudioOffset).IsZero() {
+		v.AudioOffset = time.Duration(*aux.AudioOffset)
+	}
+
+	return nil
+}
+
+func (v *VoiceActivity) MarshalJSON() ([]byte, error) {
+	type Alias VoiceActivity
+	aux := &struct {
+		AudioOffset *InternalDurationJSON `json:"audioOffset,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(v),
+	}
+
+	if !reflect.ValueOf(v.AudioOffset).IsZero() {
+		aux.AudioOffset = (*InternalDurationJSON)(&v.AudioOffset)
+	}
+
+	return json.Marshal(aux)
 }
 
 // Response message for API call.
@@ -7712,13 +7779,29 @@ type ContextWindowCompressionConfig struct {
 	SlidingWindow *SlidingWindow `json:"slidingWindow,omitempty"`
 }
 
+// Indicates the language of the audio should be automatically detected.
+type LanguageAuto struct {
+}
+
+// Provides hints to the model about possible languages present in the audio.
+type LanguageHints struct {
+	// Optional. BCP-47 language codes. At least one must be specified.
+	LanguageCodes []string `json:"languageCodes,omitempty"`
+}
+
 // The audio transcription configuration in Setup.
 type AudioTranscriptionConfig struct {
-	// Optional. The language codes of the audio. BCP-47 language code. If not set, the
-	// transcription will be in the language detected by the model. If set, the server will
-	// use the language code specified in the model config as a hint for the language of
-	// the audio
+	// Optional. Deprecated: use LanguageAuto or LanguageHints instead.
 	LanguageCodes []string `json:"languageCodes,omitempty"`
+	// Optional. The model will detect the language automatically. Do not use together with
+	// LanguageHints.
+	LanguageAuto *LanguageAuto `json:"languageAuto,omitempty"`
+	// Optional. Specifies one or more languages in the audio. Do not use together with
+	// LanguageAuto.
+	LanguageHints *LanguageHints `json:"languageHints,omitempty"`
+	// Optional. A list of phrases used for speech adaptation, which biases the ASR model
+	// to improve recognition of these specific terms.
+	AdaptationPhrases []string `json:"adaptationPhrases,omitempty"`
 }
 
 // Config for proactivity features.

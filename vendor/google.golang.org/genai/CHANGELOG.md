@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.62.0](https://github.com/googleapis/go-genai/compare/v1.61.0...v1.62.0) (2026-06-24)
+
+
+### Features
+
+* Add ComputerUse.disabled_safety_policies ([c89e5eb](https://github.com/googleapis/go-genai/commit/c89e5eb0e45b11805adf87d419016e219b8ef5a9))
+
+## [1.61.0](https://github.com/googleapis/go-genai/compare/v1.60.0...v1.61.0) (2026-06-17)
+
+
+### Features
+
+* Add audioOffset to VoiceActivity ([43a352f](https://github.com/googleapis/go-genai/commit/43a352fc5ceafff366259afececc0d816f0c3816))
+* Add interimInputTranscription to LiveServerContent ([43a352f](https://github.com/googleapis/go-genai/commit/43a352fc5ceafff366259afececc0d816f0c3816))
+* Add LanguageAuto, LanguageHints, and adaptationPhrases to AudioTranscriptionConfig ([43a352f](https://github.com/googleapis/go-genai/commit/43a352fc5ceafff366259afececc0d816f0c3816))
+
 ## [1.60.0](https://github.com/googleapis/go-genai/compare/v1.59.0...v1.60.0) (2026-06-04)
 
 

@@ -19,11 +19,13 @@ type ProgConfig struct {
 	GeminiLiteAiModel       string `yaml:"GeminiLiteAiModel"`
 	GeminiFlashAiModel      string `yaml:"GeminiFlashAiModel"`
 	GeminiProAiModel        string `yaml:"GeminiProAiModel"`
+	GeminiLiteImageAiModel  string `yaml:"GeminiLiteImageAiModel"`
 	GeminiFlashImageAiModel string `yaml:"GeminiFlashImageAiModel"`
 	GeminiProImageAiModel   string `yaml:"GeminiProImageAiModel"`
 	GeminiDefaultAiModel    string `yaml:"GeminiDefaultAiModel"`
 
 	GeminiResponseModalities []string `yaml:"GeminiResponseModalities"`
+	GeminiResponseMIMEType   string   `yaml:"GeminiResponseMIMEType"`
 	GeminiImageAspectRatio   string   `yaml:"GeminiImageAspectRatio"`
 	GeminiImageResolution    string   `yaml:"GeminiImageResolution"`
 
@@ -425,7 +427,6 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		// FrequencyPenalty
 		// Seed *int32
 		// ResponseMIMEType string
-		ResponseMIMEType: "text/plain", // always expected: plain text with markdown tags
 		// ResponseSchema *Schema
 		// ResponseJsonSchema any
 		// RoutingConfig *GenerationConfigRoutingConfig
@@ -441,17 +442,22 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		// AudioTimestamp bool
 		// ThinkingConfig *ThinkingConfig
 		// ImageConfig *ImageConfig
-		//	EnableEnhancedCivicAnswers *bool
+		// EnableEnhancedCivicAnswers *bool
 		// ModelArmorConfig *ModelArmorConfig
 		// ServiceTier ServiceTier
 
 	}
-	// configure AI model parameters
-	if progConfig.GeminiCandidateCount != nil {
-		generateContentConfig.CandidateCount = *progConfig.GeminiCandidateCount
-	}
+	// configure AI model response parameters.
 	if len(progConfig.GeminiResponseModalities) > 0 {
 		generateContentConfig.ResponseModalities = append(generateContentConfig.ResponseModalities, progConfig.GeminiResponseModalities...)
+	}
+	if progConfig.GeminiResponseMIMEType != "" {
+		generateContentConfig.ResponseMIMEType = progConfig.GeminiResponseMIMEType
+	}
+
+	// configure AI model general parameters
+	if progConfig.GeminiCandidateCount != nil {
+		generateContentConfig.CandidateCount = *progConfig.GeminiCandidateCount
 	}
 	if progConfig.GeminiTemperature != nil {
 		generateContentConfig.Temperature = progConfig.GeminiTemperature
@@ -548,8 +554,11 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		type ImageConfig struct {
 			AspectRatio              string
 			ImageSize                string
+			PersonGeneration         string
+			ProminentPeople          ProminentPeople
 			OutputMIMEType           string
 			OutputCompressionQuality *int32
+			ImageOutputOptions       *ImageConfigImageOutputOptions
 		}
 	*/
 	if isImageRequest && (progConfig.GeminiImageAspectRatio != "" || progConfig.GeminiImageResolution != "") {

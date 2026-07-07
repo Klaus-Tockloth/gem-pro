@@ -21,7 +21,12 @@ Die Gemini KI-Familie besteht aus folgenden (Text-) Modellen:
 | **Leistung** | niedrig / mittel | hoch | sehr hoch |
 | **Kosten** | sehr niedrig | niedrig / mittel | hoch |
 
-Für diesen KI-Client bietet sich die wahlweise Nutzung der KI-Modelle "Flash" und "Pro" an.
+Zusätzlich stehen für die Bildgenerierung folgende Bildmodelle zur Verfügung:
+
+| | **Lite Image** (Nano Banana Lite) | **Flash Image** (Nano Banana 2) | **Pro Image** (Nano Banana Pro) |
+| :--- | :--- | :--- | :--- |
+| **Modell** | `models/gemini-3.1-flash-lite-image` | `models/gemini-3.1-flash-image` | `models/gemini-3-pro-image` |
+| **Am Besten geeignet für** | Schnelles, kostengünstiges Prototyping und einfache Layouts | Standard-Bildgenerierung mit ausgewogener Qualität und Performance | Komplexe, detailreiche Grafiken und professionelle Illustrationen |
 
 ### Funktionsumfang
 
@@ -286,7 +291,12 @@ The Gemini AI family consists of the following (text) models:
 | **Performance** | low / medium | high | very high |
 | **Cost** | very low | low / medium | high |
 
-For this AI client, the optional use of the "Flash" and "Pro" AI models is suitable.
+Additionally, the following image models are available for image generation:
+
+| | **Lite Image** (Nano Banana Lite) | **Flash Image** (Nano Banana 2) | **Pro Image** (Nano Banana Pro) |
+| :--- | :--- | :--- | :--- |
+| **Model** | `models/gemini-3.1-flash-lite-image` | `models/gemini-3.1-flash-image` | `models/gemini-3-pro-image` |
+| **Best suited for** | Fast, cost-effective prototyping and simple layouts | Standard image generation with balanced quality and speed | Complex, highly detailed graphics and professional illustrations |
 
 ### Features
 

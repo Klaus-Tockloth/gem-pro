@@ -11,22 +11,12 @@ import (
 //go:embed gem-pro.yaml
 var gemProYaml []byte
 
-//go:embed gem-pro-image.yaml
-var gemProImageYaml []byte
-
 /*
-writeConfig writes the embedded default configurations (gemProYaml, gemProImageYaml)
-to files named 'gem-pro.yaml' and 'gem-pro-image.yaml".
+writeConfig writes the embedded default configurations (gemProYaml) to file named 'gem-pro.yaml'.
 */
 func writeConfig() error {
 	filename := "gem-pro.yaml"
 	err := os.WriteFile(filename, gemProYaml, 0600)
-	if err != nil {
-		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
-	}
-
-	filename = "gem-pro-image.yaml"
-	err = os.WriteFile(filename, gemProImageYaml, 0600)
 	if err != nil {
 		return fmt.Errorf("embed: error [%v] at os.WriteFile(), file = [%s]", err, filename)
 	}
