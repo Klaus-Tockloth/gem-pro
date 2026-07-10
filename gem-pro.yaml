@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v1.3 - 2026-07-06: corresponding to program release
+# - v1.3 - 2026-07-09: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -29,11 +29,6 @@ GeminiLiteAiModel: models/gemini-flash-lite-latest
 GeminiFlashAiModel: models/gemini-flash-latest
 GeminiProAiModel: models/gemini-pro-latest
 
-# Gemini AI image model family (options: -lite-image [Nano Banana 2 Lite], -flash-image [Nano Banana 2], -pro-image [Nano Banana Pro])
-GeminiLiteImageAiModel: models/gemini-3.1-flash-lite-image
-GeminiFlashImageAiModel: models/gemini-3.1-flash-image
-GeminiProImageAiModel: models/gemini-3-pro-image
-
 # Gemini AI default model
 GeminiDefaultAiModel: models/gemini-flash-latest
 
@@ -54,30 +49,6 @@ GeminiCandidateCount: 1
 
 # pure response without any boilerplate
 GeminiPureResponse: false
-
-# Image Generation: AspectRatio: '1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', or '21:9'
-# Note: Important technical setting not possible within the prompt.
-# Square
-#   1:1: Best for profile pictures (avatars), Instagram grid posts, and logo design. It is the most neutral format for general subjects.
-# Vertical (Portrait)
-#   9:16: The standard for full-screen mobile content. Use this for TikTok, Instagram Reels, YouTube Shorts, and mobile wallpapers.
-#   2:3: Classic photography ratio (35mm film rotated). Great for portrait photography and Pinterest pins.
-#   3:4: Common in digital cameras and iPads. Good for portraits that need a bit more width than 2:3.
-#   4:5: The optimized vertical format for Instagram Feed posts. It takes up the maximum amount of screen space.
-# Horizontal (Landscape)
-#   16:9: The standard for YouTube videos, television, monitors, and presentation slides.
-#   3:2: Classic 35mm photography ratio. The standard for landscape photography and DSLR sensors.
-#   4:3: Traditional monitor shape and standard digital camera sensor. Great for general illustrations and classic TV style.
-#   5:4: A slightly taller landscape, often used in classic large-format art prints (like 8x10 or 16x20 inches).
-#   21:9: Ultrawide or Cinematic. Use this for movie concept art, gaming wallpapers, or wide panoramic landscapes.
-GeminiImageAspectRatio: "4:3"
-
-# Image Generation: Resolution/ImageSize: "1K", "2K", "4K"
-# Note: Important technical setting not possible within the prompt.
-# 1K (Standard / Low usage): Rapid prototyping, testing prompts, or thumbnail creation.
-# 2K (High Definition): General purpose web use, digital art portfolios, and standard screen viewing.
-# 4K (Ultra High Definition): Printing, desktop wallpapers, professional post-production, or highly detailed illustrations.
-GeminiImageResolution: "1K"
 
 # control the randomness of the output (varies by model, float)
 # Values can range over [0.0, MaxTemperature], inclusive. A higher value will produce responses that

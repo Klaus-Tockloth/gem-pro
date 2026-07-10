@@ -9,6 +9,7 @@ Releases:
   - v0.4.0 - 2025-07-12: minor improvements
   - v0.5.0 - 2025-12-18: minor improvements
   - v0.6.0 - 2026-05-30: minor improvements
+  - v0.7.0 - 2026-07-09: improvements for sub and sup
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -286,14 +287,19 @@ abbr[title]:hover {
   color: #0056b3;
 }
 
-sub {
-  vertical-align: sub;
-  font-size: smaller;
+sup, sub {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
 }
 
 sup {
-  vertical-align: super;
-  font-size: smaller;
+  top: -0.5em;
+}
+
+sub {
+  bottom: -0.25em;
 }
 
 kbd {

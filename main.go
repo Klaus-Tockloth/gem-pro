@@ -52,6 +52,7 @@ Releases:
   - v1.2.0 - 2026-07-07: libs updated, go v1.26.4, slug as browser window/tab name, configuration updated,
                          option -lite-image added, separate image configuration removed, CLI option "-candidates <int>" removed,
                          default system instruction optimized, GeminiResponseMIMEType added to configuration
+  - v1.3.0 - 2026-07-09: libs updated, go v1.26.5, image generation feature removed (breaking change),  inline grounding citations
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -65,13 +66,9 @@ Contact:
 Remarks:
 - none
 
-ToDos (high complexity, not planned yet):
-- Support grounding references in response, e.g., "... lorem ipsum.[7][8]" and later "7. Webpage XY").
+ToDos (not planned yet):
 - Support batch mode (use case missing).
 - Support predefined structured output (JSON).
-
-ToDos (breaking change):
-- Focus on text generation, remove image generation.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -105,8 +102,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.2.0"
-	progDate    = "2026-07-07"
+	progVersion = "v1.3.0"
+	progDate    = "2026-07-09"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -175,14 +172,11 @@ func (s *stringArray) Get() interface{} {
 
 // command line parameters
 var (
-	liteModel       = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
-	flashModel      = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
-	proModel        = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
-	liteImageModel  = flag.Bool("lite-image", false, "Specifies the Gemini AI lite image generation model (Nano Banana 2 Lite).")
-	flashImageModel = flag.Bool("flash-image", false, "Specifies the Gemini AI flash image generation model (Nano Banana 2).")
-	proImageModel   = flag.Bool("pro-image", false, "Specifies the Gemini AI pro image generation model (Nano Banana Pro).")
-	defaultModel    = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
-	config          = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
+	liteModel    = flag.Bool("lite", false, "Specifies the Gemini AI lite model to use.")
+	flashModel   = flag.Bool("flash", false, "Specifies the Gemini AI flash model to use.")
+	proModel     = flag.Bool("pro", false, "Specifies the Gemini AI pro model to use.")
+	defaultModel = flag.Bool("default", false, "Specifies the Gemini AI default model to use.")
+	config       = flag.String("config", progName+".yaml", "Specifies the name of the YAML configuration file.")
 	// special handling for option 'filelist'
 	listModels       = flag.Bool("list-models", false, "Lists all available Gemini AI models and exits.")
 	chatmode         = flag.Bool("chatmode", false, "Enables chat mode, where the AI remembers conversation history within a session.")
@@ -315,7 +309,6 @@ func main() {
 
 	// set Gemini AI model
 	progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
-	isImageRequest := false
 	switch {
 	case *liteModel:
 		progConfig.GeminiAiModel = progConfig.GeminiLiteAiModel
@@ -323,26 +316,12 @@ func main() {
 		progConfig.GeminiAiModel = progConfig.GeminiFlashAiModel
 	case *proModel:
 		progConfig.GeminiAiModel = progConfig.GeminiProAiModel
-	case *liteImageModel:
-		progConfig.GeminiAiModel = progConfig.GeminiLiteImageAiModel
-		isImageRequest = true
-	case *flashImageModel:
-		progConfig.GeminiAiModel = progConfig.GeminiFlashImageAiModel
-		isImageRequest = true
-	case *proImageModel:
-		progConfig.GeminiAiModel = progConfig.GeminiProImageAiModel
-		isImageRequest = true
 	case *defaultModel:
 		progConfig.GeminiAiModel = progConfig.GeminiDefaultAiModel
 	}
 	if progConfig.GeminiAiModel == "" {
 		fmt.Printf("empty Gemini AI model not allowed\n")
 		os.Exit(1)
-	}
-
-	// detect image model
-	if strings.Contains(progConfig.GeminiAiModel, "image") {
-		isImageRequest = true
 	}
 
 	// build list of files given via command line
@@ -499,7 +478,7 @@ func main() {
 	}
 
 	// generate Gemini model configuration (adds cache if defined)
-	geminiModelConfig := generateGeminiModelConfig(isImageRequest, cacheName, includeStores)
+	geminiModelConfig := generateGeminiModelConfig(cacheName, includeStores)
 
 	// show start/config parameter
 	if *verbose {
@@ -661,10 +640,7 @@ func main() {
 			// chat mode
 			resp, respErr = chat.SendMessage(ctx, parts...)
 		} else {
-			// non-chat mode: text AND image generation for Gemini 3 models
-			if isImageRequest {
-				fmt.Printf("%02d:%02d:%02d: Generating content (image/text) ...\n", now.Hour(), now.Minute(), now.Second())
-			}
+			// non-chat mode: text generation for Gemini 3 models
 			resp, respErr = client.Models.GenerateContent(ctx, progConfig.GeminiAiModel, contents, geminiModelConfig)
 		}
 		finishProcessing = time.Now()
@@ -737,6 +713,14 @@ like Markdown and HTML.
 func handleResponse(resp *genai.GenerateContentResponse, respErr error) {
 	now := finishProcessing
 	fmt.Printf("%02d:%02d:%02d: Processing response ...\n", now.Hour(), now.Minute(), now.Second())
+
+	// apply structured grounding citations inline before any downstream processing
+	if resp != nil {
+		for _, candidate := range resp.Candidates {
+			applyInlineCitations(candidate)
+		}
+	}
+
 	switch {
 	case respErr != nil:
 		processError(respErr)

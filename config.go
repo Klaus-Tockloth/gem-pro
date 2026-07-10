@@ -15,19 +15,14 @@ type ProgConfig struct {
 	// Gemini configuration
 	GeminiAPIKey string `yaml:"GeminiAPIKey"`
 
-	GeminiAiModel           string // one of the following models
-	GeminiLiteAiModel       string `yaml:"GeminiLiteAiModel"`
-	GeminiFlashAiModel      string `yaml:"GeminiFlashAiModel"`
-	GeminiProAiModel        string `yaml:"GeminiProAiModel"`
-	GeminiLiteImageAiModel  string `yaml:"GeminiLiteImageAiModel"`
-	GeminiFlashImageAiModel string `yaml:"GeminiFlashImageAiModel"`
-	GeminiProImageAiModel   string `yaml:"GeminiProImageAiModel"`
-	GeminiDefaultAiModel    string `yaml:"GeminiDefaultAiModel"`
+	GeminiAiModel        string // one of the following models
+	GeminiLiteAiModel    string `yaml:"GeminiLiteAiModel"`
+	GeminiFlashAiModel   string `yaml:"GeminiFlashAiModel"`
+	GeminiProAiModel     string `yaml:"GeminiProAiModel"`
+	GeminiDefaultAiModel string `yaml:"GeminiDefaultAiModel"`
 
 	GeminiResponseModalities []string `yaml:"GeminiResponseModalities"`
 	GeminiResponseMIMEType   string   `yaml:"GeminiResponseMIMEType"`
-	GeminiImageAspectRatio   string   `yaml:"GeminiImageAspectRatio"`
-	GeminiImageResolution    string   `yaml:"GeminiImageResolution"`
 
 	GeminiCandidateCount  *int32   `yaml:"GeminiCandidateCount"`
 	GeminiPureResponse    bool     `yaml:"GeminiPureResponse"`
@@ -281,20 +276,6 @@ func loadConfiguration(configFile string) error {
 		}
 	}
 
-	// image generation
-	if progConfig.GeminiImageAspectRatio != "" {
-		validRatios := map[string]bool{"auto": true, "1:1": true,
-			"9:16": true, "16:9": true,
-			"3:4": true, "4:3": true,
-			"2:3": true, "3:2": true,
-			"4:5": true, "5:4": true,
-			"21:9": true,
-		}
-		if !validRatios[progConfig.GeminiImageAspectRatio] {
-			fmt.Printf("warning: unusual aspect ratio [%s]\n", progConfig.GeminiImageAspectRatio)
-		}
-	}
-
 	return nil
 }
 
@@ -411,42 +392,9 @@ generateGeminiModelConfig generates a configuration object for the Gemini AI mod
 genai.GenerateContentConfig object and configures it based on the program settings for interacting
 with the Gemini AI model.
 */
-func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames []string) *genai.GenerateContentConfig {
-	generateContentConfig := &genai.GenerateContentConfig{
-		// HTTPOptions *HTTPOptions
-		// SystemInstruction *Content
-		// Temperature *float32
-		// TopP *float32
-		// TopK *float32
-		// CandidateCount int32
-		// MaxOutputTokens int32
-		// StopSequences []string
-		// ResponseLogprobs bool
-		// Logprobs *int32
-		// PresencePenalty
-		// FrequencyPenalty
-		// Seed *int32
-		// ResponseMIMEType string
-		// ResponseSchema *Schema
-		// ResponseJsonSchema any
-		// RoutingConfig *GenerationConfigRoutingConfig
-		// ModelSelectionConfig *ModelSelectionConfig
-		// SafetySettings []*SafetySetting
-		// Tools []*Tool
-		// ToolConfig *ToolConfig
-		// Labels map[string]string
-		// CachedContent string
-		// ResponseModalities []string
-		// MediaResolution MediaResolution
-		// SpeechConfig *SpeechConfig
-		// AudioTimestamp bool
-		// ThinkingConfig *ThinkingConfig
-		// ImageConfig *ImageConfig
-		// EnableEnhancedCivicAnswers *bool
-		// ModelArmorConfig *ModelArmorConfig
-		// ServiceTier ServiceTier
+func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.GenerateContentConfig {
+	generateContentConfig := &genai.GenerateContentConfig{}
 
-	}
 	// configure AI model response parameters.
 	if len(progConfig.GeminiResponseModalities) > 0 {
 		generateContentConfig.ResponseModalities = append(generateContentConfig.ResponseModalities, progConfig.GeminiResponseModalities...)
@@ -550,27 +498,6 @@ func generateGeminiModelConfig(isImageRequest bool, cacheName string, storeNames
 		}
 	}
 
-	/*
-		type ImageConfig struct {
-			AspectRatio              string
-			ImageSize                string
-			PersonGeneration         string
-			ProminentPeople          ProminentPeople
-			OutputMIMEType           string
-			OutputCompressionQuality *int32
-			ImageOutputOptions       *ImageConfigImageOutputOptions
-		}
-	*/
-	if isImageRequest && (progConfig.GeminiImageAspectRatio != "" || progConfig.GeminiImageResolution != "") {
-		generateContentConfig.ImageConfig = &genai.ImageConfig{}
-		if progConfig.GeminiImageAspectRatio != "" {
-			generateContentConfig.ImageConfig.AspectRatio = progConfig.GeminiImageAspectRatio
-		}
-		if progConfig.GeminiImageResolution != "" {
-			generateContentConfig.ImageConfig.ImageSize = progConfig.GeminiImageResolution
-		}
-	}
-
 	return generateContentConfig
 }
 
@@ -636,14 +563,6 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	}
 	if geminiModelConfig.ServiceTier != "" {
 		fmt.Printf("  ServiceTier       : %v\n", geminiModelConfig.ServiceTier)
-	}
-	if geminiModelConfig.ImageConfig != nil {
-		if geminiModelConfig.ImageConfig.AspectRatio != "" {
-			fmt.Printf("  ImageAspectRatio  : %s\n", geminiModelConfig.ImageConfig.AspectRatio)
-		}
-		if geminiModelConfig.ImageConfig.ImageSize != "" {
-			fmt.Printf("  ImageSize         : %s\n", geminiModelConfig.ImageConfig.ImageSize)
-		}
 	}
 }
 

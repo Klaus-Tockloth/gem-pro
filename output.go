@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -22,6 +23,142 @@ func printPromptResponseToTerminal() {
 		return
 	}
 	_, _ = os.Stdout.Write(data)
+}
+
+/*
+applyInlineCitations processes a candidate's GroundingMetadata to insert interactive inline citations
+directly into the text parts of the response. It groups citations by segment end-indexes, prevents index-shifting
+errors by applying replacements in reverse/descending order, and formats citations as clickable Markdown links.
+*/
+func applyInlineCitations(candidate *genai.Candidate) {
+	if candidate == nil || candidate.Content == nil || candidate.GroundingMetadata == nil {
+		return
+	}
+	metadata := candidate.GroundingMetadata
+	if len(metadata.GroundingChunks) == 0 || len(metadata.GroundingSupports) == 0 {
+		return
+	}
+
+	// group chunk indices by PartIndex and EndIndex to consolidate overlapping citations
+	// map structure: PartIndex -> EndIndex -> Set of ChunkIndex
+	groupedSupports := make(map[int32]map[int32]map[int32]struct{})
+
+	for _, support := range metadata.GroundingSupports {
+		if support == nil || support.Segment == nil {
+			continue
+		}
+		partIdx := support.Segment.PartIndex
+		endIdx := support.Segment.EndIndex
+
+		if groupedSupports[partIdx] == nil {
+			groupedSupports[partIdx] = make(map[int32]map[int32]struct{})
+		}
+		if groupedSupports[partIdx][endIdx] == nil {
+			groupedSupports[partIdx][endIdx] = make(map[int32]struct{})
+		}
+		for _, chunkIdx := range support.GroundingChunkIndices {
+			groupedSupports[partIdx][endIdx][chunkIdx] = struct{}{}
+		}
+	}
+
+	// LOGISCHES MAPPING:
+	// Bildet den logischen PartIndex (nur Nicht-Gedanken) auf den physischen Slice-Index ab.
+	logicalToPhysical := make(map[int]int)
+	logicalIdx := 0
+	for physicalIdx, part := range candidate.Content.Parts {
+		if part.Thought {
+			continue
+		}
+		logicalToPhysical[logicalIdx] = physicalIdx
+		logicalIdx++
+	}
+
+	// apply citations to each text part
+	for partIdxVal, endIdxMap := range groupedSupports {
+		logicalIdx := int(partIdxVal)
+		physicalIdx, ok := logicalToPhysical[logicalIdx]
+		if !ok {
+			continue
+		}
+		part := candidate.Content.Parts[physicalIdx]
+		if part == nil || part.Text == "" {
+			continue
+		}
+
+		// Sort end indexes in descending order to insert citations from right-to-left.
+		// This ensures that insertions do not shift indices of preceding citations.
+		var endIndices []int32
+		for endIdx := range endIdxMap {
+			endIndices = append(endIndices, endIdx)
+		}
+		sort.Slice(endIndices, func(i, j int) bool {
+			return endIndices[i] > endIndices[j]
+		})
+
+		textBytes := []byte(part.Text)
+
+		for _, endIdxVal := range endIndices {
+			endIdx := int(endIdxVal)
+			if endIdx < 0 || endIdx > len(textBytes) {
+				continue
+			}
+
+			// gather and sort chunk indices for this insertion point
+			chunkIdxMap := endIdxMap[endIdxVal]
+			var chunkIndices []int
+			for idx := range chunkIdxMap {
+				chunkIndices = append(chunkIndices, int(idx))
+			}
+			sort.Ints(chunkIndices)
+
+			if len(chunkIndices) == 0 {
+				continue
+			}
+
+			// construct citation string containing Markdown links (e.g. <sup>[1](url1),[2](url2)</sup>)
+			var citationParts []string
+			for _, idx := range chunkIndices {
+				if idx < 0 || idx >= len(metadata.GroundingChunks) {
+					continue
+				}
+				chunk := metadata.GroundingChunks[idx]
+				citationNum := idx + 1
+
+				// Find the best source URI
+				uri := ""
+				switch {
+				case chunk.Web != nil:
+					uri = chunk.Web.URI
+				case chunk.Maps != nil:
+					uri = chunk.Maps.URI
+				case chunk.RetrievedContext != nil:
+					uri = chunk.RetrievedContext.URI
+				}
+
+				if uri != "" {
+					citationParts = append(citationParts, fmt.Sprintf("[%d](%s)", citationNum, uri))
+				} else {
+					citationParts = append(citationParts, fmt.Sprintf("%d", citationNum))
+				}
+			}
+
+			if len(citationParts) == 0 {
+				continue
+			}
+
+			citationStr := "<sup>" + strings.Join(citationParts, ",") + "</sup>"
+			citationBytes := []byte(citationStr)
+
+			// insert citation bytes safely
+			newTextBytes := make([]byte, 0, len(textBytes)+len(citationBytes))
+			newTextBytes = append(newTextBytes, textBytes[:endIdx]...)
+			newTextBytes = append(newTextBytes, citationBytes...)
+			newTextBytes = append(newTextBytes, textBytes[endIdx:]...)
+			textBytes = newTextBytes
+		}
+
+		part.Text = string(textBytes)
+	}
 }
 
 /*
@@ -558,9 +695,10 @@ func appendResponseString(responseString strings.Builder) {
 	}
 
 	// 2. render markdown response as ansi
-	ansiData := markdownForFileAndAnsi // use the cleaned version
+	ansiData := markdownForFileAndAnsi        // use the cleaned version
+	ansiData = stripInlineCitations(ansiData) // strip inline citations for clean terminal view
 	if progConfig.AnsiRendering {
-		ansiData = renderMarkdown2Ansi(markdownForFileAndAnsi) // pass the cleaned version
+		ansiData = renderMarkdown2Ansi(ansiData) // pass the cleaned version without inline citations
 	}
 
 	// append response string to current ansi request/response file

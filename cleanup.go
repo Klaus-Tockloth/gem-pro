@@ -99,3 +99,12 @@ func removeSpacesBetweenNewlineAndCodeblock(input string) string {
 	}
 	return output.String()
 }
+
+/*
+stripInlineCitations removes inline grounding citations (<sup>...</sup>) entirely
+from the input string to keep outputs (like ANSI terminal display) clean and readable.
+*/
+func stripInlineCitations(input string) string {
+	re := regexp.MustCompile(`<sup>.*?</sup>`)
+	return re.ReplaceAllString(input, "")
+}
