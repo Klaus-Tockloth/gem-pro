@@ -53,6 +53,7 @@ Releases:
                          option -lite-image added, separate image configuration removed, CLI option "-candidates <int>" removed,
                          default system instruction optimized, GeminiResponseMIMEType added to configuration
   - v1.3.0 - 2026-07-09: libs updated, go v1.26.5, image generation feature removed (breaking change),  inline grounding citations
+  - v1.3.1 - 2026-07-11: libs updated, fix: mapping part index to slice index, minor improvements
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -102,8 +103,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.3.0"
-	progDate    = "2026-07-09"
+	progVersion = "v1.3.1"
+	progDate    = "2026-07-11"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )

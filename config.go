@@ -581,7 +581,7 @@ func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.Generat
 	fmt.Printf("Model  : %s (Limits: %s In / %s Out)\n", modelInfo.Name, inLimit, outLimit)
 
 	// Config
-	configParts := []string{fmt.Sprintf("%d Candidate(s)", *progConfig.GeminiCandidateCount)}
+	configParts := []string{}
 	if progConfig.GeminiThinkingLevel != "" {
 		configParts = append(configParts, "Thinking: "+progConfig.GeminiThinkingLevel)
 	}

@@ -61,12 +61,11 @@ func applyInlineCitations(candidate *genai.Candidate) {
 		}
 	}
 
-	// LOGISCHES MAPPING:
-	// Bildet den logischen PartIndex (nur Nicht-Gedanken) auf den physischen Slice-Index ab.
+	// map logical part index to physical slice index
 	logicalToPhysical := make(map[int]int)
 	logicalIdx := 0
 	for physicalIdx, part := range candidate.Content.Parts {
-		if part.Thought {
+		if part.Thought || part.Text == "" {
 			continue
 		}
 		logicalToPhysical[logicalIdx] = physicalIdx
