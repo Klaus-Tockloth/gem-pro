@@ -7,7 +7,7 @@
 # Releases:
 # - v1.0.0 - 2025-03-11: initial release
 # - v1.1.0 - 2026-02-19: Windows ARM-32 support removed, ARM-64 added
-# - v1.2.0 - 2026-06-03: freebsd, netbsd, openbsd removed
+# - v1.2.0 - 2026-06-03: FreeBSD, OpenBSD and NetBSD support removed
 # ------------------------------------
 
 # set -o xtrace

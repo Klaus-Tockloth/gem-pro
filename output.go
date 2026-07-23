@@ -333,21 +333,25 @@ func getCandidateText(candidate *genai.Candidate) (string, string) {
 		if part.VideoMetadata != nil {
 			regularContent.WriteString("Metadata for a given video.\n")
 		}
+
 		if part.CodeExecutionResult != nil {
-			regularContent.WriteString("\nCode Execution Result:\n")
-			regularContent.WriteString("\n```plaintext\n")
+			regularContent.WriteString("\n<!-- CODE_RESULT_START -->\n")
+			regularContent.WriteString("```plaintext\n")
 			if part.CodeExecutionResult.Outcome != genai.OutcomeOK {
 				fmt.Fprintf(&regularContent, "%s\n\n", part.CodeExecutionResult.Outcome)
 			}
 			regularContent.WriteString(strings.TrimSuffix(part.CodeExecutionResult.Output, "\n"))
 			regularContent.WriteString("\n```\n")
+			regularContent.WriteString("<!-- CODE_RESULT_END -->\n")
 		}
 		if part.ExecutableCode != nil {
-			fmt.Fprintf(&regularContent, "\nExecutable %s Code:\n", part.ExecutableCode.Language)
-			fmt.Fprintf(&regularContent, "\n```%s\n", part.ExecutableCode.Language)
+			regularContent.WriteString("\n<!-- CODE_EXECUTION_START -->\n")
+			fmt.Fprintf(&regularContent, "```%s\n", part.ExecutableCode.Language)
 			regularContent.WriteString(strings.TrimSuffix(part.ExecutableCode.Code, "\n"))
 			regularContent.WriteString("\n```\n")
+			regularContent.WriteString("<!-- CODE_EXECUTION_END -->\n")
 		}
+
 		if part.FileData != nil {
 			fmt.Fprintf(&regularContent, "File Data: URI=%s, MIME=%s\n", part.FileData.FileURI, part.FileData.MIMEType)
 		}
@@ -358,18 +362,8 @@ func getCandidateText(candidate *genai.Candidate) (string, string) {
 			regularContent.WriteString("The result output of a [FunctionCall].\n")
 		}
 		if part.InlineData != nil {
-			fmt.Fprintf(&regularContent, "Inline data (%.1f KiB, %s) : ", float64(len(part.InlineData.Data))/1024.0, part.InlineData.MIMEType)
-			pathname, filename, err := writeDataToFile(part.InlineData.Data, part.InlineData.MIMEType, finishProcessing)
-			if err != nil {
-				fmt.Fprintf(&regularContent, "error [%v] writing data to file\n", err)
-			} else {
-				u := url.URL{
-					Scheme: "file",
-					Path:   pathname,
-				}
-				encodedURL := u.String()
-				fmt.Fprintf(&regularContent, "\n![%s](%s)\n\n", filename, encodedURL)
-			}
+			// fallback only, inline data should be saved and mutated in saveAttachments()
+			regularContent.WriteString("\n[unexpected inline data]\n")
 		}
 		if part.Text != "" { // ensure that part.Text is not from Thought
 			regularContent.WriteString(removeSpacesBetweenNewlineAndCodeblock(part.Text))
@@ -437,41 +431,39 @@ func processResponse(resp *genai.GenerateContentResponse) {
 
 		responseString.WriteString(content)
 
-		// build list of text citation source URIs
-		citationURIs := []string{}
+		// build deduplicated citations list (URI with optional license)
+		type citationEntry struct {
+			URI     string
+			License string
+		}
+
+		var citations []citationEntry
+		seenURIs := make(map[string]bool)
+
 		if candidate.CitationMetadata != nil {
 			for _, citation := range candidate.CitationMetadata.Citations {
-				if citation.URI != "" {
-					citationURIs = append(citationURIs, (fmt.Sprintf("%v", citation.URI)))
+				uri := strings.TrimSpace(citation.URI)
+				if uri == "" || seenURIs[uri] {
+					continue
 				}
+				seenURIs[uri] = true
+				citations = append(citations, citationEntry{
+					URI:     uri,
+					License: strings.TrimSpace(citation.License),
+				})
 			}
 		}
 
-		// show text citation source URIs
-		if len(citationURIs) > 0 {
+		// show citations
+		if len(citations) > 0 {
 			responseString.WriteString("\n***\n")
-			fmt.Fprintf(&responseString, "Text Citation %s:\n\n", pluralize(len(citationURIs), "Source"))
-			for _, citationURI := range citationURIs {
-				fmt.Fprintf(&responseString, "* [%s](%s)\n", citationURI, citationURI)
-			}
-		}
-
-		// build list of code citation licenses
-		citationLicenses := []string{}
-		if candidate.CitationMetadata != nil {
-			for _, citation := range candidate.CitationMetadata.Citations {
-				if citation.License != "" {
-					citationLicenses = append(citationLicenses, citation.License)
+			fmt.Fprintf(&responseString, "%s:\n\n", pluralize(len(citations), "Citation"))
+			for _, item := range citations {
+				if item.License != "" {
+					fmt.Fprintf(&responseString, "* [%s](%s) (%s)\n", item.URI, item.URI, item.License)
+				} else {
+					fmt.Fprintf(&responseString, "* [%s](%s)\n", item.URI, item.URI)
 				}
-			}
-		}
-
-		// show code citation licenses
-		if len(citationLicenses) > 0 {
-			responseString.WriteString("\n***\n")
-			fmt.Fprintf(&responseString, "Code Citation %s:\n\n", pluralize(len(citationLicenses), "License"))
-			for _, citationSourceLicense := range citationLicenses {
-				fmt.Fprintf(&responseString, "* %s\n", citationSourceLicense)
 			}
 		}
 
@@ -516,15 +508,6 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	}
 
 	var modelParams []string
-	if progConfig.GeminiTemperature != nil {
-		modelParams = append(modelParams, fmt.Sprintf("Temperature: %.2f", *progConfig.GeminiTemperature))
-	}
-	if progConfig.GeminiTopP != nil {
-		modelParams = append(modelParams, fmt.Sprintf("TopP: %.2f", *progConfig.GeminiTopP))
-	}
-	if progConfig.GeminiTopK != nil {
-		modelParams = append(modelParams, fmt.Sprintf("TopK: %.2f", *progConfig.GeminiTopK))
-	}
 	if progConfig.GeminiThinkingLevel != "" {
 		modelParams = append(modelParams, fmt.Sprintf("ThinkingLevel: %s", progConfig.GeminiThinkingLevel))
 	}
@@ -547,16 +530,16 @@ func processResponse(resp *genai.GenerateContentResponse) {
 
 	var activeTools []string
 	if progConfig.GeminiGroundingWithGoogleSearch {
-		activeTools = append(activeTools, "Google Search")
+		activeTools = append(activeTools, "GoogleSearch")
 	}
 	if progConfig.GeminiGroundingWithURLContext {
 		activeTools = append(activeTools, "URLContext")
 	}
 	if progConfig.GeminiGroundingWithCodeExecution {
-		activeTools = append(activeTools, "Code Execution")
+		activeTools = append(activeTools, "CodeExecution")
 	}
 	if progConfig.GeminiGroundingWithGoogleMaps {
-		activeTools = append(activeTools, "Google Maps")
+		activeTools = append(activeTools, "GoogleMaps")
 	}
 	if len(includeStores) > 0 {
 		activeTools = append(activeTools, "FileSearchStores")
@@ -606,6 +589,10 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		outputDetails := []string{fmt.Sprintf("Candidates: %d", u.CandidatesTokenCount)}
 		if u.ThoughtsTokenCount > 0 {
 			outputDetails = append(outputDetails, fmt.Sprintf("Thoughts: %d", u.ThoughtsTokenCount))
+		}
+		if duration.Seconds() > 0 {
+			tokensPerSec := float64(totalOutputCount) / duration.Seconds()
+			outputDetails = append(outputDetails, fmt.Sprintf("Speed: %.1f tokens/s", tokensPerSec))
 		}
 		fmt.Fprintf(&responseString, "  Output   : %d (%s)\n",
 			totalOutputCount, strings.Join(outputDetails, ", "))
@@ -665,7 +652,7 @@ to the current request / response files in Markdown, ANSI, and HTML formats.
 func appendResponseString(responseString strings.Builder) {
 	rawMarkdown := responseString.String()
 
-	// extraxt Metadata Slug
+	// extract Metadata Slug
 	cleanedContent, _ := extractAndCleanSlug(rawMarkdown)
 
 	// cleanup Markdown
@@ -676,6 +663,10 @@ func appendResponseString(responseString strings.Builder) {
 	markdownForFileAndAnsi := cleanedMarkdown
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- THOUGHTS_START -->", "**Thoughts:**\n")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- THOUGHTS_END -->", "")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- CODE_EXECUTION_START -->", "**Executable Code:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- CODE_EXECUTION_END -->", "")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- CODE_RESULT_START -->", "**Code Execution Result:**\n")
+	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- CODE_RESULT_END -->", "")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- STATS_START -->", "**Statistics:**\n")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- STATS_END -->", "")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- RESPONSE_START -->", "**Response:**\n")
@@ -727,6 +718,36 @@ func appendResponseString(responseString strings.Builder) {
 		_, err = fmt.Fprint(currentFileHTML, htmlData)
 		if err != nil {
 			fmt.Printf("error [%v] writing to HTML file\n", err)
+		}
+	}
+}
+
+/*
+saveAttachments iterates over the response, saves file attachments (e.g., inline data) to disk
+and mutates the response object by replacing InlineData with a markdown link in the Text field.
+*/
+func saveAttachments(resp *genai.GenerateContentResponse, finishProcessing time.Time) {
+	if resp == nil {
+		return
+	}
+	for _, candidate := range resp.Candidates {
+		if candidate.Content == nil {
+			continue
+		}
+		for _, part := range candidate.Content.Parts {
+			if part.InlineData != nil {
+				// write the file to disk exactly once
+				pathname, filename, err := writeDataToFile(part.InlineData.Data, part.InlineData.MIMEType, finishProcessing)
+
+				if err == nil {
+					// mutate response tree: remove inline data and replace it with the generated markdown link
+					part.Text += fmt.Sprintf("\n\n![%s](%s)\n\n", filename, pathname)
+					part.InlineData = nil
+				} else {
+					part.Text += fmt.Sprintf("\n\n[Error saving inline data: %v]\n\n", err)
+					part.InlineData = nil
+				}
+			}
 		}
 	}
 }

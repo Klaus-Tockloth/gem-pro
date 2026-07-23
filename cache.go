@@ -13,7 +13,7 @@ import (
 )
 
 /*
-createApIModelSpecificCache creates new AI model specific cache from given files.
+createAIModelSpecificCache creates a new AI model specific cache from given files.
 All files (content parts) thereby form one cache object.
 The cache object must consist of at least 1024 or 2048 tokens.
 */

@@ -26,12 +26,12 @@ Releases:
   - v0.9.0 - 2025-10-11: yaml config enriched (latest models, Google Maps), libs updated, compiled with go v1.25.2
   - v0.9.1 - 2025-10-21: segmentation violation in 'output.go' fixed, libs updated, compiled with go v1.25.3
   - v0.10.0 - 2025-11-17: thinking limit increased, model list output improved, libs updated, compiled with go v1.25.4
-                          list of MIMI type replacements added to config
+                          list of MIME type replacements added to config
   - v0.11.0 - 2026-01-06: support for think level, libs updated, default configuration optimized for Gemini 3
                           support for media resolution, command line options revised, panic recovery, go v1.25.5
 						  markdown to ansi renderer replaced (glamour), option '-filelist' can be used multiple times
 						  tool 'FileSearchStores' (RAG, Retrieval-Augmented Generation) added
-						  CLI paramaters 'temperature' and 'topp' removed, tool 'URLContext' added
+						  CLI parameters 'temperature' and 'topp' removed, tool 'URLContext' added
 						  README.md embedded in application, README.md revised, usage/help revised
 						  pipe support revised, image support, token calculation revised
   - v0.12.0 - 2026-01-13: libs updated, output of pure markdown prompt response added (feature)
@@ -42,8 +42,8 @@ Releases:
   - v0.14.1 - 2026-02-20: libs updated, go v1.26.0, hard-coded system instruction modified, gemini-3.1-pro-preview
   - v1.0.0 - 2026-04-02: libs updated, go v1.26.1, configuration (YAML) updated
   - v1.1.0 - 2026-05-30: libs updated, go v1.26.3,
-                         configurationmodified: GeminiMaxThinkingBudget removed, GeminiServiceTier added, default gemini-flash-latest
-                         binary generation for freebsd, openbsd and netbsd removed
+                         configuration modified: GeminiMaxThinkingBudget removed, GeminiServiceTier added, default gemini-flash-latest
+                         binary generation for FreeBSD, OpenBSD and NetBSD removed
 						 cli flags servicetier and thinkinglevel added
 						 slug added to response summery
 						 system prompt (instruction) handling revised
@@ -52,8 +52,12 @@ Releases:
   - v1.2.0 - 2026-07-07: libs updated, go v1.26.4, slug as browser window/tab name, configuration updated,
                          option -lite-image added, separate image configuration removed, CLI option "-candidates <int>" removed,
                          default system instruction optimized, GeminiResponseMIMEType added to configuration
-  - v1.3.0 - 2026-07-09: libs updated, go v1.26.5, image generation feature removed (breaking change),  inline grounding citations
+  - v1.3.0 - 2026-07-09: libs updated, go v1.26.5, image generation feature removed (breaking change), inline grounding citations
   - v1.3.1 - 2026-07-11: libs updated, fix: mapping part index to slice index, minor improvements
+  - v1.4.0 - 2026-07-22: libs updated, tool 'code execution': activated by default, usage limited via system prompt,
+                         inline data handling fixed (e.g. images), minor improvements, presentation of 'citations' revised,
+						 no longer supported parameters (temperature, top_p, top_k) removed, performance indicator 'tokens/s' added,
+						 CLI option '-out' removed
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -67,9 +71,13 @@ Contact:
 Remarks:
 - none
 
-ToDos (not planned yet):
+ToDos (not planned):
 - Support batch mode (use case missing).
 - Support predefined structured output (JSON).
+
+ToDos (planned):
+- Add MCP support.
+- Revise cache handling.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -103,8 +111,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.3.1"
-	progDate    = "2026-07-11"
+	progVersion = "v1.4.0"
+	progDate    = "2026-07-22"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -199,7 +207,6 @@ var (
 	addToStore       = flag.String("add-to-store", "", "Adds the given files (via args or -filelist) to the specified FileSearchStore (Name/ID).")
 	deleteFromStore  = flag.String("delete-from-store", "", "Deletes the specified FileSearchStore document (full Name/ID).")
 	listStoreContent = flag.String("list-store-content", "", "Lists all documents within the specified FileSearchStore (Name/ID).")
-	outputBase       = flag.String("out", "", "Specifies the base filename for the output files.\n E.g. 'response-1' -> 'response-1.md', 'response-1.html', 'response-1.ansi'.")
 	pureResponse     = flag.Bool("pure-response", false, "Pure response without any boilerplate.")
 	verbose          = flag.Bool("verbose", false, "Detailed output of configuration and model information.")
 	serviceTier      = flag.String("servicetier", "", "Specifies the service tier to use (standard, flex, priority).")
@@ -294,13 +301,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("error [%v] loading configuration\n", err)
 		os.Exit(1)
-	}
-
-	// handle custom output base filename
-	if *outputBase != "" {
-		progConfig.MarkdownPromptResponseFile = *outputBase + ".md"
-		progConfig.HTMLPromptResponseFile = *outputBase + ".html"
-		progConfig.AnsiPromptResponseFile = *outputBase + ".ansi"
 	}
 
 	// join FileSearchStores from YAML and CLI
@@ -632,7 +632,7 @@ func main() {
 
 		processPrompt(prompt, *chatmode, chatNumber)
 
-		dumpDataToFile(os.O_TRUNC|os.O_WRONLY, "gemini model config", geminiModelConfig)
+		dumpDataToFile(os.O_TRUNC|os.O_CREATE|os.O_WRONLY, "gemini model config", geminiModelConfig)
 		dumpDataToFile(os.O_APPEND|os.O_CREATE|os.O_WRONLY, "gemini prompt contents", contents)
 
 		// generate content
@@ -660,7 +660,7 @@ func main() {
 		// handle response
 		handleResponse(resp, respErr)
 
-		// If input was piped, we are in "One-Shot" mod: process one prompt, get one response, and exit.
+		// If input was piped, we are in "One-Shot" mode: process one prompt, get one response, and exit.
 		if isPiped {
 			os.Exit(0)
 		}
@@ -720,6 +720,8 @@ func handleResponse(resp *genai.GenerateContentResponse, respErr error) {
 		for _, candidate := range resp.Candidates {
 			applyInlineCitations(candidate)
 		}
+		// save attachments immediately (mutates resp: InlineData -> Text).
+		saveAttachments(resp, finishProcessing)
 	}
 
 	switch {

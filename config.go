@@ -24,12 +24,9 @@ type ProgConfig struct {
 	GeminiResponseModalities []string `yaml:"GeminiResponseModalities"`
 	GeminiResponseMIMEType   string   `yaml:"GeminiResponseMIMEType"`
 
-	GeminiCandidateCount  *int32   `yaml:"GeminiCandidateCount"`
-	GeminiPureResponse    bool     `yaml:"GeminiPureResponse"`
-	GeminiMaxOutputTokens *int32   `yaml:"GeminiMaxOutputTokens"`
-	GeminiTemperature     *float32 `yaml:"GeminiTemperature"`
-	GeminiTopP            *float32 `yaml:"GeminiTopP"`
-	GeminiTopK            *float32 `yaml:"GeminiTopK"`
+	GeminiCandidateCount  *int32 `yaml:"GeminiCandidateCount"`
+	GeminiPureResponse    bool   `yaml:"GeminiPureResponse"`
+	GeminiMaxOutputTokens *int32 `yaml:"GeminiMaxOutputTokens"`
 
 	GeminiGroundingWithCodeExecution    bool     `yaml:"GeminiGroundingWithCodeExecution"`
 	GeminiGroundingWithGoogleSearch     bool     `yaml:"GeminiGroundingWithGoogleSearch"`
@@ -407,15 +404,6 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 	if progConfig.GeminiCandidateCount != nil {
 		generateContentConfig.CandidateCount = *progConfig.GeminiCandidateCount
 	}
-	if progConfig.GeminiTemperature != nil {
-		generateContentConfig.Temperature = progConfig.GeminiTemperature
-	}
-	if progConfig.GeminiTopP != nil {
-		generateContentConfig.TopP = progConfig.GeminiTopP
-	}
-	if progConfig.GeminiTopK != nil {
-		generateContentConfig.TopK = progConfig.GeminiTopK
-	}
 	if progConfig.GeminiMaxOutputTokens != nil && *progConfig.GeminiMaxOutputTokens > 0 {
 		generateContentConfig.MaxOutputTokens = *progConfig.GeminiMaxOutputTokens
 	}
@@ -513,15 +501,6 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 			fmt.Printf("  SystemInstruction : %v\n", wrapString(geminiModelConfig.SystemInstruction.Parts[0].Text, terminalWidth, 22))
 		}
 	}
-	if geminiModelConfig.Temperature != nil {
-		fmt.Printf("  Temperature       : %v\n", *geminiModelConfig.Temperature)
-	}
-	if geminiModelConfig.TopP != nil {
-		fmt.Printf("  TopP              : %v\n", *geminiModelConfig.TopP)
-	}
-	if geminiModelConfig.TopK != nil {
-		fmt.Printf("  TopK              : %v\n", *geminiModelConfig.TopK)
-	}
 	fmt.Printf("  CandidateCount    : %v\n", geminiModelConfig.CandidateCount)
 	if geminiModelConfig.MaxOutputTokens > 0 {
 		fmt.Printf("  MaxOutputTokens   : %v\n", geminiModelConfig.MaxOutputTokens)
@@ -572,7 +551,7 @@ showCompactConfiguration shows a very compact overview of the most important par
 func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.GenerateContentConfig) {
 	fmt.Printf("\n--- %s %s ---------------------------------------------------\n", progName, progVersion)
 
-	// Modell & Limits
+	// Model & Limits
 	inLimit := fmt.Sprintf("%dk", modelInfo.InputTokenLimit/1024)
 	if modelInfo.InputTokenLimit >= 1048576 {
 		inLimit = fmt.Sprintf("%dM", modelInfo.InputTokenLimit/1048576)

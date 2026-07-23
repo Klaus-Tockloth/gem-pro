@@ -3761,6 +3761,9 @@ type ContentEmbeddingStatistics struct {
 	Truncated bool `json:"truncated,omitempty"`
 	// Gemini Enterprise Agent Platform only. Number of tokens of the input text.
 	TokenCount float32 `json:"tokenCount,omitempty"`
+	// Optional. Gemini Enterprise Agent Platform only. List of modalities and their token
+	// count for the input content.
+	TokensDetails []*ModalityTokenCount `json:"tokensDetails,omitempty"`
 }
 
 // The embedding generated from an input content.
@@ -8144,6 +8147,16 @@ type ProactivityConfig struct {
 	ProactiveAudio *bool `json:"proactiveAudio,omitempty"`
 }
 
+// Configuration for history exchange between client and server.
+type HistoryConfig struct {
+	// Optional. If true, after sending `setup_complete`, the server will wait
+	// and at first process `client_content` messages until `turn_complete` is
+	// `true`. This initial history will not trigger a model call and
+	// may end with model content. After `turn_complete` is `true`, the client
+	// can start the realtime conversation via `realtime_input`.
+	InitialHistoryInClientContent bool `json:"initialHistoryInClientContent,omitempty"`
+}
+
 // Configures the customized avatar to be used in the session.
 type CustomizedAvatar struct {
 	// Optional. The MIME type of the reference image, e.g., "image/jpeg".
@@ -8209,6 +8222,8 @@ type LiveClientSetup struct {
 	// Optional. Safety settings in the request to block unsafe content in the
 	// response.
 	SafetySettings []*SafetySetting `json:"safetySettings,omitempty"`
+	// Optional. Configures the exchange of history between the client and the server.
+	HistoryConfig *HistoryConfig `json:"historyConfig,omitempty"`
 }
 
 // Incremental update of the current conversation delivered from the client.

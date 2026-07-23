@@ -152,9 +152,9 @@ wrapString wraps a long string to a specified width for better readability in te
 long string and formats it by wrapping it to a specified width, inserting line breaks and indentation for
 improved terminal display.
 */
-func wrapString(message string, width int, ident int) string {
-	wrapped := wordwrap.WrapString(message, uint(width-ident))
-	wrapped = strings.ReplaceAll(wrapped, "\n", "\n"+strings.Repeat(" ", ident))
+func wrapString(message string, width int, indent int) string {
+	wrapped := wordwrap.WrapString(message, uint(width-indent))
+	wrapped = strings.ReplaceAll(wrapped, "\n", "\n"+strings.Repeat(" ", indent))
 	return wrapped
 }
 

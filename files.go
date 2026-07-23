@@ -12,7 +12,7 @@ import (
 
 /*
 uploadFilesToGemini uploads files to Google file store. Gemini AI can reference an uploaded file via URL.
-An uploaded files is stored for a limited amount of time (e.g., 2 days).
+An uploaded file is stored for a limited amount of time (e.g., 2 days).
 */
 func uploadFilesToGemini(filesToUpload []FileToHandle) {
 	// create AI client
@@ -33,7 +33,7 @@ func uploadFilesToGemini(filesToUpload []FileToHandle) {
 
 		uploadFileConfig := genai.UploadFileConfig{}
 		// 'Name' may only contain lowercase alphanumeric characters or dashes (-) and cannot begin or
-		//  end with a dash. Due to the above limitations, we let Gemini AI generete an unique 'Name'.
+		//  end with a dash. Due to the above limitations, we let Gemini AI generate a unique 'Name'.
 		uploadFileConfig.MIMEType = fileToUpload.MimeType
 		uploadFileConfig.DisplayName = fileToUpload.Filepath
 

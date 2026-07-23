@@ -10,7 +10,7 @@
 #
 # Meta Aspects:
 # - 'lichen' analyzes the respective platform-specific binary.
-# - Consequently, plattform-specific NOTICE files are generated.
+# - Consequently, platform-specific NOTICE files are generated.
 # - For 'lichen' to work, a binary must be generated first.
 # - If a component changes (new, deleted, version change):
 #   1. Build applications

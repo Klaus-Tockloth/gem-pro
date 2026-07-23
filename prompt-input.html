@@ -143,6 +143,9 @@
 
 # Beschreibung und/oder Daten:
 - ...
+<daten>
+
+</daten>
 
 # Aufgaben und/oder Fragen:
 - ...
@@ -164,6 +167,9 @@
 
 # Description and/or Data:
 - ...
+<data>
+
+</data>
 
 # Tasks and/or Questions:
 - ...
@@ -234,7 +240,7 @@
           }
 
           if (event.target.classList.contains("duplicate-button")) {
-            const container = event.target.closest(".textareaContainer"); // traverse to .textareaContainer
+            const container = event.target.closest(".textareaContainer");
             const newContainer = container.cloneNode(true);
             const originalTextarea = container.querySelector("textarea");
             const newTextarea = newContainer.querySelector("textarea");

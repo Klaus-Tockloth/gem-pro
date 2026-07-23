@@ -237,22 +237,6 @@ Je nach Aufgabenstellung kann auch die Nutzung beider Modell-Linien hilfreich se
 * Benutzer: Auswahl der besten Lösungsvariante
 * Pro-Linie: Verfeinerung der ausgewählten Lösungsvariante
 
-### Wichtige Parameter
-
-* **Temperature**: Steuert die Zufälligkeit der Ausgabe.
-    *   *Hinweis zu Gemini 3 / Reasoning Modellen:* **Belassen Sie diesen Wert auf dem Standard (leer/1.0).** Diese Modelle benötigen eine gewisse Varianz ("Kreativität") für ihre internen Denkprozesse. Ein Absenken der Temperature führt hier paradoxerweise zu schlechterer Logik und Fehlern (z.B. Endlosschleifen).
-
-* **TopP (Nucleus Sampling)**: Filtert die Wortauswahl basierend auf kumulativer Wahrscheinlichkeit. Sollte für Gemini 3 in der Regel ebenfalls auf dem Standardwert belassen werden.
-
-**Empfehlung:**
-Die Steuerung der Genauigkeit erfolgt bei Gemini 3 primär über den Prompt und nicht mehr über die Sampling-Parameter. Ändern Sie diese Werte in der Konfiguration nur, wenn Sie ältere Modelle nutzen oder spezifische Experimente durchführen.
-
-#### Defaultwerte
-
-Die Standardwerte für die Gemini-Modelle sind in der Regel:
-*   **Temperature**: 1.0
-*   **TopP**: 0.95
-
 ### Support und Programme
 
 Programmfehler bitte in 'Issues' melden, Diskussionen und Fragen in 'Discussions'. Ausführbare Programme finden Sie im 'Releases'-Bereich.
@@ -498,22 +482,6 @@ Depending on the task, using both model lines can also be helpful:
 * Flash line: Generation of multiple solution variants
 * User: Selection of the best solution variant
 * Pro line: Refinement of the selected solution variant
-
-### Important Parameters
-
-* **Temperature**: Controls the randomness of the output.
-    *   *Note for Gemini 3 / Reasoning models:* **Keep this value at default (empty/1.0).** These models require a certain amount of variance ("creativity") for their internal reasoning processes. Lowering the temperature can paradoxically lead to worse logic and errors (e.g., infinite loops).
-
-* **TopP (Nucleus Sampling)**: Filters word choice based on cumulative probability. This should generally also be left at the default value for Gemini 3.
-
-**Recommendation:**
-With Gemini 3, accuracy is primarily controlled via the prompt rather than these sampling parameters. Only modify these values in the configuration if you are using older models or conducting specific experiments.
-
-#### Default Values
-
-The default values for Gemini models are typically:
-*   **Temperature**: 1.0
-*   **TopP**: 0.95
 
 ### Support and Programs
 

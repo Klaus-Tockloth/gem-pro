@@ -1,12 +1,22 @@
 # Changelog
 
-## [1.63.0](https://github.com/googleapis/go-genai/compare/v1.62.0...v1.63.0) (2026-07-08)
+## [1.64.0](https://github.com/googleapis/go-genai/compare/v1.63.0...v1.64.0) (2026-07-15)
 
 
 ### Features
 
+* Add history config. ([315c1b1](https://github.com/googleapis/go-genai/commit/315c1b1e439c31f7b84c0f026cafdeb6b0cc8e54))
+* Populate per-modality prompt token count in embedding responses for gemini-embedding-2 ([7e186ba](https://github.com/googleapis/go-genai/commit/7e186ba131512a5bc87f27c7b3cf9882d66b55fd))
+
+## [1.63.0](https://github.com/googleapis/go-genai/compare/v1.62.0...v1.63.0) (2026-07-15)
+
+
+### Features
+
+* Add history config. ([315c1b1](https://github.com/googleapis/go-genai/commit/315c1b1e439c31f7b84c0f026cafdeb6b0cc8e54))
 * Add response_format and Translation_config in GenerationConfig ([caf2595](https://github.com/googleapis/go-genai/commit/caf25953db65011cd903d2b08631ea78e37c0a32))
 * Add Tool.exa_ai_search for Gemini Enterprise API ([caf2595](https://github.com/googleapis/go-genai/commit/caf25953db65011cd903d2b08631ea78e37c0a32))
+* Populate per-modality prompt token count in embedding responses for gemini-embedding-2 ([7e186ba](https://github.com/googleapis/go-genai/commit/7e186ba131512a5bc87f27c7b3cf9882d66b55fd))
 * voice consent signature types across all SDK languages. ([ff4e260](https://github.com/googleapis/go-genai/commit/ff4e26052344e10a1364f9f5d45c52615c90ed26))
 
 

@@ -11,7 +11,7 @@
 # - v1.3.0 - 2025-12-10: revised
 # - v1.4.0 - 2026-02-03: revised
 # - v1.5.0 - 2026-02-19: Windows ARM-32 support removed, ARM-64 added
-# - v1.6.0 - 2026-05-20: freebsd, openbsd and netbsd support removed
+# - v1.6.0 - 2026-05-20: FreeBSD, OpenBSD and NetBSD support removed
 # ------------------------------------
 
 set -o errexit

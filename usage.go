@@ -23,7 +23,7 @@ func printUsage() {
 	fmt.Printf("  %-30s %s\n", "[Interactive Mode]", progName)
 
 	// Piping
-	fmt.Printf("  %-30s %s\n", "[Piped Input]", "cat task.txt | "+progName+" -out result")
+	fmt.Printf("  %-30s %s\n", "[Piped Input]", "cat task.txt | "+progName+" -pure-response")
 	fmt.Printf("  %-30s %s\n", "[Pure Response]", "echo \"Hello\" | "+progName+" -pure-response")
 
 	// Files
@@ -51,7 +51,6 @@ func printUsage() {
 		{"Generation Parameters", []string{"pure-response", "servicetier", "thinkinglevel"}},
 		{"Grounding & Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
 		{"Chat & Interaction", []string{"chatmode", "verbose", "config", "filelist"}},
-		{"Output Control", []string{"out"}},
 		{"Context: Caching (High Perf)", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
 		{"Context: Google File Store", []string{"upload-files", "include-files", "list-files", "delete-files"}},
 		{"Context: RAG (Persistent)", []string{"list-stores", "create-store", "delete-store", "add-to-store", "delete-from-store", "include-store", "list-store-content"}},
@@ -159,10 +158,10 @@ func showAvailableGeminiModels(terminalWidth int) {
 		fmt.Printf("SupportedActions : %v\n", strings.Join(modelInfo.SupportedActions, ", "))
 		// DefaultCheckpointID
 		// Checkpoints
-		fmt.Printf("Temperature      : %v\n", modelInfo.Temperature)
-		fmt.Printf("MaxTemperature   : %v\n", modelInfo.MaxTemperature)
-		fmt.Printf("TopP             : %v\n", modelInfo.TopP)
-		fmt.Printf("TopK             : %v\n", modelInfo.TopK)
+		// fmt.Printf("Temperature      : %v\n", modelInfo.Temperature)
+		// fmt.Printf("MaxTemperature   : %v\n", modelInfo.MaxTemperature)
+		// fmt.Printf("TopP             : %v\n", modelInfo.TopP)
+		// fmt.Printf("TopK             : %v\n", modelInfo.TopK)
 		fmt.Printf("Thinking         : %t\n", modelInfo.Thinking)
 	}
 	fmt.Printf("\n")

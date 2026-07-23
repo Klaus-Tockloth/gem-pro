@@ -42,6 +42,8 @@ func renderMarkdown2HTML(md string) string {
 		{"<!-- PROMPT_RESOURCES_START -->", "<!-- PROMPT_RESOURCES_END -->", "Resources", false},
 		{"<!-- RESPONSE_START -->", "<!-- RESPONSE_END -->", "Response", true},
 		{"<!-- STATS_START -->", "<!-- STATS_END -->", "Statistics", false},
+		{"<!-- CODE_EXECUTION_START -->", "<!-- CODE_EXECUTION_END -->", "Executable Code", false},
+		{"<!-- CODE_RESULT_START -->", "<!-- CODE_RESULT_END -->", "Code Execution Result", false},
 	}
 
 	var htmlBuilder strings.Builder
@@ -82,15 +84,15 @@ func renderMarkdown2HTML(md string) string {
 		}
 
 		if relativeEndIdx == -1 {
-			// missing end marker, parse the rest as inner block
+			// missing end marker, parse the rest as inner block (recursive call)
 			inner := endSearchArea
-			fmt.Fprintf(&htmlBuilder, "<details%s><summary>%s</summary>\n%s\n</details>\n", openAttr, activeDef.title, parseMarkdownToHTML(inner))
+			fmt.Fprintf(&htmlBuilder, "<details%s><summary>%s</summary>\n%s\n</details>\n", openAttr, activeDef.title, renderMarkdown2HTML(inner))
 			break
 		}
 
-		// parse inner block
+		// parse inner block (recursive call)
 		inner := endSearchArea[:relativeEndIdx]
-		fmt.Fprintf(&htmlBuilder, "<details%s><summary>%s</summary>\n%s\n</details>\n", openAttr, activeDef.title, parseMarkdownToHTML(inner))
+		fmt.Fprintf(&htmlBuilder, "<details%s><summary>%s</summary>\n%s\n</details>\n", openAttr, activeDef.title, renderMarkdown2HTML(inner))
 
 		// advance remaining string
 		remaining = endSearchArea[relativeEndIdx+len(activeDef.end):]
