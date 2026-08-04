@@ -41,6 +41,7 @@ func printUsage() {
 
 	// Caching
 	fmt.Printf("  %-30s %s\n", "[Cache large files]", progName+" -create-cache *.pdf")
+	fmt.Printf("  %-30s %s\n", "[Update Cache TTL]", progName+" -update-cache 4")
 
 	// Groups
 	groups := []struct {
@@ -51,7 +52,7 @@ func printUsage() {
 		{"Generation Parameters", []string{"pure-response", "servicetier", "thinkinglevel"}},
 		{"Grounding & Tools", []string{"code-execution", "google-search", "url-context", "google-maps"}},
 		{"Chat & Interaction", []string{"chatmode", "verbose", "config", "filelist"}},
-		{"Context: Caching (High Perf)", []string{"create-cache", "include-cache", "list-cache", "delete-cache"}},
+		{"Context: Caching (High Perf)", []string{"create-cache", "update-cache", "include-cache", "list-cache", "delete-cache"}},
 		{"Context: Google File Store", []string{"upload-files", "include-files", "list-files", "delete-files"}},
 		{"Context: RAG (Persistent)", []string{"list-stores", "create-store", "delete-store", "add-to-store", "delete-from-store", "include-store", "list-store-content"}},
 	}

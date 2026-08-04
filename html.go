@@ -28,6 +28,11 @@ It uses a "Divide and Conquer" strategy to separate logical units before parsing
 errors in one section from breaking the overall HTML structure.
 */
 func renderMarkdown2HTML(md string) string {
+	sysPromptTitle := "System Prompt"
+	if *includeCache {
+		sysPromptTitle = "System Prompt (inherited from cache)"
+	}
+
 	type blockDef struct {
 		start string
 		end   string
@@ -38,7 +43,7 @@ func renderMarkdown2HTML(md string) string {
 	defs := []blockDef{
 		{"<!-- THOUGHTS_START -->", "<!-- THOUGHTS_END -->", "Thoughts", false},
 		{"<!-- PROMPT_USER_START -->", "<!-- PROMPT_USER_END -->", "User Prompt", false},
-		{"<!-- PROMPT_SYSTEM_START -->", "<!-- PROMPT_SYSTEM_END -->", "System Prompt", false},
+		{"<!-- PROMPT_SYSTEM_START -->", "<!-- PROMPT_SYSTEM_END -->", sysPromptTitle, false},
 		{"<!-- PROMPT_RESOURCES_START -->", "<!-- PROMPT_RESOURCES_END -->", "Resources", false},
 		{"<!-- RESPONSE_START -->", "<!-- RESPONSE_END -->", "Response", true},
 		{"<!-- STATS_START -->", "<!-- STATS_END -->", "Statistics", false},

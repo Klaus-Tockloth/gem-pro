@@ -385,9 +385,9 @@ func initializeProgram() error {
 }
 
 /*
-generateGeminiModelConfig generates a configuration object for the Gemini AI model. It creates a
-genai.GenerateContentConfig object and configures it based on the program settings for interacting
-with the Gemini AI model.
+generateGeminiModelConfig generates a configuration object for the Gemini AI model.
+If a cache is attached, System Instructions and Tools are omitted from the request config
+because they are inherited directly from the cached content.
 */
 func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.GenerateContentConfig {
 	generateContentConfig := &genai.GenerateContentConfig{}
@@ -408,45 +408,47 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 		generateContentConfig.MaxOutputTokens = *progConfig.GeminiMaxOutputTokens
 	}
 
-	// system prompt
-	if progConfig.SystemInstructionFile != "" {
-		sysInstructionBytes, err := os.ReadFile(progConfig.SystemInstructionFile)
-		if err != nil {
-			fmt.Printf("error [%v] reading system instruction file [%s]\n", err, progConfig.SystemInstructionFile)
-			os.Exit(1)
-		}
-		finalSystemInstruction = string(sysInstructionBytes)
-	} else {
-		finalSystemInstruction = ""
-	}
-
-	if finalSystemInstruction != "" {
-		generateContentConfig.SystemInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
-	}
-
-	generateContentConfig.Tools = []*genai.Tool{}
-	if progConfig.GeminiGroundingWithCodeExecution {
-		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
-	}
-	if progConfig.GeminiGroundingWithGoogleSearch {
-		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
-	}
-	if progConfig.GeminiGroundingWithURLContext {
-		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{URLContext: &genai.URLContext{}})
-	}
-	if progConfig.GeminiGroundingWithGoogleMaps {
-		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
-	}
-	if len(storeNames) > 0 {
-		generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{
-			FileSearch: &genai.FileSearch{
-				FileSearchStoreNames: storeNames,
-			},
-		})
-	}
-
+	// If a cache is attached, SystemInstruction and Tools are inherited from the Cache.
+	// Otherwise, configure them for the content generation request.
 	if cacheName != "" {
 		generateContentConfig.CachedContent = cacheName
+	} else {
+		// system prompt
+		if progConfig.SystemInstructionFile != "" {
+			sysInstructionBytes, err := os.ReadFile(progConfig.SystemInstructionFile)
+			if err != nil {
+				fmt.Printf("error [%v] reading system instruction file [%s]\n", err, progConfig.SystemInstructionFile)
+				os.Exit(1)
+			}
+			finalSystemInstruction = string(sysInstructionBytes)
+		} else {
+			finalSystemInstruction = ""
+		}
+
+		if finalSystemInstruction != "" {
+			generateContentConfig.SystemInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
+		}
+
+		generateContentConfig.Tools = []*genai.Tool{}
+		if progConfig.GeminiGroundingWithCodeExecution {
+			generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
+		}
+		if progConfig.GeminiGroundingWithGoogleSearch {
+			generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
+		}
+		if progConfig.GeminiGroundingWithURLContext {
+			generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{URLContext: &genai.URLContext{}})
+		}
+		if progConfig.GeminiGroundingWithGoogleMaps {
+			generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
+		}
+		if len(storeNames) > 0 {
+			generateContentConfig.Tools = append(generateContentConfig.Tools, &genai.Tool{
+				FileSearch: &genai.FileSearch{
+					FileSearchStoreNames: storeNames,
+				},
+			})
+		}
 	}
 
 	var thinkingLevel genai.ThinkingLevel
@@ -490,17 +492,20 @@ func generateGeminiModelConfig(cacheName string, storeNames []string) *genai.Gen
 }
 
 /*
-printGeminiModelConfig prints relevant parts of the Gemini model configuration to the console. It takes a
-Gemini model configuration and prints its key parameters to the terminal, formatted for readability within
-a specified width.
+printGeminiModelConfig prints relevant parts of the Gemini model configuration to the console.
 */
 func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, terminalWidth int) {
 	fmt.Printf("\nGemini model configuration (excerpt):\n")
-	if geminiModelConfig.SystemInstruction != nil {
-		if len(geminiModelConfig.SystemInstruction.Parts) > 0 {
-			fmt.Printf("  SystemInstruction : %v\n", wrapString(geminiModelConfig.SystemInstruction.Parts[0].Text, terminalWidth, 22))
+	if geminiModelConfig.SystemInstruction != nil && len(geminiModelConfig.SystemInstruction.Parts) > 0 {
+		fmt.Printf("  SystemInstruction : %v\n", wrapString(geminiModelConfig.SystemInstruction.Parts[0].Text, terminalWidth, 22))
+	} else if geminiModelConfig.CachedContent != "" {
+		if finalSystemInstruction != "" {
+			fmt.Printf("  SystemInstruction : %v (inherited from cache)\n", wrapString(finalSystemInstruction, terminalWidth, 22))
+		} else {
+			fmt.Printf("  SystemInstruction : none (inherited from cache)\n")
 		}
 	}
+
 	fmt.Printf("  CandidateCount    : %v\n", geminiModelConfig.CandidateCount)
 	if geminiModelConfig.MaxOutputTokens > 0 {
 		fmt.Printf("  MaxOutputTokens   : %v\n", geminiModelConfig.MaxOutputTokens)
@@ -508,7 +513,8 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 	if geminiModelConfig.ResponseMIMEType != "" {
 		fmt.Printf("  ResponseMIMEType  : %v\n", geminiModelConfig.ResponseMIMEType)
 	}
-	if geminiModelConfig.Tools != nil {
+
+	if len(geminiModelConfig.Tools) > 0 {
 		for _, tool := range geminiModelConfig.Tools {
 			if tool.GoogleSearch != nil {
 				fmt.Printf("  Tool              : GoogleSearch\n")
@@ -527,7 +533,14 @@ func printGeminiModelConfig(geminiModelConfig *genai.GenerateContentConfig, term
 					strings.Join(tool.FileSearch.FileSearchStoreNames, ", "))
 			}
 		}
+	} else if geminiModelConfig.CachedContent != "" {
+		if len(cacheToHandle.Tools) > 0 {
+			fmt.Printf("  Tools             : %s (inherited from cache)\n", strings.Join(cacheToHandle.Tools, ", "))
+		} else {
+			fmt.Printf("  Tools             : none (inherited from cache)\n")
+		}
 	}
+
 	if geminiModelConfig.ResponseModalities != nil {
 		fmt.Printf("  ResponseModalities: %v\n", strings.Join(geminiModelConfig.ResponseModalities, ", "))
 	}
@@ -573,21 +586,29 @@ func showCompactConfiguration(modelInfo *genai.Model, modelConfig *genai.Generat
 	fmt.Printf("Config : %s\n", strings.Join(configParts, ", "))
 
 	// Tools
-	var activeTools []string
-	if progConfig.GeminiGroundingWithGoogleSearch {
-		activeTools = append(activeTools, "GoogleSearch")
-	}
-	if progConfig.GeminiGroundingWithURLContext {
-		activeTools = append(activeTools, "URLContext")
-	}
-	if progConfig.GeminiGroundingWithCodeExecution {
-		activeTools = append(activeTools, "CodeExecution")
-	}
-	if progConfig.GeminiGroundingWithGoogleMaps {
-		activeTools = append(activeTools, "GoogleMaps")
-	}
-	if len(activeTools) > 0 {
-		fmt.Printf("Tools  : %s\n", strings.Join(activeTools, ", "))
+	if modelConfig.CachedContent != "" {
+		if len(cacheToHandle.Tools) > 0 {
+			fmt.Printf("Tools  : %s (inherited from cache)\n", strings.Join(cacheToHandle.Tools, ", "))
+		} else {
+			fmt.Printf("Tools  : none (inherited from cache)\n")
+		}
+	} else {
+		var activeTools []string
+		if progConfig.GeminiGroundingWithGoogleSearch {
+			activeTools = append(activeTools, "GoogleSearch")
+		}
+		if progConfig.GeminiGroundingWithURLContext {
+			activeTools = append(activeTools, "URLContext")
+		}
+		if progConfig.GeminiGroundingWithCodeExecution {
+			activeTools = append(activeTools, "CodeExecution")
+		}
+		if progConfig.GeminiGroundingWithGoogleMaps {
+			activeTools = append(activeTools, "GoogleMaps")
+		}
+		if len(activeTools) > 0 {
+			fmt.Printf("Tools  : %s\n", strings.Join(activeTools, ", "))
+		}
 	}
 
 	// Context (Files, Cache, RAG)

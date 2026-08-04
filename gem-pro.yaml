@@ -4,7 +4,7 @@
 # - Program configuration for Gemini AI Client
 # 
 # Release:
-# - v1.4 - 2026-07-22: corresponding to program release
+# - v1.5 - 2026-08-03: corresponding to program release
 #
 # Remarks:
 # - Do not use tabs or unnecessary white spaces in YAML files.
@@ -75,7 +75,7 @@ GeminiGroundingWithFileSearchStores:
 
 # level of thoughts tokens that the model should generate (minimal, low, medium or high)
 # Google recommends 'medium' as default
-GeminiThinkingLevel: medium
+GeminiThinkingLevel: high
 
 # include thoughts in the response (true, false) (AI model must support this setting)
 GeminiIncludeThoughts: true

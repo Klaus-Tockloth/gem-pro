@@ -209,7 +209,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 
 			// 1. local files as Markdown table
 			if len(filesToHandle) > 0 {
-				promptString.WriteString("**Local files from commandline**\n\n")
+				promptString.WriteString("**Local files from commandline:**\n\n")
 				promptString.WriteString("| State | Path | Size | MIME | Modified |\n")
 				promptString.WriteString("| :--- | :--- | :--- | :--- | :--- |\n")
 				for _, fileToUpload := range filesToHandle {
@@ -233,7 +233,7 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 
 			// 2. Google File Store as list
 			if *includeFiles {
-				promptString.WriteString("#### Google File Store (remote files)\n\n")
+				promptString.WriteString("**Google File Store (remote files):**\n\n")
 				promptString.WriteString("```plaintext\n")
 				promptString.WriteString(listFilesUploadedToGemini(""))
 				promptString.WriteString("```\n\n")
@@ -241,16 +241,15 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 
 			// 3. AI Model Cache Details as list
 			if *includeCache {
-				promptString.WriteString("### AI model cache details\n\n")
-				promptString.WriteString("```plaintext\n")
+				promptString.WriteString("**AI model cache details:**\n\n")
 				_, cacheDetails := listAIModelSpecificCache("")
 				promptString.WriteString(cacheDetails)
-				promptString.WriteString("```\n\n")
+				promptString.WriteString("\n")
 			}
 
 			// 4. FileSearchStores (RAG) as list
 			if len(includeStores) > 0 {
-				promptString.WriteString("### FileSearchStores (RAG knowledge database)\n\n")
+				promptString.WriteString("**FileSearchStores (RAG knowledge database):**\n\n")
 				for _, storeID := range includeStores {
 					fmt.Fprintf(&promptString, "* Active FileSearchStore: `%s`\n", storeID)
 				}
@@ -269,7 +268,11 @@ func processPrompt(prompt string, chatmode bool, chatNumber int) {
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_USER_START -->", "**User Prompt:**\n")
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_USER_END -->", "")
 
-	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_START -->", "**System Prompt:**\n")
+	if *includeCache {
+		markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_START -->", "**System Prompt (inherited from cache):**\n")
+	} else {
+		markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_START -->", "**System Prompt:**\n")
+	}
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_SYSTEM_END -->", "")
 
 	markdownForFileAndAnsi = strings.ReplaceAll(markdownForFileAndAnsi, "<!-- PROMPT_RESOURCES_START -->", "**Resources:**\n")
@@ -385,7 +388,7 @@ func processPureResponse(resp *genai.GenerateContentResponse) {
 
 	// print response candidate(s)
 	for _, candidate := range resp.Candidates {
-		// Get text content, explicitly excluding thoughts
+		// get text content, explicitly excluding thoughts
 		_, content := getCandidateText(candidate)
 		responseString.WriteString(content)
 
@@ -528,25 +531,33 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	responseString.WriteString("```plaintext\n")
 	fmt.Fprintf(&responseString, "AI model   : %v%s\n", resp.ModelVersion, paramsStr)
 
-	var activeTools []string
-	if progConfig.GeminiGroundingWithGoogleSearch {
-		activeTools = append(activeTools, "GoogleSearch")
-	}
-	if progConfig.GeminiGroundingWithURLContext {
-		activeTools = append(activeTools, "URLContext")
-	}
-	if progConfig.GeminiGroundingWithCodeExecution {
-		activeTools = append(activeTools, "CodeExecution")
-	}
-	if progConfig.GeminiGroundingWithGoogleMaps {
-		activeTools = append(activeTools, "GoogleMaps")
-	}
-	if len(includeStores) > 0 {
-		activeTools = append(activeTools, "FileSearchStores")
-	}
+	if *includeCache {
+		if len(cacheToHandle.Tools) > 0 {
+			fmt.Fprintf(&responseString, "Tools      : %s (inherited from cache)\n", strings.Join(cacheToHandle.Tools, ", "))
+		} else {
+			fmt.Fprintf(&responseString, "Tools      : none (inherited from cache)\n")
+		}
+	} else {
+		var activeTools []string
+		if progConfig.GeminiGroundingWithGoogleSearch {
+			activeTools = append(activeTools, "GoogleSearch")
+		}
+		if progConfig.GeminiGroundingWithURLContext {
+			activeTools = append(activeTools, "URLContext")
+		}
+		if progConfig.GeminiGroundingWithCodeExecution {
+			activeTools = append(activeTools, "CodeExecution")
+		}
+		if progConfig.GeminiGroundingWithGoogleMaps {
+			activeTools = append(activeTools, "GoogleMaps")
+		}
+		if len(includeStores) > 0 {
+			activeTools = append(activeTools, "FileSearchStores")
+		}
 
-	if len(activeTools) > 0 {
-		fmt.Fprintf(&responseString, "Tools      : %s\n", strings.Join(activeTools, ", "))
+		if len(activeTools) > 0 {
+			fmt.Fprintf(&responseString, "Tools      : %s\n", strings.Join(activeTools, ", "))
+		}
 	}
 
 	// slug extraction
@@ -563,8 +574,15 @@ func processResponse(resp *genai.GenerateContentResponse) {
 	fmt.Fprintf(&responseString, "Generated  : %v\n", finishProcessing.Format(time.RFC850))
 
 	duration := finishProcessing.Sub(startProcessing)
-	fmt.Fprintf(&responseString, "Processing : %.1f secs for %d %s\n", duration.Seconds(),
-		len(resp.Candidates), pluralize(len(resp.Candidates), "candidate"))
+
+	speedStr := ""
+	if resp.UsageMetadata != nil && duration.Seconds() > 0 {
+		totalOutputCount := resp.UsageMetadata.CandidatesTokenCount + resp.UsageMetadata.ThoughtsTokenCount
+		tokensPerSec := float64(totalOutputCount) / duration.Seconds()
+		speedStr = fmt.Sprintf(" (%.1f output tokens/s)", tokensPerSec)
+	}
+
+	fmt.Fprintf(&responseString, "Processing : %.1f secs%s\n", duration.Seconds(), speedStr)
 
 	if resp.UsageMetadata != nil {
 		u := resp.UsageMetadata
@@ -589,10 +607,6 @@ func processResponse(resp *genai.GenerateContentResponse) {
 		outputDetails := []string{fmt.Sprintf("Candidates: %d", u.CandidatesTokenCount)}
 		if u.ThoughtsTokenCount > 0 {
 			outputDetails = append(outputDetails, fmt.Sprintf("Thoughts: %d", u.ThoughtsTokenCount))
-		}
-		if duration.Seconds() > 0 {
-			tokensPerSec := float64(totalOutputCount) / duration.Seconds()
-			outputDetails = append(outputDetails, fmt.Sprintf("Speed: %.1f tokens/s", tokensPerSec))
 		}
 		fmt.Fprintf(&responseString, "  Output   : %d (%s)\n",
 			totalOutputCount, strings.Join(outputDetails, ", "))

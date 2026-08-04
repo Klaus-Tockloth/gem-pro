@@ -58,6 +58,7 @@ Releases:
                          inline data handling fixed (e.g. images), minor improvements, presentation of 'citations' revised,
 						 no longer supported parameters (temperature, top_p, top_k) removed, performance indicator 'tokens/s' added,
 						 CLI option '-out' removed
+  - v1.5.0 - 2026-08-04: libs updated, cache handling revised, option 'update-cache' added, thinkinglevel high (default)
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -77,7 +78,6 @@ ToDos (not planned):
 
 ToDos (planned):
 - Add MCP support.
-- Revise cache handling.
 
 Links:
 - https://pkg.go.dev/google.golang.org/genai
@@ -111,8 +111,8 @@ import (
 // general program info
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
-	progVersion = "v1.4.0"
-	progDate    = "2026-07-22"
+	progVersion = "v1.5.0"
+	progDate    = "2026-08-04"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -144,8 +144,10 @@ var finalSystemInstruction string
 
 // CacheToHandle represents all tokenized files in AI model specific cache
 type CacheToHandle struct {
-	CachedContent  genai.CachedContent
-	FilesTokenized []FileToHandle
+	CachedContent     genai.CachedContent
+	FilesTokenized    []FileToHandle
+	SystemInstruction string
+	Tools             []string
 }
 
 // cacheToHandle holds all data concerning AI model specific cache
@@ -194,6 +196,7 @@ var (
 	listFiles        = flag.Bool("list-files", false, "Lists given files in Google File Store and exits.")
 	includeFiles     = flag.Bool("include-files", false, "Includes all previously uploaded files from Google File Store in prompt to Gemini AI.")
 	createCache      = flag.Bool("create-cache", false, "Creates a new AI model specific cache from given files and exits.")
+	updateCache      = flag.Int("update-cache", 0, "Updates the TTL of the AI model specific cache to the given hours and exits.")
 	deleteCache      = flag.Bool("delete-cache", false, "Deletes AI model specific cache and exits.")
 	listCache        = flag.Bool("list-cache", false, "Lists AI model specific cache and exits.")
 	includeCache     = flag.Bool("include-cache", false, "Includes AI model specific cache in prompt to Gemini AI.")
@@ -988,6 +991,18 @@ func handleStandaloneCacheActions() {
 		}
 		_, cacheDetails := listAIModelSpecificCache("  ")
 		fmt.Printf("\nAI model specific cache created:\n")
+		if len(cacheDetails) == 0 {
+			fmt.Printf("  none\n\n")
+		} else {
+			fmt.Printf("%s\n", cacheDetails)
+		}
+		os.Exit(0)
+
+	case *updateCache > 0:
+		fmt.Printf("\nUpdating AI model specific cache TTL to %d hours:\n", *updateCache)
+		updateAIModelSpecificCache(*updateCache)
+		_, cacheDetails := listAIModelSpecificCache("  ")
+		fmt.Printf("\nAI model specific cache updated:\n")
 		if len(cacheDetails) == 0 {
 			fmt.Printf("  none\n\n")
 		} else {

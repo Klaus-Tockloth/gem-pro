@@ -13,9 +13,8 @@ import (
 )
 
 /*
-createAIModelSpecificCache creates a new AI model specific cache from given files.
-All files (content parts) thereby form one cache object.
-The cache object must consist of at least 1024 or 2048 tokens.
+createAIModelSpecificCache creates a new AI model specific cache from given files,
+including System Instructions and Tools into the cached content object.
 */
 func createAIModelSpecificCache(filesToUpload []FileToHandle) {
 	if len(filesToUpload) == 0 {
@@ -61,18 +60,125 @@ func createAIModelSpecificCache(filesToUpload []FileToHandle) {
 		parts = append(parts, content.Parts[0])
 	}
 
-	// create cached content
-	cachedContent, err := client.Caches.Create(ctx, progConfig.GeminiAiModel, &genai.CreateCachedContentConfig{
-		TTL:         time.Duration(progConfig.GeminiCacheTimeToLive) * time.Hour,
-		DisplayName: progConfig.GeminiCacheName,
-		Contents:    []*genai.Content{{Role: "user", Parts: parts}},
-	})
+	// prepare system instruction for cache
+	var sysInstruction *genai.Content
+	if progConfig.SystemInstructionFile != "" {
+		sysInstructionBytes, err := os.ReadFile(progConfig.SystemInstructionFile)
+		if err != nil {
+			fmt.Printf("error [%v] reading system instruction file [%s]\n", err, progConfig.SystemInstructionFile)
+			os.Exit(1)
+		}
+		finalSystemInstruction = string(sysInstructionBytes)
+	} else {
+		finalSystemInstruction = ""
+	}
+	if finalSystemInstruction != "" {
+		sysInstruction = genai.NewContentFromText(finalSystemInstruction, "user")
+	}
+
+	// prepare tools for cache
+	tools := []*genai.Tool{}
+	if progConfig.GeminiGroundingWithCodeExecution {
+		tools = append(tools, &genai.Tool{CodeExecution: &genai.ToolCodeExecution{}})
+	}
+	if progConfig.GeminiGroundingWithGoogleSearch {
+		tools = append(tools, &genai.Tool{GoogleSearch: &genai.GoogleSearch{}})
+	}
+	if progConfig.GeminiGroundingWithURLContext {
+		tools = append(tools, &genai.Tool{URLContext: &genai.URLContext{}})
+	}
+	if progConfig.GeminiGroundingWithGoogleMaps {
+		tools = append(tools, &genai.Tool{GoogleMaps: &genai.GoogleMaps{}})
+	}
+	if len(includeStores) > 0 {
+		tools = append(tools, &genai.Tool{
+			FileSearch: &genai.FileSearch{
+				FileSearchStoreNames: includeStores,
+			},
+		})
+	}
+
+	// create cached content including SystemInstruction and Tools
+	createConfig := &genai.CreateCachedContentConfig{
+		TTL:               time.Duration(progConfig.GeminiCacheTimeToLive) * time.Hour,
+		DisplayName:       progConfig.GeminiCacheName,
+		Contents:          []*genai.Content{{Role: "user", Parts: parts}},
+		SystemInstruction: sysInstruction,
+	}
+	if len(tools) > 0 {
+		createConfig.Tools = tools
+	}
+
+	cachedContent, err := client.Caches.Create(ctx, progConfig.GeminiAiModel, createConfig)
 	if err != nil {
 		log.Fatalf("error [%v] creating Gemini AI cache", err)
 	}
 
 	// add cached content details
 	cacheToHandle.CachedContent = *cachedContent
+
+	cacheToHandle.SystemInstruction = finalSystemInstruction
+
+	var toolNames []string
+	if progConfig.GeminiGroundingWithCodeExecution {
+		toolNames = append(toolNames, "CodeExecution")
+	}
+	if progConfig.GeminiGroundingWithGoogleSearch {
+		toolNames = append(toolNames, "GoogleSearch")
+	}
+	if progConfig.GeminiGroundingWithURLContext {
+		toolNames = append(toolNames, "URLContext")
+	}
+	if progConfig.GeminiGroundingWithGoogleMaps {
+		toolNames = append(toolNames, "GoogleMaps")
+	}
+	if len(includeStores) > 0 {
+		toolNames = append(toolNames, "FileSearchStores")
+	}
+	cacheToHandle.Tools = toolNames
+}
+
+/*
+updateAIModelSpecificCache updates the TTL of the AI model specific cache.
+*/
+func updateAIModelSpecificCache(ttlHours int) {
+	// create AI client
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  progConfig.GeminiAPIKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		log.Fatalf("error [%v] creating Gemini AI client", err)
+	}
+
+	aiModel := filepath.Base(progConfig.GeminiAiModel)
+	cacheFound := false
+
+	// retrieve all caches
+	for item, err := range client.Caches.All(ctx) {
+		if err != nil {
+			log.Fatalf("error [%v] retrieving cached content resources from Gemini AI", err)
+		}
+
+		// AI model specific cache
+		if item.DisplayName == progConfig.GeminiCacheName && filepath.Base(item.Model) == aiModel {
+			// update cache
+			_, err = client.Caches.Update(ctx, item.Name, &genai.UpdateCachedContentConfig{
+				TTL: time.Duration(ttlHours) * time.Hour,
+			})
+			if err != nil {
+				log.Fatalf("error [%v] updating cache from Gemini AI", err)
+			}
+			cacheFound = true
+			break
+		}
+	}
+
+	if !cacheFound {
+		fmt.Printf("  error: no AI model specific cache found to update\n")
+		os.Exit(1)
+	}
 }
 
 /*
@@ -110,7 +216,8 @@ func deleteAIModelSpecificCache() {
 }
 
 /*
-listAIModelSpecificCache lists AI model specific cache.
+listAIModelSpecificCache lists AI model specific cache including cached System Instructions and Tools.
+Cache details and tokenized files are formatted in Markdown.
 */
 func listAIModelSpecificCache(indent string) (string, string) {
 	cacheName := ""
@@ -138,31 +245,31 @@ func listAIModelSpecificCache(indent string) (string, string) {
 
 		// AI model specific cache
 		if item.DisplayName == progConfig.GeminiCacheName && filepath.Base(item.Model) == aiModel {
-			// print details of cached content
-			cacheDetails += fmt.Sprintf("%sName          : %s\n", indent, item.Name)
-			cacheDetails += fmt.Sprintf("%sDisplayName   : %s\n", indent, item.DisplayName)
-			cacheDetails += fmt.Sprintf("%sModel         : %s\n", indent, item.Model)
-			cacheDetails += fmt.Sprintf("%sCreateTime    : %s\n", indent, item.CreateTime.Local().Format(time.RFC850))
-			// cacheDetails += fmt.Sprintf("%sUpdateTime    : %s\n", indent, item.UpdateTime.Local().Format(time.RFC850))
+			// print details of cached content in Markdown format
+			cacheDetails += fmt.Sprintf("%s* **Name**: `%s`\n", indent, item.Name)
+			cacheDetails += fmt.Sprintf("%s* **DisplayName**: `%s`\n", indent, item.DisplayName)
+			cacheDetails += fmt.Sprintf("%s* **Model**: `%s`\n", indent, item.Model)
+			cacheDetails += fmt.Sprintf("%s* **CreateTime**: %s\n", indent, item.CreateTime.Local().Format(time.RFC850))
 
 			diff := item.ExpireTime.Sub(now)
 			diffInHours := diff.Hours()
-			cacheDetails += fmt.Sprintf("%sExpireTime    : %s (%.1f h)\n", indent, item.ExpireTime.Local().Format(time.RFC850), diffInHours)
+			cacheDetails += fmt.Sprintf("%s* **ExpireTime**: %s (%.1f h)\n", indent, item.ExpireTime.Local().Format(time.RFC850), diffInHours)
+
 			if item.UsageMetadata != nil {
 				if item.UsageMetadata.AudioDurationSeconds > 0 {
-					cacheDetails += fmt.Sprintf("%sAudioDuration : %d (sec)\n", indent, item.UsageMetadata.AudioDurationSeconds)
+					cacheDetails += fmt.Sprintf("%s* **AudioDuration**: %d (sec)\n", indent, item.UsageMetadata.AudioDurationSeconds)
 				}
 				if item.UsageMetadata.VideoDurationSeconds > 0 {
-					cacheDetails += fmt.Sprintf("%sVideoDuration : %d (sec)\n", indent, item.UsageMetadata.VideoDurationSeconds)
+					cacheDetails += fmt.Sprintf("%s* **VideoDuration**: %d (sec)\n", indent, item.UsageMetadata.VideoDurationSeconds)
 				}
 				if item.UsageMetadata.ImageCount > 0 {
-					cacheDetails += fmt.Sprintf("%sImageCount    : %d\n", indent, item.UsageMetadata.ImageCount)
+					cacheDetails += fmt.Sprintf("%s* **ImageCount**: %d\n", indent, item.UsageMetadata.ImageCount)
 				}
 				if item.UsageMetadata.TextCount > 0 {
-					cacheDetails += fmt.Sprintf("%sTextCount     : %d\n", indent, item.UsageMetadata.TextCount)
+					cacheDetails += fmt.Sprintf("%s* **TextCount**: %d\n", indent, item.UsageMetadata.TextCount)
 				}
 				if item.UsageMetadata.TotalTokenCount > 0 {
-					cacheDetails += fmt.Sprintf("%sTotalToken    : %d\n", indent, item.UsageMetadata.TotalTokenCount)
+					cacheDetails += fmt.Sprintf("%s* **TotalToken**: %d\n", indent, item.UsageMetadata.TotalTokenCount)
 				}
 			}
 			cacheName = item.Name
@@ -183,19 +290,24 @@ func listAIModelSpecificCache(indent string) (string, string) {
 		log.Fatalf("error [%v] at loadCacheDetailsFromFile()", err)
 	}
 
+	// populate global cacheToHandle
+	cacheToHandle = savedCacheDetails
+
 	// verify cache name and AI model
 	if savedCacheDetails.CachedContent.Name != cacheName || filepath.Base(savedCacheDetails.CachedContent.Model) != aiModel {
 		cacheDetails += fmt.Sprintf("%swarning: unexpected content in file [%s]\n", indent, filename)
 	} else {
-		// iterate over all tokenized files in cache details
-		printHeader := true
-		for _, fileTokenized := range savedCacheDetails.FilesTokenized {
-			if printHeader {
-				cacheDetails += fmt.Sprintf("\n%sDisplayName, Size, MIMEType, UpdateTime\n", indent)
-				printHeader = false
+		// pass system instruction from cache to global variable for prompt rendering
+		finalSystemInstruction = savedCacheDetails.SystemInstruction
+
+		// iterate over all tokenized files in cache details and render as Markdown table
+		if len(savedCacheDetails.FilesTokenized) > 0 {
+			cacheDetails += fmt.Sprintf("\n%s| Path | Size | MIME | Modified |\n", indent)
+			cacheDetails += fmt.Sprintf("%s| :--- | :--- | :--- | :--- |\n", indent)
+			for _, fileTokenized := range savedCacheDetails.FilesTokenized {
+				cacheDetails += fmt.Sprintf("%s| %s | %s | %s | %s |\n", indent,
+					fileTokenized.Filepath, fileTokenized.FileSize, fileTokenized.MimeType, fileTokenized.LastUpdate)
 			}
-			cacheDetails += fmt.Sprintf("%s%s, %s, %s, %s\n", indent,
-				fileTokenized.Filepath, fileTokenized.FileSize, fileTokenized.MimeType, fileTokenized.LastUpdate)
 		}
 	}
 
