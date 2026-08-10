@@ -58,7 +58,7 @@ Releases:
                          inline data handling fixed (e.g. images), minor improvements, presentation of 'citations' revised,
 						 no longer supported parameters (temperature, top_p, top_k) removed, performance indicator 'tokens/s' added,
 						 CLI option '-out' removed
-  - v1.5.0 - 2026-08-04: libs updated, cache handling revised, option 'update-cache' added, thinkinglevel high (default)
+  - v1.5.0 - 2026-08-10: libs updated, cache handling revised, option 'update-cache' added, thinkinglevel high (default)
 
 Copyright:
 - © 2025-2026 | Klaus Tockloth
@@ -112,7 +112,7 @@ import (
 var (
 	progName    = strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(filepath.Base(os.Args[0])))
 	progVersion = "v1.5.0"
-	progDate    = "2026-08-04"
+	progDate    = "2026-08-10"
 	progPurpose = "gemini prompt"
 	progInfo    = "Prompts Google Gemini AI and displays the response."
 )
@@ -387,7 +387,11 @@ func main() {
 		}
 		if *verbose {
 			fmt.Printf("\nInclude AI model specific cache:\n")
-			fmt.Printf("%s", cacheDetails)
+			if progConfig.AnsiOutput {
+				fmt.Printf("%s", renderMarkdown2Ansi(cacheDetails))
+			} else {
+				fmt.Printf("%s", cacheDetails)
+			}
 		}
 	}
 
@@ -994,7 +998,11 @@ func handleStandaloneCacheActions() {
 		if len(cacheDetails) == 0 {
 			fmt.Printf("  none\n\n")
 		} else {
-			fmt.Printf("%s\n", cacheDetails)
+			if progConfig.AnsiOutput {
+				fmt.Printf("%s\n", renderMarkdown2Ansi(cacheDetails))
+			} else {
+				fmt.Printf("%s\n", cacheDetails)
+			}
 		}
 		os.Exit(0)
 
@@ -1006,7 +1014,11 @@ func handleStandaloneCacheActions() {
 		if len(cacheDetails) == 0 {
 			fmt.Printf("  none\n\n")
 		} else {
-			fmt.Printf("%s\n", cacheDetails)
+			if progConfig.AnsiOutput {
+				fmt.Printf("%s\n", renderMarkdown2Ansi(cacheDetails))
+			} else {
+				fmt.Printf("%s\n", cacheDetails)
+			}
 		}
 		os.Exit(0)
 
@@ -1014,7 +1026,11 @@ func handleStandaloneCacheActions() {
 		fmt.Printf("\nDeleting AI model specific cache:\n")
 		deleteAIModelSpecificCache()
 		_, cacheDetails := listAIModelSpecificCache("  ")
-		fmt.Printf("%s\n", cacheDetails)
+		if progConfig.AnsiOutput {
+			fmt.Printf("%s\n", renderMarkdown2Ansi(cacheDetails))
+		} else {
+			fmt.Printf("%s\n", cacheDetails)
+		}
 		os.Exit(0)
 
 	case *listCache:
@@ -1023,7 +1039,11 @@ func handleStandaloneCacheActions() {
 		if len(cacheDetails) == 0 {
 			fmt.Printf("  none\n\n")
 		} else {
-			fmt.Printf("%s\n", cacheDetails)
+			if progConfig.AnsiOutput {
+				fmt.Printf("%s\n", renderMarkdown2Ansi(cacheDetails))
+			} else {
+				fmt.Printf("%s\n", cacheDetails)
+			}
 		}
 		os.Exit(0)
 	}

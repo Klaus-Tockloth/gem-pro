@@ -1238,6 +1238,11 @@ func generateContentConfigToMldev(ac *InternalAPIClient, fromObject map[string]a
 
 	fromResponseJsonSchema := InternalGetValueByPath(fromObject, []string{"responseJsonSchema"})
 	if fromResponseJsonSchema != nil {
+		fromResponseJsonSchema, err = InternalTJsonSchema(fromResponseJsonSchema)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"responseJsonSchema"}, fromResponseJsonSchema)
 	}
 
@@ -1454,6 +1459,11 @@ func generateContentConfigToVertex(ac *InternalAPIClient, fromObject map[string]
 
 	fromResponseJsonSchema := InternalGetValueByPath(fromObject, []string{"responseJsonSchema"})
 	if fromResponseJsonSchema != nil {
+		fromResponseJsonSchema, err = InternalTJsonSchema(fromResponseJsonSchema)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"responseJsonSchema"}, fromResponseJsonSchema)
 	}
 
@@ -2696,6 +2706,11 @@ func generationConfigToVertex(fromObject map[string]any, parentObject map[string
 
 	fromResponseJsonSchema := InternalGetValueByPath(fromObject, []string{"responseJsonSchema"})
 	if fromResponseJsonSchema != nil {
+		fromResponseJsonSchema, err = InternalTJsonSchema(fromResponseJsonSchema)
+		if err != nil {
+			return nil, err
+		}
+
 		InternalSetValueByPath(toObject, []string{"responseJsonSchema"}, fromResponseJsonSchema)
 	}
 
@@ -2873,6 +2888,10 @@ func googleMapsToMldev(fromObject map[string]any, parentObject map[string]any, r
 	fromEnableWidget := InternalGetValueByPath(fromObject, []string{"enableWidget"})
 	if fromEnableWidget != nil {
 		InternalSetValueByPath(toObject, []string{"enableWidget"}, fromEnableWidget)
+	}
+
+	if InternalGetValueByPath(fromObject, []string{"groundingTypes"}) != nil {
+		return nil, fmt.Errorf("groundingTypes parameter is only supported in Gemini Enterprise Agent Platform mode, not in Gemini Developer API mode.")
 	}
 
 	return toObject, nil

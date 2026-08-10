@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"google.golang.org/genai"
@@ -299,6 +300,35 @@ func listAIModelSpecificCache(indent string) (string, string) {
 	} else {
 		// pass system instruction from cache to global variable for prompt rendering
 		finalSystemInstruction = savedCacheDetails.SystemInstruction
+
+		// Add Tools
+		if len(savedCacheDetails.Tools) > 0 {
+			cacheDetails += fmt.Sprintf("%s* **Tools**: %s\n", indent, strings.Join(savedCacheDetails.Tools, ", "))
+		} else {
+			cacheDetails += fmt.Sprintf("%s* **Tools**: none\n", indent)
+		}
+
+		// add SystemInstruction (max 48 non-whitespace chars)
+		if savedCacheDetails.SystemInstruction != "" {
+			var excerptBuilder strings.Builder
+			nwCount := 0
+			for _, r := range savedCacheDetails.SystemInstruction {
+				if r != ' ' && r != '\t' && r != '\n' && r != '\r' {
+					nwCount++
+					excerptBuilder.WriteRune(r)
+				} else if excerptBuilder.Len() > 0 && !strings.HasSuffix(excerptBuilder.String(), " ") {
+					excerptBuilder.WriteRune(' ')
+				}
+
+				if nwCount >= 48 {
+					excerptBuilder.WriteString("...")
+					break
+				}
+			}
+			cacheDetails += fmt.Sprintf("%s* **SystemInstruction**: %s\n", indent, strings.TrimSpace(excerptBuilder.String()))
+		} else {
+			cacheDetails += fmt.Sprintf("%s* **SystemInstruction**: none\n", indent)
+		}
 
 		// iterate over all tokenized files in cache details and render as Markdown table
 		if len(savedCacheDetails.FilesTokenized) > 0 {
